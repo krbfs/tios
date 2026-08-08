@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Teamconstructor 2.0 — UI prototype (`tc_26`)
 
-## Getting Started
+Визуальная копия ключевых страниц без бэкенда:
 
-First, run the development server:
+- `/` — лендинг
+- `/test` — инструкция «Как проходить?»
+- `/test/take` — 75 вопросов (по 5 на страницу, шкала −2…+2)
+- `/results` — пример результата / личный кабинет
+- `/login` — демо-форма входа
+
+Ответы теста сохраняются в `localStorage`.
+
+## Локальный запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Контейнер (локально, как на Cloud Run)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+chmod +x scripts/*.sh
+npm run docker:build
+npm run docker:run
+# или
+npm run docker:up
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Сервис слушает `http://localhost:8080`.
 
-## Learn More
+## Google Cloud Run
 
-To learn more about Next.js, take a look at the following resources:
+Инфра в репозитории:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Файл | Назначение |
+|------|------------|
+| `Dockerfile` | multi-stage Next.js standalone → Node на порту 8080 |
+| `cloudbuild.yaml` | Cloud Build: build → Artifact Registry → Cloud Run |
+| `deploy/service.yaml` | манифест сервиса Cloud Run |
+| `scripts/setup-gcp.sh` | один раз: API + Artifact Registry + IAM |
+| `scripts/deploy.sh` | деплой через Cloud Build (или `LOCAL=1` локально) |
+| `deploy/env.example` | переменные окружения |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Bootstrap GCP (один раз)
 
-## Deploy on Vercel
+```bash
+export PROJECT_ID=your-gcp-project-id
+export REGION=europe-west1
+npm run gcp:setup
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. Деплой
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+export PROJECT_ID=your-gcp-project-id
+npm run gcp:deploy
+```
+
+Локальная сборка образа + push + deploy:
+
+```bash
+LOCAL=1 npm run gcp:deploy
+```
+
+### 3. Ручной Cloud Build
+
+```bash
+gcloud builds submit --config cloudbuild.yaml \
+  --substitutions=_REGION=europe-west1,_SERVICE=tc26,_REPO=tc26,_IMAGE=tc26
+```

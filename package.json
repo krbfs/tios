@@ -5,8 +5,13 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start -p ${PORT:-8080}",
+    "lint": "next lint",
+    "docker:build": "./scripts/docker-local.sh build",
+    "docker:run": "./scripts/docker-local.sh run",
+    "docker:up": "docker compose up --build",
+    "gcp:setup": "./scripts/setup-gcp.sh",
+    "gcp:deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
     "react": "^19.0.0",
