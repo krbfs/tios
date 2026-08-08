@@ -5,23 +5,27 @@ import { usePathname } from "next/navigation";
 
 export function Header() {
   const pathname = usePathname();
-  const loginHref = pathname === "/login" ? "/" : `/login?next=${encodeURIComponent(pathname)}`;
+  const loginHref =
+    pathname === "/login" ? "/" : `/login?next=${encodeURIComponent(pathname)}`;
 
   return (
-    <header className="sticky top-0 z-40 border-0 border-b border-solid border-border bg-white">
-      <div className="container-page flex items-center justify-between py-4 px-3">
-        <Link href="/" className="inline-block" aria-label="Teamconstructor">
+    <header className="z-40 border-0 border-b border-solid border-border bg-white py-4">
+      <div className="flex items-center justify-between px-3">
+        <Link href="/" className="block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            alt="teamconstructor logo"
+            width={109}
+            height={34}
+            className="mr-2 inline-block"
             src="/tc-logo-full.svg"
-            alt="Teamconstructor"
-            width={140}
-            height={44}
           />
         </Link>
-        <Link href={loginHref} className="btn btn-primary">
-          Войти
-        </Link>
+        <div>
+          <Link href={loginHref} className="btn btn-outline">
+            Войти
+          </Link>
+        </div>
       </div>
     </header>
   );

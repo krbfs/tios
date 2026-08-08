@@ -3,18 +3,15 @@ set -euo pipefail
 
 # Build image in Cloud Build and deploy to Cloud Run.
 #
-# Usage:
-#   export PROJECT_ID=my-gcp-project
-#   ./scripts/deploy.sh
-#
-# Optional:
-#   REGION=europe-west1 SERVICE=tc26 REPO=tc26 IMAGE=tc26 ./scripts/deploy.sh
-#   LOCAL=1 ./scripts/deploy.sh   # local docker build + gcloud run deploy
+# Reads .env from project root.
+# LOCAL=1 ./scripts/deploy.sh   # local docker build + push + deploy
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/load-env.sh"
 cd "$ROOT_DIR"
 
-PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID}"
+PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID in .env}"
 REGION="${REGION:-europe-west1}"
 SERVICE="${SERVICE:-tc26}"
 REPO="${REPO:-tc26}"

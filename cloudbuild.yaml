@@ -2,7 +2,7 @@
 #
 # Usage:
 #   gcloud builds submit --config cloudbuild.yaml \
-#     --substitutions=_REGION=europe-west1,_SERVICE=tc26,_REPO=tc26
+#     --substitutions=_REGION=europe-west1,_SERVICE=tc26,_REPO=tc26,_IMAGE=tc26,_TAG=manual
 #
 # Required APIs: cloudbuild.googleapis.com, run.googleapis.com,
 #                artifactregistry.googleapis.com
@@ -12,6 +12,7 @@ substitutions:
   _SERVICE: tc26
   _REPO: tc26
   _IMAGE: tc26
+  _TAG: latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -23,16 +24,16 @@ steps:
     args:
       - build
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
       - .
 
   - name: gcr.io/cloud-builders/docker
-    id: PushSha
+    id: PushTag
     args:
       - push
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
 
   - name: gcr.io/cloud-builders/docker
     id: PushLatest
@@ -47,7 +48,7 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
@@ -61,5 +62,5 @@ steps:
       - --set-env-vars=NODE_ENV=production
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest

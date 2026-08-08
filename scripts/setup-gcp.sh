@@ -2,16 +2,14 @@
 set -euo pipefail
 
 # One-time GCP bootstrap for Cloud Run + Artifact Registry + Cloud Build.
-#
-# Usage:
-#   export PROJECT_ID=my-gcp-project
-#   export REGION=europe-west1
-#   ./scripts/setup-gcp.sh
+# Reads .env from project root.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "${ROOT_DIR}/scripts/load-env.sh"
 cd "$ROOT_DIR"
 
-PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID}"
+PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID in .env}"
 REGION="${REGION:-europe-west1}"
 REPO="${REPO:-tc26}"
 

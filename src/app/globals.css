@@ -2,12 +2,12 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1f2937;
+  --foreground: #111827;
   --primary: #3e50b4;
   --primary-hover: #32429a;
-  --muted: #6b7280;
+  --muted: #64748b;
   --border: #e5e7eb;
-  --surface: #f9fafb;
+  --surface: #f8fafc;
   --surface-alt: #f3f4f6;
 }
 

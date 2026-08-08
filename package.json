@@ -10,8 +10,8 @@
     "docker:build": "./scripts/docker-local.sh build",
     "docker:run": "./scripts/docker-local.sh run",
     "docker:up": "docker compose up --build",
-    "gcp:setup": "./scripts/setup-gcp.sh",
-    "gcp:deploy": "./scripts/deploy.sh"
+    "gcp:setup": "python3 scripts/deploy.py --setup",
+    "gcp:deploy": "python3 scripts/deploy.py --deploy"
   },
   "dependencies": {
     "react": "^19.0.0",

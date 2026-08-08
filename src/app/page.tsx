@@ -3,10 +3,10 @@ import Link from "next/link";
 const reasons = [
   {
     title: "Научно‑обоснованный метод",
-    text: "Алгоритм проверен на 10 000+ пользователей.",
+    text: "Алгоритм проверен на 10 000+ пользователей.",
   },
   {
-    title: "75 вопросов ≈ 10 минут",
+    title: "75 вопросов ≈ 10 минут",
     text: "Завершите тест за кофе‑брейк и получите результат мгновенно.",
   },
   {
@@ -23,125 +23,164 @@ const reasons = [
   },
 ];
 
-const benefits = [
+const features = [
   {
-    icon: "/taking-notes.svg",
+    icon: "/rocket.svg",
+    alt: "Динамика наблюдений",
     title: "Динамика наблюдений",
-    text: "Вы можете проходить наши тесты периодически, отслеживая своё психологическое состояние.",
-  },
-  {
-    icon: "/genius.svg",
-    title: "Безопасность результатов",
-    text: "Все результаты тестирований хранятся в безопасной базе данных. Доступ имеете только вы и наши специалисты.",
+    text: "Вы можете проходить наши тесты периодически, отслеживая, таким образом, свое психологическое состояние",
   },
   {
     icon: "/calculator.svg",
+    alt: "Безопасность результатов",
+    title: "Безопасность результатов",
+    text: "Все результаты Ваших тестирований хранятся в безопасной базе данных. Доступ имеете только Вы и наши специалисты",
+  },
+  {
+    icon: "/taking-notes.svg",
+    alt: "Индивидуальный подход",
     title: "Индивидуальный подход",
-    text: "Вы всегда можете обратиться к нашим специалистам за персональным разбором управленческого профиля.",
+    text: "Вы всегда можете обратиться к нашим специалистам за квалифицированным персональным разбором Вашего управленческого профиля",
   },
 ];
 
 export default function HomePage() {
   return (
-    <div>
-      <section className="relative overflow-hidden border-b border-solid border-border bg-[linear-gradient(180deg,#eef1fb_0%,#ffffff_55%)]">
-        <div className="container-page grid lg:grid-cols-2 gap-8 items-center py-12 lg:py-16">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold leading-tight text-primary mb-4">
-              Диагностика управленческого профиля: сфера ваших талантов и карта эффективности
-            </h1>
-            <p className="text-muted text-lg mb-8 max-w-xl">
-              Получите объективное подтверждение ваших сильных сторон и рекомендации по их оптимизации
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/test" className="btn btn-primary btn-lg">
-                Узнать свой психотип
-              </Link>
-              <Link href="/results" className="btn btn-outline btn-lg">
-                Пример результата
-              </Link>
-            </div>
-          </div>
-          <div className="flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/rocket.svg"
-              alt="Иллюстрация Teamconstructor"
-              width={420}
-              height={420}
-              className="w-full max-w-[420px] h-auto"
-            />
+    <>
+      <section
+        id="main"
+        className="space-y-6 pb-20 pt-3 md:pb-12 md:pt-8 lg:py-32"
+      >
+        <div className="container mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt="main image"
+            width={300}
+            height={300}
+            src="/genius.svg"
+          />
+          <h1 className="text-3xl lg:text-5xl">
+            Диагностика управленческого профиля: сфера ваших талантов и карта
+            эффективности
+          </h1>
+          <p className="max-w-[46rem] text-lg text-muted lg:text-2xl">
+            Получите объективное подтверждение ваших сильных сторон и
+            рекомендации по их оптимизации
+          </p>
+          <div className="space-x-4">
+            <Link href="/test" className="btn btn-primary btn-lg font-bold">
+              Узнать свой психотип
+            </Link>
+            <Link href="/results" className="btn btn-outline btn-lg font-bold">
+              Пример результата
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="container-page py-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
+      <section
+        id="heroBenefits"
+        className="container mx-auto px-4 pb-20 pt-3 md:pb-12 md:pt-8 lg:py-26"
+      >
+        <h2 className="mb-6 text-center text-3xl leading-[1.1] sm:text-3xl md:text-4xl">
           Почему стоит пройти тест Teamconstructor
         </h2>
-        <div className="grid gap-4 max-w-3xl mx-auto">
-          {reasons.map((item) => (
-            <div
-              key={item.title}
-              className="relative rounded-lg border border-solid border-border bg-white/80 backdrop-blur p-4 pl-14"
+        <ul className="mx-auto max-w-2xl list-none p-0">
+          {reasons.map((item, index) => (
+            <li
+              key={index}
+              className="relative mb-4 rounded-lg border border-solid border-border p-4 pl-14 backdrop-blur"
             >
-              <span className="absolute left-4 top-7 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-sm font-bold">
+              <span className="absolute left-4 top-7 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white">
                 ✓
               </span>
-              <h3 className="font-semibold mb-1 leading-tight">{item.title}</h3>
-              <p className="text-muted text-md">{item.text}</p>
-            </div>
+              <h4 className="mb-1 font-semibold leading-tight">{item.title}</h4>
+              <p className="text-md text-muted">{item.text}</p>
+            </li>
           ))}
-        </div>
-        <p className="text-center text-muted max-w-3xl mx-auto mt-8">
-          Тест состоит из 75 пар утверждений. Для каждого выберите, какое утверждение ближе и насколько вы с ним согласны.
-          Отвечайте честно — так вы получите наиболее точный психопрофиль.
+        </ul>
+        <p className="mx-auto max-w-3xl text-muted sm:text-lg">
+          Тест состоит из 75 пар утверждений. Для каждого выберите, какое
+          утверждение ближе и насколько вы с ним согласны. Отвечайте честно —
+          так вы получите наиболее точный психопрофиль.
         </p>
       </section>
 
-      <section className="bg-surface border-y border-solid border-border py-12">
-        <div className="container-page">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3">
+      <section
+        id="features"
+        className="container mx-auto space-y-6 rounded-2xl bg-slate-50 px-4 py-8 md:py-12 lg:py-24"
+      >
+        <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+          <h2 className="text-3xl leading-[1.1] sm:text-3xl md:text-4xl">
             Что вы получите после ответа на 75 вопросов
           </h2>
-          <p className="text-center text-muted max-w-3xl mx-auto mb-10">
-            С помощью нашего теста вы сможете узнать особенности своего характера и получить инструмент
-            подтверждения управленческой компетентности.
+          <p className="max-w-[85%] leading-normal text-muted sm:text-lg sm:leading-7">
+            С помощью нашего теста Вы сможете узнать особенности своего
+            характера, получить инструмент подтверждения управленческой
+            компетентности.
           </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {benefits.map((item) => (
-              <div key={item.title} className="text-center flex flex-col items-center gap-4 p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.icon} alt="" width={140} height={140} className="h-[140px] w-auto" />
-                <h3 className="text-xl font-bold text-primary">{item.title}</h3>
-                <p className="text-muted">{item.text}</p>
+        </div>
+
+        <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-5xl md:grid-cols-3">
+          {features.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-lg border border-solid border-border bg-white"
+            >
+              <div className="p-6">
+                <div className="rounded-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    alt={item.alt}
+                    width={150}
+                    height={150}
+                    src={item.icon}
+                    style={{ display: "block", margin: "0 auto 15px" }}
+                  />
+                  <div className="space-y-2">
+                    <h3 className="font-bold">{item.title}</h3>
+                    <p className="text-sm text-muted">{item.text}</p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-          <p className="text-center text-muted max-w-3xl mx-auto mt-10">
-            Тест можно проходить без регистрации. В таком случае вы всегда сможете получить доступ к результату
-            по специальной ссылке. Зарегистрированные пользователи могут сохранять все результаты и наблюдать
-            за динамикой изменения своего состояния.
+            </div>
+          ))}
+        </div>
+
+        <div className="mx-auto text-left md:max-w-[58rem] md:text-center">
+          <p className="leading-normal text-muted sm:text-lg sm:leading-7">
+            Тест можно проходить без регистрации. В таком случае Вы всегда
+            сможете получить доступ к Вашему результату по специальной ссылке,
+            сгенерированной после прохождения теста.{" "}
+            <b>Зарегистрированные</b> же пользователи могут сохранять все
+            результаты и наблюдать за динамикой изменения своего состояния.
           </p>
-          <div className="flex justify-center mt-8">
-            <Link href="/test" className="btn btn-primary btn-lg">
+          <div className="mt-6 space-x-4 text-center">
+            <Link href="/test" className="btn btn-primary btn-lg font-bold">
               Пройти тест
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="container-page py-8 text-center text-muted">
-        Наш партнер —{" "}
-        <a
-          href="https://insighter.pro"
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary hover:underline"
-        >
-          ООО Инсайтер
-        </a>
+      <section
+        id="partners"
+        className="container mx-auto px-4 py-8 md:py-12 lg:py-24"
+      >
+        <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
+          <p className="max-w-[85%] text-2xl leading-normal text-muted sm:leading-7">
+            Наш партнер -{" "}
+            <a
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+              href="https://insighter-service.com/"
+            >
+              ООО Инсайтер
+            </a>
+          </p>
+        </div>
       </section>
-    </div>
+    </>
   );
 }

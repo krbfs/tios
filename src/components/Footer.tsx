@@ -1,13 +1,20 @@
 export function Footer() {
   return (
-    <footer className="border-0 border-t border-solid border-border mt-10">
-      <div className="container-page py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted">
-        <div>
-          © {new Date().getFullYear()} | Teamconstructor
+    <footer className="border-t border-solid border-border">
+      <div className="container mx-auto px-4 py-4 text-xs">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="mb-3 text-center text-muted md:text-left">
+            © 2026 | Teamconstructor
+          </div>
+          <div className="mb-3 text-center md:text-right">
+            <a
+              className="text-muted underline underline-offset-2"
+              href="mailto:support@teamconstructor.pro"
+            >
+              support@teamconstructor.pro
+            </a>
+          </div>
         </div>
-        <a href="mailto:support@teamconstructor.pro" className="text-primary hover:underline">
-          support@teamconstructor.pro
-        </a>
       </div>
     </footer>
   );
