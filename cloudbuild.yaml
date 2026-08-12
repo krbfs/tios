@@ -13,6 +13,7 @@ substitutions:
   _REPO: tc26
   _IMAGE: tc26
   _TAG: latest
+  _SITE_URL: https://tc26-wppkmlz42a-ew.a.run.app
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -23,6 +24,8 @@ steps:
     id: Build
     args:
       - build
+      - --build-arg
+      - NEXT_PUBLIC_SITE_URL=${_SITE_URL}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
       - -t
@@ -59,7 +62,7 @@ steps:
       - --max-instances=10
       - --concurrency=80
       - --timeout=300
-      - --set-env-vars=NODE_ENV=production
+      - --set-env-vars=NODE_ENV=production,NEXT_PUBLIC_SITE_URL=${_SITE_URL}
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}

@@ -1,4 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/JsonLd";
+import {
+  buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
+  faqItems,
+  pages,
+} from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: { absolute: pages.home.title },
+  description: pages.home.description,
+  alternates: { canonical: pages.home.path },
+  openGraph: {
+    title: pages.home.title,
+    description: pages.home.description,
+    url: pages.home.path,
+  },
+};
 
 const reasons = [
   {
@@ -164,6 +183,32 @@ export default function HomePage() {
       </section>
 
       <section
+        id="faq"
+        className="container mx-auto px-4 py-8 md:py-12"
+        aria-labelledby="faq-heading"
+      >
+        <h2
+          id="faq-heading"
+          className="mb-6 text-center text-3xl leading-[1.1] md:text-4xl"
+        >
+          Частые вопросы о тесте
+        </h2>
+        <div className="mx-auto max-w-2xl space-y-3">
+          {faqItems.map((item) => (
+            <details
+              key={item.question}
+              className="rounded-lg border border-solid border-border p-4"
+            >
+              <summary className="cursor-pointer font-semibold">
+                {item.question}
+              </summary>
+              <p className="mt-2 text-muted">{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section
         id="partners"
         className="container mx-auto px-4 py-8 md:py-12 lg:py-24"
       >
@@ -181,6 +226,13 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      <JsonLd
+        data={[
+          buildFaqJsonLd(),
+          buildBreadcrumbJsonLd([{ name: "Главная", path: "/" }]),
+        ]}
+      />
     </>
   );
 }

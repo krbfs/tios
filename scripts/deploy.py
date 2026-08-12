@@ -27,6 +27,7 @@ DEFAULTS = {
     "REPO": "tc26",
     "IMAGE": "tc26",
     "PORT": "8080",
+    "NEXT_PUBLIC_SITE_URL": "https://tc26-wppkmlz42a-ew.a.run.app",
 }
 
 
@@ -218,13 +219,16 @@ def deploy(cfg: dict[str, str]) -> None:
     run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
     ensure_billing(cfg["PROJECT_ID"])
     tag = image_tag()
+    site_url = cfg.get("NEXT_PUBLIC_SITE_URL") || DEFAULTS["NEXT_PUBLIC_SITE_URL"]
     print(f"==> Image tag: {tag}", flush=True)
+    print(f"==> Site URL:  {site_url}", flush=True)
     subs = (
         f"_REGION={cfg['REGION']},"
         f"_SERVICE={cfg['SERVICE']},"
         f"_REPO={cfg['REPO']},"
         f"_IMAGE={cfg['IMAGE']},"
-        f"_TAG={tag}"
+        f"_TAG={tag},"
+        f"_SITE_URL={site_url}"
     )
     result = subprocess.run(
         [

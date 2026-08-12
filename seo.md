@@ -1,0 +1,134 @@
+# SEO и LLM-discoverability — правила проекта `tc_26`
+
+Этот документ — источник правды для метаданных, текстов и файлов, по которым сайт находят люди, поисковики и AI-агенты.
+
+## Цели
+
+1. По запросам вроде «психологический тест онлайн», «управленческий психотип», «тест Teamconstructor» страница должна быть однозначно понятна боту.
+2. AI-агенты (ChatGPT/Perplexity/Claude crawlers и т.п.) должны за 1 запрос понять: что это, для кого, сколько вопросов, как пройти, какой URL старта.
+3. Не врать: только факты из продукта (75 вопросов, ~10 минут, анонимно, управленческий профиль).
+
+## Обязательные файлы (всегда поддерживать)
+
+| Файл / route | Назначение |
+|---|---|
+| `src/lib/seo.ts` | Единый словарь title/description/keywords/JSON-LD |
+| `src/app/layout.tsx` | metadataBase, OG, Twitter, robots, canonical |
+| `src/app/sitemap.ts` | sitemap.xml |
+| `src/app/robots.ts` | robots.txt + ссылка на sitemap и llms.txt |
+| `public/llms.txt` | короткий вход для LLM |
+| `public/llms-full.txt` | развёрнутое описание для LLM |
+| `public/ai.txt` | политика для AI-агентов |
+| `src/components/JsonLd.tsx` | schema.org на ключевых страницах |
+
+## Правила title / description
+
+- **Title**: предмет + выгода + бренд. Пример:  
+  `Психологический тест онлайн — управленческий психотип за 10 минут | Teamconstructor`
+- **Description**: 140–160 символов, с цифрой «75 вопросов», CTA «пройти тест».
+- На каждой индексируемой странице — **уникальные** title/description.
+- Canonical всегда абсолютный (`NEXT_PUBLIC_SITE_URL` + path).
+
+## Индексация
+
+| Path | Index |
+|---|---|
+| `/` | yes |
+| `/test` | yes |
+| `/test/take` | yes (тест — целевая страница) |
+| `/results` | yes (демо-пример результата) |
+| `/login` | **noindex** |
+
+`robots.txt` разрешает основных AI-ботов: GPTBot, ChatGPT-User, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended, Bytespider, CCBot — если политика продукта не запрещает иначе.
+
+## Контент для людей и агентов
+
+На лендинге и в `llms.txt` явно держать:
+
+- название продукта: **Teamconstructor**
+- что делает: диагностика управленческого профиля / психотип
+- формат: **75 пар утверждений**, шкала −2…+2
+- время: **≈ 10 минут**
+- регистрация: **не обязательна**
+- старт теста: `/test` → `/test/take`
+- пример результата: `/results`
+- контакт: `support@teamconstructor.pro`
+- партнёр: ООО Инсайтер
+
+## Structured data (JSON-LD)
+
+Минимум на главной:
+
+- `WebSite` + `SearchAction` не нужен (нет поиска) — достаточно `WebSite`
+- `WebApplication` или `SoftwareApplication` (тип Educational/Business)
+- `FAQPage` — 3–5 коротких FAQ из реальных блоков лендинга
+- `BreadcrumbList` на внутренних страницах
+
+Язык: `ru-RU`.
+
+## Open Graph / Twitter
+
+- `og:type=website` на лендинге
+- `og:locale=ru_RU`
+- `og:site_name=Teamconstructor`
+- Картинка: `/og.png` (1200×630) или логотип как fallback
+- Twitter: `summary_large_image`
+
+## LLM-файлы
+
+### `llms.txt`
+
+Коротко, markdown:
+
+- H1 название
+- 1 абзац что это
+- список ключевых URL
+- контакт
+
+### `llms-full.txt`
+
+- инструкция респондента
+- описание шкалы −2…+2
+- карта разделов сайта
+- ограничения (нет бэкенда расчёта в этом прототипе — если актуально)
+
+### `ai.txt`
+
+Разрешение на цитирование публичных страниц + указание канонического источника.
+
+## Технические правила в коде
+
+1. Все SEO-строки — только из `src/lib/seo.ts`, не хардкодить по страницам вразнобой.
+2. `metadataBase` обязателен (иначе canonical/OG ломаются в Cloud Run).
+3. `lang="ru"` на `<html>`.
+4. Один `<h1>` на страницу.
+5. Внутренние CTA ведут на `/test` и `/test/take`, не на внешний legacy-домен.
+6. При смене домена обновить `NEXT_PUBLIC_SITE_URL` в `.env` и пересобрать.
+7. После деплоя проверить: `/robots.txt`, `/sitemap.xml`, `/llms.txt`, view-source title/description.
+
+## Запросы, под которые заточены тексты (RU)
+
+- психологический тест онлайн
+- тест психотип
+- управленческий профиль
+- диагностика руководителя
+- тест личности 10 минут
+- Teamconstructor тест
+- психотип лидер мнений (для демо-результата)
+
+## Чего не делать
+
+- Не спамить keywords в видимом тексте.
+- Не клоакать (разный контент людям и ботам).
+- Не обещать «точный медицинский диагноз».
+- Не закрывать `/test` и `/test/take` в `noindex` без явной причины.
+- Не удалять `llms.txt` / `ai.txt` при рефакторинге.
+
+## Чеклист перед релизом
+
+- [ ] title/description уникальны на `/`, `/test`, `/test/take`, `/results`
+- [ ] `/login` = noindex
+- [ ] sitemap отдаёт 200
+- [ ] robots ссылается на sitemap и llms.txt
+- [ ] JSON-LD валиден (без хвостов trailing comma)
+- [ ] `NEXT_PUBLIC_SITE_URL` совпадает с продом

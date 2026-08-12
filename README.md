@@ -33,4 +33,6 @@ npm run gcp:setup
 npm run gcp:deploy
 ```
 
-Конфиг в `.env` (`PROJECT_ID`, `REGION`, …).
+Конфиг в `.env` (`PROJECT_ID`, `REGION`, `NEXT_PUBLIC_SITE_URL`, …).
+
+SEO / LLM-правила: [`seo.md`](./seo.md).

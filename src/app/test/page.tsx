@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/JsonLd";
+import { buildBreadcrumbJsonLd, pages } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: { absolute: pages.testIntro.title },
+  description: pages.testIntro.description,
+  alternates: { canonical: pages.testIntro.path },
+  openGraph: {
+    title: pages.testIntro.title,
+    description: pages.testIntro.description,
+    url: pages.testIntro.path,
+  },
+};
 
 const scaleLabels = [
   "первое утверждение однозначно ближе",
@@ -70,6 +84,12 @@ export default function TestIntroPage() {
           </div>
         </div>
       </div>
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: "Главная", path: "/" },
+          { name: "Как проходить", path: "/test" },
+        ])}
+      />
     </div>
   );
 }

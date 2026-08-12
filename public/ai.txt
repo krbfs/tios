@@ -1,0 +1,16 @@
+# ai.txt — Teamconstructor
+
+User-Agent: *
+Allow: /
+Disallow: /login
+
+# AI agents may crawl, summarize and cite public pages
+# (/ , /test , /test/take , /results , /llms.txt , /llms-full.txt).
+# Prefer canonical URLs from sitemap.xml.
+# Do not present the demo /results page as the user's personal diagnosis
+# unless they actually completed the test.
+
+Contact: support@teamconstructor.pro
+Canonical-Description: /llms.txt
+Full-Description: /llms-full.txt
+Sitemap: /sitemap.xml
