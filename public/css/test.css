@@ -239,6 +239,60 @@ input[type="range"] {
   white-space: pre-wrap;
 }
 
+.content-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.efficiency-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.efficiency-card {
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid transparent;
+}
+
+.efficiency-card-title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.efficiency-card-text {
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.efficiency-card--peak {
+  background: #ecfdf5;
+  border-color: #86efac;
+  color: #14532d;
+}
+
+.efficiency-card--peak .efficiency-card-title {
+  color: #15803d;
+}
+
+.efficiency-card--failure {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #7c2d12;
+}
+
+.efficiency-card--failure .efficiency-card-title {
+  color: #c2410c;
+}
+
+@media (min-width: 768px) {
+  .efficiency-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .admin-note {
   border-color: #fcd34d;
   background: #fffbeb;

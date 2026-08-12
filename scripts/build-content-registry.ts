@@ -212,7 +212,8 @@ function parseBlocks(
       psychotype_code: psychotypeCode,
       mode: "leader_resource",
       block_key: def.block_key,
-      block_template: "text_block",
+      block_template:
+        def.block_key === "efficiency_map" ? "card_block" : "text_block",
       title: def.title,
       content_text: normalizeContent(match[1]),
       sort_order: def.sort_order,
