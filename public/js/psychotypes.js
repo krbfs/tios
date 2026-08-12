@@ -28,6 +28,14 @@ export const RADAR_SCALE_ORDER = [
   "spontaneity",
 ];
 
+/** Среднее арифметическое по 8 шкалам — линия на радаре (ТЗ §2.3). */
+export function calculateRadarAverage(scores) {
+  return (
+    RADAR_SCALE_ORDER.reduce((sum, key) => sum + Number(scores[key] ?? 0), 0) /
+    RADAR_SCALE_ORDER.length
+  );
+}
+
 export const PSYCHOTYPE_META = {
   individualist: {
     name: "Индивидуалист",

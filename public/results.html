@@ -83,6 +83,7 @@
     <script type="module">
       import {
         formatPsychotypeTitle,
+        calculateRadarAverage,
         interpretScaleValue,
         RADAR_SCALE_ORDER,
         SCALE_LABELS,
@@ -142,7 +143,7 @@
 
           const centerX = scale.xCenter;
           const centerY = scale.yCenter;
-          const axes = scale._pointLabels.length;
+          const axes = scale.getLabels().length;
 
           ctx.save();
           for (const band of bands) {
@@ -163,12 +164,43 @@
         },
       };
 
+      function createAverageLinePlugin(averageValue) {
+        return {
+          id: "averageLine",
+          afterDatasetsDraw(chart) {
+            const scale = chart.scales.r;
+            if (!scale || !Number.isFinite(averageValue)) return;
+
+            const { ctx } = chart;
+            const centerX = scale.xCenter;
+            const centerY = scale.yCenter;
+            const axes = scale.getLabels().length;
+            const radius = scale.getDistanceFromCenterForValue(averageValue);
+
+            ctx.save();
+            ctx.strokeStyle = "#7c3aed";
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 5]);
+            ctx.beginPath();
+            for (let i = 0; i <= axes; i += 1) {
+              const angle = scale.getIndexAngle(i);
+              const x = centerX + Math.cos(angle) * radius;
+              const y = centerY + Math.sin(angle) * radius;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+          },
+        };
+      }
+
       function buildRadarChart(scores) {
         const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
         const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
-        const average =
-          values.reduce((sum, value) => sum + value, 0) / values.length;
-        const averageRounded = Math.round(average * 10) / 10;
+        const averageValue = calculateRadarAverage(scores);
+        const averageRounded = Math.round(averageValue * 10) / 10;
 
         radarAverageEl.textContent = `Среднее арифметическое по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — фиолетовая пунктирная линия на диаграмме`;
 
@@ -194,9 +226,12 @@
                 data: labels.map(() => averageRounded),
                 borderColor: "#7c3aed",
                 borderDash: [8, 5],
-                borderWidth: 3,
+                borderWidth: 0,
+                backgroundColor: "transparent",
                 pointRadius: 0,
-                pointHoverRadius: 0,
+                pointHoverRadius: 4,
+                pointHitRadius: 16,
+                pointBackgroundColor: "#7c3aed",
                 fill: false,
                 order: 2,
               },
@@ -208,6 +243,7 @@
               r: {
                 min: 0,
                 max: 30,
+                startAngle: 90,
                 ticks: { stepSize: 6 },
                 pointLabels: { font: { size: 12 } },
               },
@@ -224,7 +260,7 @@
               },
             },
           },
-          plugins: [zonePlugin],
+          plugins: [zonePlugin, createAverageLinePlugin(averageRounded)],
         });
       }
 

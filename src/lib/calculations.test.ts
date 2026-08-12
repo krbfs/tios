@@ -80,6 +80,12 @@ describe("calculate_systemic_scores", () => {
 });
 
 describe("determine_psychotype", () => {
+  it("avg_intensity is arithmetic mean of 8 scales (TZ radar reference)", () => {
+    const scores = calculate_scaled_scores(fillAnswers(0));
+    const result = determine_psychotype(scores);
+    expect(result.avg_intensity).toBe(15);
+  });
+
   it("detects clear leader as individualist", () => {
     const answers = fillAnswers(0);
     for (const id of [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72]) {
