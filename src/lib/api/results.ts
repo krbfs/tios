@@ -2,6 +2,15 @@ import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 
 import { db } from "@/lib/db";
 
+export const ALLOWED_MODES = [
+  "leader_resource",
+  "insighter",
+  "stressless",
+  "hr_table",
+] as const;
+
+export type ResultMode = (typeof ALLOWED_MODES)[number];
+
 type ResultWithSession = TestResult & { session: TestSession };
 
 export type ContentBlockDto = {
@@ -26,10 +35,40 @@ export function parseVisibilityOverrides(
   );
 }
 
-export async function loadVisibleContentBlocks(
+function latestBlocksByKey(blocks: ContentBlock[]): ContentBlock[] {
+  const latestByKey = new Map<string, ContentBlock>();
+  for (const block of blocks) {
+    const existing = latestByKey.get(block.blockKey);
+    if (!existing || block.version > existing.version) {
+      latestByKey.set(block.blockKey, block);
+    }
+  }
+
+  return [...latestByKey.values()].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.blockKey.localeCompare(b.blockKey),
+  );
+}
+
+function mapContentBlockDto(
+  block: ContentBlock,
+  visibilityOverrides: Record<string, boolean>,
+): ContentBlockDto {
+  const isVisible = visibilityOverrides[block.blockKey] ?? block.isVisibleDefault;
+  return {
+    block_key: block.blockKey,
+    block_template: block.blockTemplate,
+    title: block.title,
+    content_text: block.contentText,
+    sort_order: block.sortOrder,
+    is_visible: isVisible,
+  };
+}
+
+export async function loadContentBlocks(
   psychotypeCode: string,
   mode: string,
   visibilityOverrides: Record<string, boolean>,
+  options?: { includeHidden?: boolean },
 ): Promise<ContentBlockDto[]> {
   const blocks = await db.contentBlock.findMany({
     where: {
@@ -40,28 +79,23 @@ export async function loadVisibleContentBlocks(
     orderBy: [{ sortOrder: "asc" }, { blockKey: "asc" }],
   });
 
-  const latestByKey = new Map<string, ContentBlock>();
-  for (const block of blocks) {
-    const existing = latestByKey.get(block.blockKey);
-    if (!existing || block.version > existing.version) {
-      latestByKey.set(block.blockKey, block);
-    }
+  const mapped = latestBlocksByKey(blocks).map((block) =>
+    mapContentBlockDto(block, visibilityOverrides),
+  );
+
+  if (options?.includeHidden) {
+    return mapped;
   }
 
-  return [...latestByKey.values()]
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.blockKey.localeCompare(b.blockKey))
-    .map((block) => {
-      const isVisible = visibilityOverrides[block.blockKey] ?? block.isVisibleDefault;
-      return {
-        block_key: block.blockKey,
-        block_template: block.blockTemplate,
-        title: block.title,
-        content_text: block.contentText,
-        sort_order: block.sortOrder,
-        is_visible: isVisible,
-      };
-    })
-    .filter((block) => block.is_visible);
+  return mapped.filter((block) => block.is_visible);
+}
+
+export async function loadVisibleContentBlocks(
+  psychotypeCode: string,
+  mode: string,
+  visibilityOverrides: Record<string, boolean>,
+): Promise<ContentBlockDto[]> {
+  return loadContentBlocks(psychotypeCode, mode, visibilityOverrides);
 }
 
 export function buildShareUrl(shareToken: string): string {
@@ -69,26 +103,12 @@ export function buildShareUrl(shareToken: string): string {
   return `${base.replace(/\/$/, "")}/results.html?token=${shareToken}`;
 }
 
-export async function serializeResult(
-  result: ResultWithSession,
-  options?: { includeHiddenBlocks?: boolean },
-) {
+export async function serializeResult(result: ResultWithSession) {
   const visibilityOverrides = parseVisibilityOverrides(result.visibilityOverrides);
   const blocks = await loadVisibleContentBlocks(
     result.psychotypeCode,
     result.mode,
-    options?.includeHiddenBlocks
-      ? Object.fromEntries(
-          (await db.contentBlock.findMany({
-            where: {
-              psychotypeCode: result.psychotypeCode,
-              mode: result.mode,
-              isActive: true,
-            },
-            select: { blockKey: true },
-          })).map((block) => [block.blockKey, true]),
-        )
-      : visibilityOverrides,
+    visibilityOverrides,
   );
 
   return {
@@ -108,6 +128,23 @@ export async function serializeResult(
     visibility_overrides: visibilityOverrides,
     is_public: result.isPublic,
     share_link: result.shareToken ? buildShareUrl(result.shareToken) : null,
+    content_blocks: blocks,
+  };
+}
+
+export async function serializeAdminResult(result: ResultWithSession) {
+  const visibilityOverrides = parseVisibilityOverrides(result.visibilityOverrides);
+  const blocks = await loadContentBlocks(
+    result.psychotypeCode,
+    result.mode,
+    visibilityOverrides,
+    { includeHidden: true },
+  );
+
+  return {
+    ...(await serializeResult(result)),
+    admin_comment: result.adminComment,
+    show_admin_comment: result.showAdminComment,
     content_blocks: blocks,
   };
 }

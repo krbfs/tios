@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
-import { serializeResult } from "@/lib/api/results";
+import { serializeAdminResult } from "@/lib/api/results";
 import { db } from "@/lib/db";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -35,7 +35,7 @@ export async function POST(request: Request, context: RouteContext) {
       include: { session: true },
     });
 
-    return json(await serializeResult(result, { includeHiddenBlocks: true }));
+    return json(await serializeAdminResult(result));
   } catch {
     return error("Result not found", 404);
   }

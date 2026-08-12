@@ -1,14 +1,7 @@
 import { requireAdmin } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
-import { serializeResult } from "@/lib/api/results";
+import { ALLOWED_MODES, serializeAdminResult } from "@/lib/api/results";
 import { db } from "@/lib/db";
-
-const ALLOWED_MODES = [
-  "leader_resource",
-  "insighter",
-  "stressless",
-  "hr_table",
-] as const;
 
 type RouteContext = { params: Promise<{ id: string }> };
 type ModeBody = { mode?: string };
@@ -36,7 +29,7 @@ export async function PUT(request: Request, context: RouteContext) {
       include: { session: true },
     });
 
-    return json(await serializeResult(result, { includeHiddenBlocks: true }));
+    return json(await serializeAdminResult(result));
   } catch {
     return error("Result not found", 404);
   }

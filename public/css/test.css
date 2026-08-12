@@ -220,6 +220,33 @@ input[type="range"] {
   margin-top: 24px;
 }
 
+.result-link-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.result-link-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+
+.result-link-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.result-link-row input {
+  flex: 1 1 280px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: #f9fafb;
+}
+
 .content-block {
   border: 1px solid var(--border);
   border-radius: 10px;

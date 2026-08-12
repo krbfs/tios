@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         destination: "/results.html",
         permanent: false,
       },
+      {
+        source: "/admin",
+        destination: "/admin/index.html",
+        permanent: false,
+      },
     ];
   },
 };

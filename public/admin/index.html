@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Результаты — Админ Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <strong>Teamconstructor Admin</strong>
+        <a href="/admin/index.html" class="active">Результаты</a>
+        <a href="/admin/content.html">Контент</a>
+        <span class="admin-nav-spacer"></span>
+        <span id="admin-email" class="muted"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1>Результаты тестов</h1>
+
+        <form id="filters" class="admin-toolbar">
+          <div class="admin-toolbar-row">
+            <label class="admin-field">
+              С даты
+              <input id="filter-from" type="date" />
+            </label>
+            <label class="admin-field">
+              По дату
+              <input id="filter-to" type="date" />
+            </label>
+            <label class="admin-field">
+              Психотип
+              <select id="filter-psychotype">
+                <option value="">Все</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Применить</button>
+            <button id="reset-filters" class="btn btn-outline" type="button">Сбросить</button>
+          </div>
+        </form>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Психотип</th>
+                <th>Режим</th>
+                <th>Пользователь</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr>
+                <td colspan="5" class="muted">Загрузка…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        adminApiJson,
+        getStoredUser,
+        logout,
+        modeLabel,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      const resultsBody = document.getElementById("results-body");
+      const statusEl = document.getElementById("status");
+      const filterPsychotype = document.getElementById("filter-psychotype");
+
+      for (const [code, meta] of Object.entries(PSYCHOTYPE_META)) {
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = meta.name;
+        filterPsychotype.appendChild(option);
+      }
+
+      document.getElementById("admin-email").textContent =
+        getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", logout);
+
+      function buildQuery() {
+        const params = new URLSearchParams();
+        const from = document.getElementById("filter-from").value;
+        const to = document.getElementById("filter-to").value;
+        const psychotype = filterPsychotype.value;
+
+        if (from) params.set("from", from);
+        if (to) params.set("to", to);
+        if (psychotype) params.set("psychotype", psychotype);
+
+        return params.toString();
+      }
+
+      async function loadResults() {
+        resultsBody.innerHTML =
+          '<tr><td colspan="5" class="muted">Загрузка…</td></tr>';
+
+        const query = buildQuery();
+        const results = await adminApiJson(
+          `/api/admin/results${query ? `?${query}` : ""}`,
+        );
+
+        if (!results.length) {
+          resultsBody.innerHTML =
+            '<tr><td colspan="5" class="muted">Результатов не найдено</td></tr>';
+          statusEl.textContent = "0 результатов";
+          return;
+        }
+
+        resultsBody.innerHTML = "";
+        for (const result of results) {
+          const row = document.createElement("tr");
+          const psychotypeName =
+            PSYCHOTYPE_META[result.psychotype_code]?.name ||
+            result.psychotype_code;
+
+          row.innerHTML = `
+            <td>${formatDate(result.created_at)}</td>
+            <td>${psychotypeName}</td>
+            <td>${modeLabel(result.mode)}</td>
+            <td>${result.user?.email || "Аноним"}</td>
+            <td><a href="/admin/result.html?id=${result.id}">Открыть</a></td>
+          `;
+          resultsBody.appendChild(row);
+        }
+
+        statusEl.textContent = `${results.length} результат(ов)`;
+      }
+
+      document.getElementById("filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        loadResults().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      });
+
+      document.getElementById("reset-filters").addEventListener("click", () => {
+        document.getElementById("filter-from").value = "";
+        document.getElementById("filter-to").value = "";
+        filterPsychotype.value = "";
+        loadResults();
+      });
+
+      if (await requireAdmin()) {
+        loadResults().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

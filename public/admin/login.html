@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Вход — Админ Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body>
+    <main class="container" style="max-width: 420px; padding-top: 48px">
+      <div class="card">
+        <h1>Админ-панель</h1>
+        <p class="muted">Вход только для пользователей с ролью admin.</p>
+        <form id="login-form" class="admin-toolbar">
+          <label class="admin-field">
+            Email
+            <input id="email" type="email" required autocomplete="username" />
+          </label>
+          <label class="admin-field">
+            Пароль
+            <input id="password" type="password" required autocomplete="current-password" />
+          </label>
+          <button class="btn btn-primary" type="submit">Войти</button>
+          <p id="error" class="error" hidden></p>
+        </form>
+      </div>
+    </main>
+
+    <script type="module">
+      import { getStoredUser, isAdmin, login } from "/js/admin-auth.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next") || "/admin/index.html";
+
+      if (isAdmin()) {
+        window.location.replace(next);
+      }
+
+      const form = document.getElementById("login-form");
+      const errorEl = document.getElementById("error");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorEl.hidden = true;
+
+        try {
+          await login(
+            document.getElementById("email").value.trim(),
+            document.getElementById("password").value,
+          );
+          window.location.replace(next);
+        } catch (error) {
+          errorEl.textContent = error.message;
+          errorEl.hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Результат — Админ Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <strong>Teamconstructor Admin</strong>
+        <a href="/admin/index.html">Результаты</a>
+        <a href="/admin/content.html">Контент</a>
+        <span class="admin-nav-spacer"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <p><a href="/admin/index.html">← К списку результатов</a></p>
+
+      <div class="card">
+        <h1 id="page-title">Результат</h1>
+        <dl class="admin-meta" id="result-meta"></dl>
+
+        <div class="actions">
+          <a id="user-view-link" class="btn btn-outline" href="#" target="_blank" rel="noopener">
+            Как видит пользователь
+          </a>
+          <button id="copy-result-link" class="btn btn-primary" type="button">
+            Скопировать результат
+          </button>
+        </div>
+        <p id="copy-link-status" class="status-msg muted"></p>
+      </div>
+
+      <div class="admin-grid-2" style="margin-top: 20px">
+        <section class="admin-panel">
+          <h2>Режим отображения</h2>
+          <p class="muted">Переключение доступно только администратору.</p>
+          <label class="admin-field">
+            Режим
+            <select id="mode-select"></select>
+          </label>
+          <p id="mode-status" class="status-msg muted"></p>
+        </section>
+
+        <section class="admin-panel">
+          <h2>Комментарий администратора</h2>
+          <label class="admin-field">
+            Текст
+            <textarea id="admin-comment"></textarea>
+          </label>
+          <label class="visibility-item">
+            <input id="show-comment" type="checkbox" />
+            <span>Показать пользователю</span>
+          </label>
+          <div class="actions">
+            <button id="save-comment" class="btn btn-primary" type="button">
+              Сохранить комментарий
+            </button>
+          </div>
+          <p id="comment-status" class="status-msg muted"></p>
+        </section>
+      </div>
+
+      <section class="admin-panel" style="margin-top: 20px">
+        <h2>Видимость блоков</h2>
+        <p class="muted">
+          Снимите галочку, чтобы скрыть блок для этого результата. Изменения применяются к текущему режиму.
+        </p>
+        <div id="visibility-list" class="visibility-list"></div>
+        <div class="actions">
+          <button id="save-visibility" class="btn btn-primary" type="button">
+            Сохранить видимость
+          </button>
+        </div>
+        <p id="visibility-status" class="status-msg muted"></p>
+      </section>
+
+      <section class="admin-panel" style="margin-top: 20px">
+        <h2>Предпросмотр контента</h2>
+        <div id="content-preview"></div>
+      </section>
+
+      <p id="error" class="error" hidden></p>
+    </main>
+
+    <script type="module">
+      import { renderBlockBody } from "/js/block-templates.js";
+      import { formatPsychotypeTitle } from "/js/psychotypes.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        MODES,
+        adminApiJson,
+        logout,
+        modeLabel,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const resultId = params.get("id");
+
+      const pageTitle = document.getElementById("page-title");
+      const resultMeta = document.getElementById("result-meta");
+      const userViewLink = document.getElementById("user-view-link");
+      const modeSelect = document.getElementById("mode-select");
+      const modeStatus = document.getElementById("mode-status");
+      const adminComment = document.getElementById("admin-comment");
+      const showComment = document.getElementById("show-comment");
+      const commentStatus = document.getElementById("comment-status");
+      const visibilityList = document.getElementById("visibility-list");
+      const visibilityStatus = document.getElementById("visibility-status");
+      const contentPreview = document.getElementById("content-preview");
+      const errorEl = document.getElementById("error");
+
+      let resultData = null;
+      let visibilityDraft = {};
+
+      document.getElementById("logout-btn").addEventListener("click", logout);
+
+      document.getElementById("copy-result-link").addEventListener("click", async () => {
+        const statusEl = document.getElementById("copy-link-status");
+        statusEl.textContent = "Подготовка ссылки…";
+
+        try {
+          let link = resultData?.share_link;
+          if (!link) {
+            const data = await adminApiJson(`/api/results/${resultId}/share`, {
+              method: "POST",
+            });
+            link = data.share_link;
+            if (resultData) {
+              resultData.share_link = link;
+            }
+          }
+
+          await navigator.clipboard.writeText(link);
+          statusEl.textContent = "Ссылка на результат скопирована";
+          statusEl.className = "status-msg success";
+        } catch (error) {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        }
+      });
+
+      for (const mode of MODES) {
+        const option = document.createElement("option");
+        option.value = mode.value;
+        option.textContent = mode.label;
+        modeSelect.appendChild(option);
+      }
+
+      function showError(message) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+
+      function renderMeta(result) {
+        resultMeta.innerHTML = `
+          <dt>ID</dt><dd>${result.id}</dd>
+          <dt>Дата</dt><dd>${formatDate(result.created_at)}</dd>
+          <dt>Психотип</dt><dd>${formatPsychotypeTitle(result.psychotype_code)}</dd>
+          <dt>Режим</dt><dd>${modeLabel(result.mode)}</dd>
+          <dt>Интенсивность</dt><dd>${result.avg_intensity ?? "—"}</dd>
+        `;
+        pageTitle.textContent = `Результат ${result.id.slice(0, 8)}…`;
+        userViewLink.href = `/results.html?id=${result.id}`;
+      }
+
+      function renderVisibilityList(blocks) {
+        visibilityList.innerHTML = "";
+        for (const block of blocks) {
+          const item = document.createElement("label");
+          item.className = `visibility-item${block.is_visible ? "" : " is-hidden"}`;
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = block.is_visible;
+          checkbox.dataset.blockKey = block.block_key;
+          checkbox.addEventListener("change", () => {
+            visibilityDraft[block.block_key] = checkbox.checked;
+            item.classList.toggle("is-hidden", !checkbox.checked);
+          });
+
+          const text = document.createElement("div");
+          text.innerHTML = `
+            <div class="visibility-item-title">${block.title || block.block_key}</div>
+            <div class="visibility-item-key">${block.block_key}</div>
+          `;
+
+          item.appendChild(checkbox);
+          item.appendChild(text);
+          visibilityList.appendChild(item);
+        }
+      }
+
+      function renderPreview(blocks) {
+        contentPreview.innerHTML = "";
+        const visibleBlocks = blocks.filter((block) => block.is_visible);
+
+        if (!visibleBlocks.length) {
+          contentPreview.innerHTML =
+            '<p class="muted">Нет видимых блоков для текущего режима.</p>';
+          return;
+        }
+
+        for (const block of visibleBlocks) {
+          const wrapper = document.createElement("article");
+          wrapper.className = "content-block";
+          wrapper.innerHTML = `<div class="content-block-title">${block.title || block.block_key}</div>`;
+          const body = document.createElement("div");
+          body.className = "content-block-body";
+          body.appendChild(renderBlockBody(block));
+          wrapper.appendChild(body);
+          contentPreview.appendChild(wrapper);
+        }
+      }
+
+      function applyResult(result) {
+        resultData = result;
+        visibilityDraft = Object.fromEntries(
+          result.content_blocks.map((block) => [block.block_key, block.is_visible]),
+        );
+
+        renderMeta(result);
+        modeSelect.value = result.mode;
+        adminComment.value = result.admin_comment || "";
+        showComment.checked = Boolean(result.show_admin_comment);
+
+        renderVisibilityList(result.content_blocks);
+        renderPreview(result.content_blocks);
+      }
+
+      async function loadResult() {
+        if (!resultId) {
+          showError("Не указан id результата");
+          return;
+        }
+
+        const result = await adminApiJson(`/api/admin/results/${resultId}`);
+        applyResult(result);
+      }
+
+      modeSelect.addEventListener("change", async () => {
+        if (!resultData || modeSelect.value === resultData.mode) {
+          return;
+        }
+
+        modeStatus.textContent = "Сохранение режима…";
+        modeStatus.className = "status-msg muted";
+
+        try {
+          const updated = await adminApiJson(
+            `/api/admin/results/${resultId}/mode`,
+            {
+              method: "PUT",
+              body: JSON.stringify({ mode: modeSelect.value }),
+            },
+          );
+          applyResult(updated);
+          modeStatus.textContent = `Режим изменён на «${modeLabel(updated.mode)}». Контент перезагружен.`;
+          modeStatus.className = "status-msg success";
+        } catch (error) {
+          modeSelect.value = resultData.mode;
+          modeStatus.textContent = error.message;
+          modeStatus.className = "status-msg error";
+        }
+      });
+
+      document.getElementById("save-visibility").addEventListener("click", async () => {
+        visibilityStatus.textContent = "Сохранение…";
+        visibilityStatus.className = "status-msg muted";
+
+        try {
+          const updated = await adminApiJson(
+            `/api/admin/results/${resultId}/visibility`,
+            {
+              method: "PUT",
+              body: JSON.stringify({ visibility_overrides: visibilityDraft }),
+            },
+          );
+          applyResult(updated);
+          visibilityStatus.textContent = "Видимость сохранена";
+          visibilityStatus.className = "status-msg success";
+        } catch (error) {
+          visibilityStatus.textContent = error.message;
+          visibilityStatus.className = "status-msg error";
+        }
+      });
+
+      document.getElementById("save-comment").addEventListener("click", async () => {
+        commentStatus.textContent = "Сохранение…";
+        commentStatus.className = "status-msg muted";
+
+        try {
+          const updated = await adminApiJson(
+            `/api/admin/results/${resultId}/comment`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                comment: adminComment.value,
+                show_to_user: showComment.checked,
+              }),
+            },
+          );
+          applyResult(updated);
+          commentStatus.textContent = "Комментарий сохранён";
+          commentStatus.className = "status-msg success";
+        } catch (error) {
+          commentStatus.textContent = error.message;
+          commentStatus.className = "status-msg error";
+        }
+      });
+
+      if (await requireAdmin()) {
+        loadResult().catch((error) => showError(error.message));
+      }
+    </script>
+  </body>
+</html>

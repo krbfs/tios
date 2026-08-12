@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Контент — Админ Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <strong>Teamconstructor Admin</strong>
+        <a href="/admin/index.html">Результаты</a>
+        <a href="/admin/content.html" class="active">Контент</a>
+        <span class="admin-nav-spacer"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1>Блоки контента</h1>
+
+        <form id="filters" class="admin-toolbar">
+          <div class="admin-toolbar-row">
+            <label class="admin-field">
+              Психотип
+              <select id="filter-psychotype">
+                <option value="">Все</option>
+              </select>
+            </label>
+            <label class="admin-field">
+              Режим
+              <select id="filter-mode">
+                <option value="">Все</option>
+              </select>
+            </label>
+            <button class="btn btn-primary" type="submit">Применить</button>
+          </div>
+        </form>
+
+        <div id="blocks-list"></div>
+        <p id="blocks-status" class="status-msg muted"></p>
+      </div>
+
+      <div class="card" style="margin-top: 20px">
+        <h2>Импорт из JSON</h2>
+        <p class="muted">
+          Загрузите файл в формате <code>content_registry.json</code> (поле <code>blocks</code>).
+        </p>
+        <label class="admin-field">
+          JSON-файл
+          <input id="import-file" type="file" accept=".json,application/json" />
+        </label>
+        <div class="actions">
+          <button id="import-btn" class="btn btn-primary" type="button" disabled>
+            Импортировать
+          </button>
+        </div>
+        <p id="import-status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import {
+        MODES,
+        adminApiJson,
+        logout,
+        modeLabel,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      const filterPsychotype = document.getElementById("filter-psychotype");
+      const filterMode = document.getElementById("filter-mode");
+      const blocksList = document.getElementById("blocks-list");
+      const blocksStatus = document.getElementById("blocks-status");
+      const importFile = document.getElementById("import-file");
+      const importBtn = document.getElementById("import-btn");
+      const importStatus = document.getElementById("import-status");
+
+      let importPayload = null;
+
+      document.getElementById("logout-btn").addEventListener("click", logout);
+
+      for (const [code, meta] of Object.entries(PSYCHOTYPE_META)) {
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = meta.name;
+        filterPsychotype.appendChild(option);
+      }
+
+      for (const mode of MODES) {
+        const option = document.createElement("option");
+        option.value = mode.value;
+        option.textContent = mode.label;
+        filterMode.appendChild(option);
+      }
+
+      function buildQuery() {
+        const params = new URLSearchParams();
+        if (filterPsychotype.value) {
+          params.set("psychotype", filterPsychotype.value);
+        }
+        if (filterMode.value) {
+          params.set("mode", filterMode.value);
+        }
+        return params.toString();
+      }
+
+      function renderBlockEditor(block) {
+        const wrapper = document.createElement("article");
+        wrapper.className = "content-editor";
+        wrapper.dataset.blockId = String(block.id);
+
+        wrapper.innerHTML = `
+          <div class="content-editor-meta">
+            <span><strong>${PSYCHOTYPE_META[block.psychotype_code]?.name || block.psychotype_code}</strong></span>
+            <span>${modeLabel(block.mode)}</span>
+            <span>${block.block_key}</span>
+            <span>${block.block_template}</span>
+          </div>
+          <div class="muted">${block.title || ""}</div>
+        `;
+
+        const textarea = document.createElement("textarea");
+        textarea.value = block.content_text;
+        wrapper.appendChild(textarea);
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "btn btn-outline";
+        saveBtn.type = "button";
+        saveBtn.textContent = "Сохранить";
+
+        const status = document.createElement("p");
+        status.className = "status-msg muted";
+
+        saveBtn.addEventListener("click", async () => {
+          saveBtn.disabled = true;
+          status.textContent = "Сохранение…";
+
+          try {
+            await adminApiJson(`/api/admin/content/${block.id}`, {
+              method: "PUT",
+              body: JSON.stringify({ content_text: textarea.value }),
+            });
+            status.textContent = "Сохранено";
+            status.className = "status-msg success";
+          } catch (error) {
+            status.textContent = error.message;
+            status.className = "status-msg error";
+          } finally {
+            saveBtn.disabled = false;
+          }
+        });
+
+        wrapper.appendChild(saveBtn);
+        wrapper.appendChild(status);
+        return wrapper;
+      }
+
+      async function loadBlocks() {
+        blocksList.innerHTML = '<p class="muted">Загрузка…</p>';
+        const query = buildQuery();
+        const blocks = await adminApiJson(
+          `/api/admin/content${query ? `?${query}` : ""}`,
+        );
+
+        if (!blocks.length) {
+          blocksList.innerHTML = '<p class="muted">Блоков не найдено</p>';
+          blocksStatus.textContent = "0 блоков";
+          return;
+        }
+
+        blocksList.innerHTML = "";
+        for (const block of blocks) {
+          blocksList.appendChild(renderBlockEditor(block));
+        }
+        blocksStatus.textContent = `${blocks.length} блок(ов)`;
+      }
+
+      document.getElementById("filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        loadBlocks().catch((error) => {
+          blocksStatus.textContent = error.message;
+          blocksStatus.className = "status-msg error";
+        });
+      });
+
+      importFile.addEventListener("change", async () => {
+        importPayload = null;
+        importBtn.disabled = true;
+        importStatus.textContent = "";
+
+        const file = importFile.files?.[0];
+        if (!file) {
+          return;
+        }
+
+        try {
+          const text = await file.text();
+          const json = JSON.parse(text);
+          const blocks = Array.isArray(json) ? json : json.blocks;
+
+          if (!Array.isArray(blocks) || !blocks.length) {
+            throw new Error("JSON должен содержать массив blocks");
+          }
+
+          importPayload = blocks;
+          importBtn.disabled = false;
+          importStatus.textContent = `Готово к импорту: ${blocks.length} блок(ов)`;
+          importStatus.className = "status-msg muted";
+        } catch (error) {
+          importStatus.textContent = error.message;
+          importStatus.className = "status-msg error";
+        }
+      });
+
+      importBtn.addEventListener("click", async () => {
+        if (!importPayload) {
+          return;
+        }
+
+        importBtn.disabled = true;
+        importStatus.textContent = "Импорт…";
+        importStatus.className = "status-msg muted";
+
+        try {
+          const result = await adminApiJson("/api/admin/import/content", {
+            method: "POST",
+            body: JSON.stringify({ blocks: importPayload }),
+          });
+          importStatus.textContent = `Импортировано: ${result.imported}, создано: ${result.created}, обновлено: ${result.updated}`;
+          importStatus.className = "status-msg success";
+          importFile.value = "";
+          importPayload = null;
+          await loadBlocks();
+        } catch (error) {
+          importStatus.textContent = error.message;
+          importStatus.className = "status-msg error";
+          importBtn.disabled = false;
+        }
+      });
+
+      if (await requireAdmin()) {
+        loadBlocks().catch((error) => {
+          blocksStatus.textContent = error.message;
+          blocksStatus.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

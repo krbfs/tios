@@ -37,11 +37,20 @@
           <div id="admin-note-body" class="content-block-body"></div>
         </section>
 
+        <section id="result-link-section" class="result-link-section" hidden>
+          <h2>Ссылка для доступа к вашему результату</h2>
+          <div class="result-link-row">
+            <input id="result-link-input" type="text" readonly />
+            <button id="copy-result-btn" class="btn btn-primary" type="button">
+              Скопировать результат
+            </button>
+          </div>
+          <p id="copy-status" class="muted" hidden></p>
+        </section>
+
         <div class="actions">
-          <button id="share-btn" class="btn btn-primary" type="button">Поделиться</button>
           <a class="btn btn-outline" href="/test/start.html">Пройти ещё раз</a>
         </div>
-        <p id="share-status" class="muted" hidden></p>
 
         <p id="error" class="error" hidden></p>
 
@@ -74,8 +83,10 @@
       const contentBlocksEl = document.getElementById("content-blocks");
       const adminNote = document.getElementById("admin-note");
       const adminNoteBody = document.getElementById("admin-note-body");
-      const shareBtn = document.getElementById("share-btn");
-      const shareStatus = document.getElementById("share-status");
+      const resultLinkSection = document.getElementById("result-link-section");
+      const resultLinkInput = document.getElementById("result-link-input");
+      const copyResultBtn = document.getElementById("copy-result-btn");
+      const copyStatus = document.getElementById("copy-status");
       const errorEl = document.getElementById("error");
 
       let resultData = null;
@@ -245,6 +256,33 @@
         return wrapper;
       }
 
+      function buildResultPageUrl(id) {
+        return `${window.location.origin}/results.html?id=${encodeURIComponent(id)}`;
+      }
+
+      function updateResultLink(result) {
+        if (shareToken || !result?.id) {
+          resultLinkSection.hidden = true;
+          return;
+        }
+
+        resultLinkSection.hidden = false;
+        resultLinkInput.value = result.share_link || buildResultPageUrl(result.id);
+      }
+
+      async function ensureShareLink() {
+        if (resultData.share_link) {
+          return resultData.share_link;
+        }
+
+        const data = await apiJson(`/api/results/${resultData.id}/share`, {
+          method: "POST",
+        });
+        resultData.share_link = data.share_link;
+        resultLinkInput.value = data.share_link;
+        return data.share_link;
+      }
+
       function renderResult(result) {
         resultData = result;
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
@@ -265,9 +303,7 @@
           adminNote.hidden = true;
         }
 
-        if (shareToken) {
-          shareBtn.hidden = true;
-        }
+        updateResultLink(result);
       }
 
       async function loadResult() {
@@ -292,20 +328,28 @@
         }
       }
 
-      shareBtn.addEventListener("click", async () => {
+      copyResultBtn.addEventListener("click", async () => {
         if (!resultData?.id) return;
-        shareBtn.disabled = true;
+
+        copyResultBtn.disabled = true;
+        copyStatus.hidden = true;
+
         try {
-          const data = await apiJson(`/api/results/${resultData.id}/share`, {
-            method: "POST",
-          });
-          await navigator.clipboard.writeText(data.share_link);
-          shareStatus.textContent = "Ссылка скопирована в буфер обмена.";
-          shareStatus.hidden = false;
+          const link = await ensureShareLink();
+          await navigator.clipboard.writeText(link);
+          copyResultBtn.textContent = "Скопировано";
+          copyStatus.textContent =
+            "Ссылка скопирована. Сохраните её — по ней можно вернуться к результату.";
+          copyStatus.hidden = false;
+          setTimeout(() => {
+            copyResultBtn.textContent = "Скопировать результат";
+          }, 2000);
         } catch (err) {
-          showError(err instanceof Error ? err.message : "Не удалось создать ссылку");
+          showError(
+            err instanceof Error ? err.message : "Не удалось скопировать ссылку",
+          );
         } finally {
-          shareBtn.disabled = false;
+          copyResultBtn.disabled = false;
         }
       });
 
