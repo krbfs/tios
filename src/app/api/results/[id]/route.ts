@@ -18,7 +18,8 @@ export async function GET(request: Request, context: RouteContext) {
 
   const sessionUuid = request.headers.get("x-session-uuid");
   const user = await getAuthUser(request);
-  const allowed = await canAccessResult(result, user, sessionUuid);
+  const allowed =
+    result.isPublic || (await canAccessResult(result, user, sessionUuid));
 
   if (!allowed) {
     return error("Forbidden", 403);

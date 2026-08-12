@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { getDemoEncdata } from "@/lib/encdata";
+
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -8,13 +10,15 @@ export default async function ResultsRedirectPage({ searchParams }: Props) {
   const params = await searchParams;
   const query = new URLSearchParams();
 
-  if (typeof params.id === "string") {
+  if (typeof params.encdata === "string") {
+    query.set("encdata", params.encdata);
+  } else if (typeof params.id === "string") {
     query.set("id", params.id);
-  }
-  if (typeof params.token === "string") {
+  } else if (typeof params.token === "string") {
     query.set("token", params.token);
+  } else {
+    query.set("encdata", getDemoEncdata());
   }
 
-  const suffix = query.toString() ? `?${query.toString()}` : "";
-  redirect(`/results.html${suffix}`);
+  redirect(`/results.html?${query.toString()}`);
 }

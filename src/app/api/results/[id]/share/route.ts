@@ -5,6 +5,7 @@ import { error, json } from "@/lib/api/http";
 import {
   buildShareUrl,
   canAccessResult,
+  getEncdataFromAnswers,
   getResultWithSession,
 } from "@/lib/api/results";
 import { db } from "@/lib/db";
@@ -27,6 +28,11 @@ export async function POST(request: Request, context: RouteContext) {
     return error("Forbidden", 403);
   }
 
+  const encdata = getEncdataFromAnswers(result.answers);
+  if (!encdata) {
+    return error("Result answers are missing", 400);
+  }
+
   const shareToken = result.shareToken ?? randomUUID();
 
   const updated = await db.testResult.update({
@@ -39,6 +45,8 @@ export async function POST(request: Request, context: RouteContext) {
 
   return json({
     share_token: updated.shareToken,
-    share_link: buildShareUrl(shareToken),
+    encdata,
+    result_url: buildShareUrl(encdata),
+    share_link: buildShareUrl(encdata),
   });
 }

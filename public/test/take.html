@@ -142,7 +142,7 @@
               time_per_question: times,
             }),
           });
-          window.location.href = `/results.html?id=${encodeURIComponent(payload.result_id)}`;
+          window.location.href = `/quiz/result?encdata=${encodeURIComponent(payload.encdata)}`;
         } catch (err) {
           showError(err instanceof Error ? err.message : "Ошибка отправки");
           nextBtn.disabled = false;

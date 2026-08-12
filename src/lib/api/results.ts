@@ -1,6 +1,7 @@
 import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
 
 export const ALLOWED_MODES = [
   "leader_resource",
@@ -98,9 +99,19 @@ export async function loadVisibleContentBlocks(
   return loadContentBlocks(psychotypeCode, mode, visibilityOverrides);
 }
 
-export function buildShareUrl(shareToken: string): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/results.html?token=${shareToken}`;
+export function getEncdataFromAnswers(answers: unknown): string | null {
+  if (!Array.isArray(answers) || answers.length !== 75) {
+    return null;
+  }
+  try {
+    return encodeAnswers(answers as number[]);
+  } catch {
+    return null;
+  }
+}
+
+export function buildShareUrl(encdata: string): string {
+  return buildResultUrl(encdata);
 }
 
 export async function serializeResult(result: ResultWithSession) {
@@ -111,8 +122,12 @@ export async function serializeResult(result: ResultWithSession) {
     visibilityOverrides,
   );
 
+  const encdata = getEncdataFromAnswers(result.answers);
+
   return {
     id: result.id,
+    encdata,
+    result_url: encdata ? buildShareUrl(encdata) : null,
     session_uuid: result.session.sessionUuid,
     created_at: result.createdAt.toISOString(),
     answers: result.answers,
@@ -127,7 +142,7 @@ export async function serializeResult(result: ResultWithSession) {
       result.showAdminComment && result.adminComment ? result.adminComment : null,
     visibility_overrides: visibilityOverrides,
     is_public: result.isPublic,
-    share_link: result.shareToken ? buildShareUrl(result.shareToken) : null,
+    share_link: encdata ? buildShareUrl(encdata) : null,
     content_blocks: blocks,
   };
 }

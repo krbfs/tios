@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Войти — Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body>
+    <main class="container" style="max-width: 420px; padding-top: 48px">
+      <div class="card">
+        <h1>Войти</h1>
+        <p class="muted">
+          Вход <strong>не обязателен</strong>. Без входа результат зашивается в ссылку —
+          скопируйте её на странице результата. С входом те же ссылки ещё сохраняются
+          в <a href="/cabinet.html">личном кабинете</a>.
+        </p>
+        <form id="login-form" class="admin-toolbar">
+          <label class="admin-field">
+            Email
+            <input id="email" type="email" required autocomplete="username" />
+          </label>
+          <label class="admin-field">
+            Пароль
+            <input id="password" type="password" required autocomplete="current-password" />
+          </label>
+          <button class="btn btn-primary" type="submit">Войти</button>
+          <p id="error" class="error" hidden></p>
+        </form>
+        <p class="muted" style="margin-top: 16px">
+          Нет аккаунта?
+          <a href="#" id="register-link">Зарегистрироваться</a>
+        </p>
+        <p class="muted">
+          <a href="/test/start.html">Пройти тест без входа</a> ·
+          <a href="/">На главную</a>
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { getAccessToken, loginUser, registerUser } from "/js/user-auth.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next") || "/cabinet.html";
+
+      if (getAccessToken()) {
+        window.location.replace(next);
+      }
+
+      const form = document.getElementById("login-form");
+      const errorEl = document.getElementById("error");
+      let registerMode = false;
+
+      document.getElementById("register-link").addEventListener("click", (event) => {
+        event.preventDefault();
+        registerMode = !registerMode;
+        form.querySelector("button[type=submit]").textContent = registerMode
+          ? "Зарегистрироваться"
+          : "Войти";
+        document.getElementById("register-link").textContent = registerMode
+          ? "Уже есть аккаунт? Войти"
+          : "Зарегистрироваться";
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorEl.hidden = true;
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        try {
+          if (registerMode) {
+            await registerUser(email, password);
+          } else {
+            await loginUser(email, password);
+          }
+          window.location.replace(next);
+        } catch (error) {
+          errorEl.textContent = error.message;
+          errorEl.hidden = false;
+        }
+      });
+    </script>
+  </body>
+</html>

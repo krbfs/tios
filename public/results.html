@@ -9,8 +9,10 @@
   </head>
   <body>
     <header class="site-header">
-      <div class="container">
+      <div class="container admin-nav">
         <a href="/">Teamconstructor</a>
+        <span class="admin-nav-spacer"></span>
+        <a id="cabinet-link" href="/login.html">Войти</a>
       </div>
     </header>
 
@@ -37,14 +39,30 @@
           <div id="admin-note-body" class="content-block-body"></div>
         </section>
 
-        <section id="result-link-section" class="result-link-section" hidden>
+        <section id="result-link-section" class="result-link-section">
           <h2>Ссылка для доступа к вашему результату</h2>
+          <p class="muted" style="margin: 0 0 12px">
+            Результат зашит в ссылку. Сохраните её — вход не нужен. Если вы
+            залогинены, тот же результат также появится в
+            <a href="/cabinet.html">личном кабинете</a>.
+          </p>
           <div class="result-link-row">
-            <input id="result-link-input" type="text" readonly />
+            <input
+              id="result-link-input"
+              type="text"
+              readonly
+              spellcheck="false"
+              placeholder="https://teamconstructor.pro/quiz/result?encdata=…"
+              aria-label="Ссылка на ваш результат"
+            />
             <button id="copy-result-btn" class="btn btn-primary" type="button">
               Скопировать результат
             </button>
           </div>
+          <p id="copy-hint" class="muted" style="margin: 8px 0 0">
+            Вставьте скопированную ссылку в адресную строку браузера на любом
+            устройстве — результат откроется без входа.
+          </p>
           <p id="copy-status" class="muted" hidden></p>
         </section>
 
@@ -72,8 +90,10 @@
       } from "/js/psychotypes.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
+      import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
 
       const params = new URLSearchParams(window.location.search);
+      const encdataParam = params.get("encdata");
       const resultId = params.get("id");
       const shareToken = params.get("token");
 
@@ -92,6 +112,14 @@
       let resultData = null;
       let radarChart = null;
       let barChart = null;
+
+      const cabinetLink = document.getElementById("cabinet-link");
+      if (getAccessToken()) {
+        cabinetLink.href = "/cabinet.html";
+        cabinetLink.textContent = getStoredUser()?.email
+          ? `Кабинет (${getStoredUser().email})`
+          : "Личный кабинет";
+      }
 
       function showError(message) {
         errorEl.textContent = message;
@@ -256,31 +284,17 @@
         return wrapper;
       }
 
-      function buildResultPageUrl(id) {
-        return `${window.location.origin}/results.html?id=${encodeURIComponent(id)}`;
-      }
-
       function updateResultLink(result) {
-        if (shareToken || !result?.id) {
-          resultLinkSection.hidden = true;
+        const encdata = result?.encdata;
+        if (!encdata) {
+          resultLinkInput.value = "";
+          resultLinkInput.placeholder = `${window.location.origin}/quiz/result?encdata=…`;
+          copyResultBtn.disabled = true;
           return;
         }
 
-        resultLinkSection.hidden = false;
-        resultLinkInput.value = result.share_link || buildResultPageUrl(result.id);
-      }
-
-      async function ensureShareLink() {
-        if (resultData.share_link) {
-          return resultData.share_link;
-        }
-
-        const data = await apiJson(`/api/results/${resultData.id}/share`, {
-          method: "POST",
-        });
-        resultData.share_link = data.share_link;
-        resultLinkInput.value = data.share_link;
-        return data.share_link;
+        copyResultBtn.disabled = false;
+        resultLinkInput.value = buildResultUrl(encdata);
       }
 
       function renderResult(result) {
@@ -308,8 +322,20 @@
 
       async function loadResult() {
         try {
+          if (encdataParam) {
+            const result = await apiJson(
+              `/api/results/by-encdata?encdata=${encodeURIComponent(encdataParam)}`,
+            );
+            renderResult(result);
+            return;
+          }
+
           if (shareToken) {
             const result = await apiJson(`/api/shared/${encodeURIComponent(shareToken)}`);
+            if (result.encdata) {
+              window.location.replace(buildResultUrl(result.encdata));
+              return;
+            }
             renderResult(result);
             return;
           }
@@ -317,11 +343,15 @@
           if (!resultId) {
             resultTitle.textContent = "Результат не найден";
             throw new Error(
-              "Откройте страницу после прохождения теста или добавьте ?id=... в адресную строку.",
+              "Откройте страницу после прохождения теста или добавьте ?encdata=... в адресную строку.",
             );
           }
 
           const result = await apiJson(`/api/results/${encodeURIComponent(resultId)}`);
+          if (result.encdata) {
+            window.location.replace(buildResultUrl(result.encdata));
+            return;
+          }
           renderResult(result);
         } catch (err) {
           showError(err instanceof Error ? err.message : "Не удалось загрузить результат");
@@ -329,13 +359,15 @@
       }
 
       copyResultBtn.addEventListener("click", async () => {
-        if (!resultData?.id) return;
-
         copyResultBtn.disabled = true;
         copyStatus.hidden = true;
 
         try {
-          const link = await ensureShareLink();
+          const link = resultLinkInput.value.trim();
+          if (!link) {
+            throw new Error("Ссылка недоступна");
+          }
+
           await navigator.clipboard.writeText(link);
           copyResultBtn.textContent = "Скопировано";
           copyStatus.textContent =

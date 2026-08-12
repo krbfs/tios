@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
+import { getDemoEncdata } from "@/lib/encdata";
 import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
@@ -90,7 +91,10 @@ export default function HomePage() {
             <Link href="/test" className="btn btn-primary btn-lg font-bold">
               Узнать свой психотип
             </Link>
-            <Link href="/results" className="btn btn-outline btn-lg font-bold">
+            <Link
+              href={`/quiz/result?encdata=${encodeURIComponent(getDemoEncdata())}`}
+              className="btn btn-outline btn-lg font-bold"
+            >
               Пример результата
             </Link>
           </div>

@@ -1,4 +1,5 @@
 import { calculate_result } from "@/lib/calculations";
+import { encodeAnswers } from "@/lib/encdata";
 import { getAuthUser } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { db } from "@/lib/db";
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
   return json(
     {
       result_id: result.id,
+      encdata: encodeAnswers(answers),
       session_uuid: session.sessionUuid,
       psychotype_code: result.psychotypeCode,
       psychotype_secondary: result.psychotypeSecondary,

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Личный кабинет — Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <strong><a href="/">Teamconstructor</a></strong>
+        <span class="admin-nav-spacer"></span>
+        <span id="user-email" class="muted"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1>Личный кабинет</h1>
+        <p class="muted">
+          История прохождений, если вы были залогинены во время теста (или вошли позже
+          в том же браузере). Без входа результат остаётся только в скопированной
+          ссылке <code>encdata</code> — регистрация не нужна.
+        </p>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Психотип</th>
+                <th>Ссылка</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr>
+                <td colspan="4" class="muted">Загрузка…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="status" class="status-msg muted"></p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/test/start.html">Пройти тест</a>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        authApiJson,
+        buildResultUrl,
+        getStoredUser,
+        logoutUser,
+        requireUser,
+      } from "/js/user-auth.js";
+
+      const historyBody = document.getElementById("history-body");
+      const statusEl = document.getElementById("status");
+
+      document.getElementById("user-email").textContent = getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+      async function copyLink(url) {
+        await navigator.clipboard.writeText(url);
+        statusEl.textContent = "Ссылка скопирована";
+        statusEl.className = "status-msg success";
+      }
+
+      async function loadHistory() {
+        const items = await authApiJson("/api/results/history");
+
+        if (!items.length) {
+          historyBody.innerHTML =
+            '<tr><td colspan="4" class="muted">Пока пусто. Пройдите тест, будучи залогинены — или войдите после анонимного прохождения в этом же браузере. Без входа сохраните ссылку encdata со страницы результата.</td></tr>';
+          statusEl.textContent = "0 результатов";
+          return;
+        }
+
+        historyBody.innerHTML = "";
+        for (const item of items) {
+          const row = document.createElement("tr");
+          const psychotypeName =
+            PSYCHOTYPE_META[item.psychotype_code]?.name || item.psychotype_code;
+          const url = item.result_url || (item.encdata ? buildResultUrl(item.encdata) : null);
+
+          row.innerHTML = `
+            <td>${formatDate(item.date_time)}</td>
+            <td>${psychotypeName}</td>
+            <td>${
+              url
+                ? `<input type="text" readonly value="${url.replace(/"/g, "&quot;")}" style="width:min(360px,100%);min-height:36px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:0.8125rem" />`
+                : "—"
+            }</td>
+            <td>${
+              url
+                ? `<a href="${url}">Открыть</a> · <button type="button" class="btn btn-outline copy-btn" data-url="${url.replace(/"/g, "&quot;")}">Скопировать</button>`
+                : ""
+            }</td>
+          `;
+          historyBody.appendChild(row);
+        }
+
+        historyBody.querySelectorAll(".copy-btn").forEach((button) => {
+          button.addEventListener("click", () => copyLink(button.dataset.url));
+        });
+
+        statusEl.textContent = `${items.length} результат(ов)`;
+      }
+
+      if (await requireUser()) {
+        loadHistory().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -20,9 +20,27 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/login",
+        destination: "/login.html",
+        permanent: false,
+      },
+      {
+        source: "/cabinet",
+        destination: "/cabinet.html",
+        permanent: false,
+      },
+      {
         source: "/admin",
         destination: "/admin/index.html",
         permanent: false,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/quiz/result",
+        destination: "/results.html",
       },
     ];
   },

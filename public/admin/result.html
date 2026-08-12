@@ -127,17 +127,12 @@
         statusEl.textContent = "Подготовка ссылки…";
 
         try {
-          let link = resultData?.share_link;
-          if (!link) {
-            const data = await adminApiJson(`/api/results/${resultId}/share`, {
-              method: "POST",
-            });
-            link = data.share_link;
-            if (resultData) {
-              resultData.share_link = link;
-            }
+          const encdata = resultData?.encdata;
+          if (!encdata) {
+            throw new Error("У результата нет encdata");
           }
 
+          const link = `${window.location.origin}/quiz/result?encdata=${encodeURIComponent(encdata)}`;
           await navigator.clipboard.writeText(link);
           statusEl.textContent = "Ссылка на результат скопирована";
           statusEl.className = "status-msg success";
@@ -168,7 +163,9 @@
           <dt>Интенсивность</dt><dd>${result.avg_intensity ?? "—"}</dd>
         `;
         pageTitle.textContent = `Результат ${result.id.slice(0, 8)}…`;
-        userViewLink.href = `/results.html?id=${result.id}`;
+        userViewLink.href = result.encdata
+          ? `${window.location.origin}/quiz/result?encdata=${encodeURIComponent(result.encdata)}`
+          : "#";
       }
 
       function renderVisibilityList(blocks) {

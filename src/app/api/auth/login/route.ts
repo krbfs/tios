@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
 import { signAccessToken, verifyPassword } from "@/lib/api/auth";
+import { attachSessionToUser } from "@/lib/api/session-link";
 import { error, json, parseJson } from "@/lib/api/http";
 
 type LoginBody = {
   email?: string;
   password?: string;
+  session_uuid?: string;
 };
 
 export async function POST(request: Request) {
@@ -32,6 +34,10 @@ export async function POST(request: Request) {
 
   const authUser = { id: user.id, email: user.email, role: user.role };
   const accessToken = await signAccessToken(authUser);
+
+  const sessionUuid =
+    request.headers.get("x-session-uuid") ?? body.session_uuid?.trim();
+  await attachSessionToUser(user.id, sessionUuid);
 
   return json({
     access_token: accessToken,
