@@ -215,11 +215,57 @@ def image_tag() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
 
 
+RUNTIME_ENV_KEYS = (
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "JWT_SECRET",
+    "JWT_EXPIRES_IN",
+)
+
+
+def sync_runtime_env(cfg: dict[str, str]) -> None:
+    """Push DB/JWT vars from local .env to Cloud Run (not baked into the image)."""
+    lines: list[str] = []
+    for key in RUNTIME_ENV_KEYS:
+        value = cfg.get(key, "")
+        if not value:
+            continue
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        lines.append(f'{key}: "{escaped}"')
+
+    if not cfg.get("JWT_SECRET"):
+        raise SystemExit(
+            "JWT_SECRET is empty in .env. Generate one:\n"
+            "  openssl rand -base64 48"
+        )
+    if not cfg.get("DATABASE_URL"):
+        raise SystemExit(
+            "DATABASE_URL is empty in .env. Copy from Neon console → Connect."
+        )
+
+    env_file = ROOT / ".runtime-env.yaml"
+    env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    try:
+        run(
+            [
+                "gcloud",
+                "run",
+                "services",
+                "update",
+                cfg["SERVICE"],
+                f"--region={cfg['REGION']}",
+                f"--env-vars-file={env_file}",
+            ]
+        )
+    finally:
+        env_file.unlink(missing_ok=True)
+
+
 def deploy(cfg: dict[str, str]) -> None:
     run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
     ensure_billing(cfg["PROJECT_ID"])
     tag = image_tag()
-    site_url = cfg.get("NEXT_PUBLIC_SITE_URL") || DEFAULTS["NEXT_PUBLIC_SITE_URL"]
+    site_url = cfg.get("NEXT_PUBLIC_SITE_URL") or DEFAULTS["NEXT_PUBLIC_SITE_URL"]
     print(f"==> Image tag: {tag}", flush=True)
     print(f"==> Site URL:  {site_url}", flush=True)
     subs = (
@@ -250,6 +296,8 @@ def deploy(cfg: dict[str, str]) -> None:
             flush=True,
         )
         raise SystemExit(result.returncode)
+
+    sync_runtime_env(cfg)
 
 
 def print_url(cfg: dict[str, str]) -> None:
