@@ -1,0 +1,141 @@
+// Prisma models for Teamconstructor 2.0 (Next.js).
+// Equivalent of Django models.py — stack is Next + Neon, not Django.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum PsychotypeLevel {
+  pure
+  dyad
+  triad
+}
+
+/// 1. User
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  role         UserRole @default(user)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  sessions TestSession[]
+  consents UserConsent[]
+
+  @@map("users")
+}
+
+/// 2. TestSession
+model TestSession {
+  id          String    @id @default(cuid())
+  userId      String?   @map("user_id")
+  sessionUuid String    @unique @default(uuid()) @map("session_uuid") @db.Uuid
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  result TestResult?
+
+  @@index([userId])
+  @@map("test_sessions")
+}
+
+/// 3. TestResult
+model TestResult {
+  id                   String   @id @default(cuid())
+  sessionId            String   @unique @map("session_id")
+  answers              Json     @db.JsonB
+  scaledScores         Json?    @map("scaled_scores") @db.JsonB
+  scaledSystemic       Json?    @map("scaled_systemic") @db.JsonB
+  psychotypeCode       String   @map("psychotype_code")
+  psychotypeSecondary  String?  @map("psychotype_secondary")
+  avgIntensity         Float?   @map("avg_intensity")
+  validationWarnings   Json?    @map("validation_warnings") @db.JsonB
+  mode                 String   @default("leader_resource")
+  adminComment         String?  @map("admin_comment")
+  showAdminComment     Boolean  @default(false) @map("show_admin_comment")
+  visibilityOverrides  Json?    @map("visibility_overrides") @db.JsonB
+  isPublic             Boolean  @default(false) @map("is_public")
+  shareToken           String?  @unique @map("share_token") @db.Uuid
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  session TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([psychotypeCode])
+  @@index([mode])
+  @@map("test_results")
+}
+
+/// 4. ContentBlock
+model ContentBlock {
+  id               Int      @id @default(autoincrement())
+  psychotypeCode   String   @map("psychotype_code")
+  mode             String
+  blockKey         String   @map("block_key")
+  blockTemplate    String   @map("block_template")
+  title            String?
+  contentText      String   @map("content_text")
+  sortOrder        Int      @default(0) @map("sort_order")
+  isVisibleDefault Boolean  @default(true) @map("is_visible_default")
+  version          Int      @default(1)
+  isActive         Boolean  @default(true) @map("is_active")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@unique([psychotypeCode, mode, blockKey, version])
+  @@index([mode, psychotypeCode, isActive])
+  @@map("content_blocks")
+}
+
+/// 5. Question
+model Question {
+  id               Int     @id
+  leftText         String  @map("left_text")
+  rightText        String  @map("right_text")
+  factorGroup      String  @map("factor_group")
+  subFactor        String? @map("sub_factor")
+  tendencyPositive String? @map("tendency_positive")
+  tendencyNegative String? @map("tendency_negative")
+
+  @@map("questions")
+}
+
+/// 6. PsychotypeDefinition
+model PsychotypeDefinition {
+  id        Int             @id @default(autoincrement())
+  code      String          @unique
+  nameRu    String          @map("name_ru")
+  tendency1 String          @map("tendency_1")
+  tendency2 String          @map("tendency_2")
+  level     PsychotypeLevel @default(pure)
+  isActive  Boolean         @default(true) @map("is_active")
+
+  @@map("psychotype_definitions")
+}
+
+/// 7. UserConsent
+model UserConsent {
+  id             Int       @id @default(autoincrement())
+  userId         String?   @map("user_id")
+  sessionUuid    String?   @map("session_uuid") @db.Uuid
+  consentVersion Int       @map("consent_version")
+  consentText    String    @map("consent_text")
+  consentedAt    DateTime  @default(now()) @map("consented_at")
+  withdrawnAt    DateTime? @map("withdrawn_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sessionUuid])
+  @@map("user_consents")
+}
