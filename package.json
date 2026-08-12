@@ -19,7 +19,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:import-questions": "tsx scripts/import_questions.ts",
-    "db:promote-admin": "tsx scripts/promote-admin.ts"
+    "db:promote-admin": "tsx scripts/promote-admin.ts",
+    "content:build-registry": "tsx scripts/build-content-registry.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
