@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Начало теста — Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="/">Teamconstructor</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1>Диагностика управленческого профиля</h1>
+        <p class="muted">
+          Тест состоит из 75 вопросов. На каждый вопрос даны два утверждения —
+          выберите, какое вам ближе, и насколько вы с ним согласны по шкале от
+          −2 до +2.
+        </p>
+
+        <h2>Как проходить?</h2>
+        <ul class="muted">
+          <li>−2 — полностью согласны с утверждением А (слева)</li>
+          <li>+2 — полностью согласны с утверждением В (справа)</li>
+          <li>0 — нейтральны между двумя утверждениями</li>
+        </ul>
+
+        <label class="consent-box">
+          <input id="consent" type="checkbox" />
+          <span id="consent-text"></span>
+        </label>
+
+        <p class="muted">
+          <a href="/privacy.html" target="_blank" rel="noopener"
+            >Политика обработки персональных данных</a
+          >
+        </p>
+
+        <div class="actions">
+          <button id="start-btn" class="btn btn-primary" type="button" disabled>
+            Начать тест
+          </button>
+        </div>
+
+        <p id="error" class="error" hidden></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container muted">© 2026 Teamconstructor</div>
+    </footer>
+
+    <script type="module">
+      import {
+        CONSENT_TEXT,
+        CONSENT_VERSION,
+        apiJson,
+        getSessionUuid,
+        markConsentGiven,
+      } from "/js/session.js";
+
+      const consentCheckbox = document.getElementById("consent");
+      const startBtn = document.getElementById("start-btn");
+      const errorEl = document.getElementById("error");
+      document.getElementById("consent-text").textContent = CONSENT_TEXT;
+
+      consentCheckbox.addEventListener("change", () => {
+        startBtn.disabled = !consentCheckbox.checked;
+      });
+
+      startBtn.addEventListener("click", async () => {
+        errorEl.hidden = true;
+        startBtn.disabled = true;
+
+        try {
+          const sessionUuid = getSessionUuid();
+          await apiJson("/api/consent", {
+            method: "POST",
+            body: JSON.stringify({
+              session_uuid: sessionUuid,
+              consent_version: CONSENT_VERSION,
+              consent_text: CONSENT_TEXT,
+            }),
+          });
+          markConsentGiven();
+          window.location.href = "/test/take.html";
+        } catch (err) {
+          errorEl.textContent =
+            err instanceof Error ? err.message : "Не удалось сохранить согласие";
+          errorEl.hidden = false;
+          startBtn.disabled = !consentCheckbox.checked;
+        }
+      });
+    </script>
+  </body>
+</html>

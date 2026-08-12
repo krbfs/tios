@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Результат теста — Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="/">Teamconstructor</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1 id="result-title">Загрузка результата…</h1>
+        <p id="psychotype-title" class="muted"></p>
+
+        <div class="chart-card">
+          <h2>8 шкал личности</h2>
+          <p id="radar-average" class="muted" style="margin: 0 0 12px"></p>
+          <canvas id="radar-chart" height="360"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <h2>5 системных свойств</h2>
+          <canvas id="bar-chart" height="280"></canvas>
+        </div>
+
+        <section id="content-blocks"></section>
+
+        <section id="admin-note" class="content-block admin-note" hidden>
+          <div class="content-block-title">Примечание администратора</div>
+          <div id="admin-note-body" class="content-block-body"></div>
+        </section>
+
+        <div class="actions">
+          <button id="share-btn" class="btn btn-primary" type="button">Поделиться</button>
+          <a class="btn btn-outline" href="/test/start.html">Пройти ещё раз</a>
+        </div>
+        <p id="share-status" class="muted" hidden></p>
+
+        <p id="error" class="error" hidden></p>
+
+        <p class="disclaimer">
+          Результаты не являются медицинским диагнозом. При наличии признаков
+          сильного стресса рекомендуется обратиться к квалифицированному
+          психологу.
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import {
+        RADAR_SCALE_ORDER,
+        SCALE_LABELS,
+        SYSTEMIC_LABELS,
+        formatPsychotypeTitle,
+        interpretScaleValue,
+      } from "/js/psychotypes.js";
+      import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const resultId = params.get("id");
+      const shareToken = params.get("token");
+
+      const resultTitle = document.getElementById("result-title");
+      const psychotypeTitle = document.getElementById("psychotype-title");
+      const radarAverageEl = document.getElementById("radar-average");
+      const contentBlocksEl = document.getElementById("content-blocks");
+      const adminNote = document.getElementById("admin-note");
+      const adminNoteBody = document.getElementById("admin-note-body");
+      const shareBtn = document.getElementById("share-btn");
+      const shareStatus = document.getElementById("share-status");
+      const errorEl = document.getElementById("error");
+
+      let resultData = null;
+      let radarChart = null;
+      let barChart = null;
+
+      function showError(message) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+
+      const zonePlugin = {
+        id: "radarZones",
+        beforeDatasetsDraw(chart) {
+          const scale = chart.scales.r;
+          if (!scale) return;
+
+          const { ctx } = chart;
+          const bands = [
+            { max: 30, color: "rgba(239, 68, 68, 0.12)" },
+            { max: 22, color: "rgba(234, 179, 8, 0.12)" },
+            { max: 12, color: "rgba(34, 197, 94, 0.12)" },
+            { max: 6, color: "rgba(255, 255, 255, 0)" },
+          ];
+
+          const centerX = scale.xCenter;
+          const centerY = scale.yCenter;
+          const axes = scale._pointLabels.length;
+
+          ctx.save();
+          for (const band of bands) {
+            ctx.fillStyle = band.color;
+            ctx.beginPath();
+            for (let i = 0; i <= axes; i += 1) {
+              const angle = scale.getIndexAngle(i);
+              const radius = scale.getDistanceFromCenterForValue(band.max);
+              const x = centerX + Math.cos(angle) * radius;
+              const y = centerY + Math.sin(angle) * radius;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+        },
+      };
+
+      function buildRadarChart(scores) {
+        const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
+        const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
+        const average =
+          values.reduce((sum, value) => sum + value, 0) / values.length;
+        const averageRounded = Math.round(average * 10) / 10;
+
+        radarAverageEl.textContent = `Среднее арифметическое по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — фиолетовая пунктирная линия на диаграмме`;
+
+        const ctx = document.getElementById("radar-chart");
+        if (radarChart) radarChart.destroy();
+
+        radarChart = new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Ваш профиль",
+                data: values,
+                borderColor: "#3e50b4",
+                backgroundColor: "rgba(62, 80, 180, 0.25)",
+                borderWidth: 2,
+                pointRadius: 3,
+                order: 1,
+              },
+              {
+                label: `Среднее (${averageRounded})`,
+                data: labels.map(() => averageRounded),
+                borderColor: "#7c3aed",
+                borderDash: [8, 5],
+                borderWidth: 3,
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                fill: false,
+                order: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              r: {
+                min: 0,
+                max: 30,
+                ticks: { stepSize: 6 },
+                pointLabels: { font: { size: 12 } },
+              },
+            },
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                callbacks: {
+                  label(context) {
+                    const value = context.raw;
+                    return `${context.dataset.label}: ${value} (${interpretScaleValue(value)})`;
+                  },
+                },
+              },
+            },
+          },
+          plugins: [zonePlugin],
+        });
+      }
+
+      function buildBarChart(systemic) {
+        const keys = Object.keys(SYSTEMIC_LABELS);
+        const labels = keys.map((key) => SYSTEMIC_LABELS[key]);
+        const values = keys.map((key) => Number(systemic[key] ?? 0));
+
+        const ctx = document.getElementById("bar-chart");
+        if (barChart) barChart.destroy();
+
+        barChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Системные свойства",
+                data: values,
+                backgroundColor: "rgba(62, 80, 180, 0.7)",
+                borderColor: "#3e50b4",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 30,
+              },
+            },
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      }
+
+      function renderBlock(block) {
+        const wrapper = document.createElement("article");
+        wrapper.className = "content-block";
+
+        if (block.title) {
+          const title = document.createElement("div");
+          title.className = "content-block-title";
+          title.textContent = block.title;
+          wrapper.appendChild(title);
+        }
+
+        const body = document.createElement("div");
+        body.className = "content-block-body";
+
+        if (block.block_template === "list_block") {
+          const list = document.createElement("ul");
+          block.content_text
+            .split(/—|-\s/)
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .forEach((item) => {
+              const li = document.createElement("li");
+              li.textContent = item.replace(/^—\s*/, "");
+              list.appendChild(li);
+            });
+          body.appendChild(list);
+        } else {
+          body.textContent = block.content_text;
+        }
+
+        wrapper.appendChild(body);
+        return wrapper;
+      }
+
+      function renderResult(result) {
+        resultData = result;
+        resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
+        psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
+
+        buildRadarChart(result.scaled_scores || {});
+        buildBarChart(result.scaled_systemic || {});
+
+        contentBlocksEl.replaceChildren();
+        (result.content_blocks || []).forEach((block) => {
+          contentBlocksEl.appendChild(renderBlock(block));
+        });
+
+        if (result.admin_comment) {
+          adminNoteBody.textContent = result.admin_comment;
+          adminNote.hidden = false;
+        } else {
+          adminNote.hidden = true;
+        }
+
+        if (shareToken) {
+          shareBtn.hidden = true;
+        }
+      }
+
+      async function loadResult() {
+        try {
+          if (shareToken) {
+            const result = await apiJson(`/api/shared/${encodeURIComponent(shareToken)}`);
+            renderResult(result);
+            return;
+          }
+
+          if (!resultId) {
+            resultTitle.textContent = "Результат не найден";
+            throw new Error(
+              "Откройте страницу после прохождения теста или добавьте ?id=... в адресную строку.",
+            );
+          }
+
+          const result = await apiJson(`/api/results/${encodeURIComponent(resultId)}`);
+          renderResult(result);
+        } catch (err) {
+          showError(err instanceof Error ? err.message : "Не удалось загрузить результат");
+        }
+      }
+
+      shareBtn.addEventListener("click", async () => {
+        if (!resultData?.id) return;
+        shareBtn.disabled = true;
+        try {
+          const data = await apiJson(`/api/results/${resultData.id}/share`, {
+            method: "POST",
+          });
+          await navigator.clipboard.writeText(data.share_link);
+          shareStatus.textContent = "Ссылка скопирована в буфер обмена.";
+          shareStatus.hidden = false;
+        } catch (err) {
+          showError(err instanceof Error ? err.message : "Не удалось создать ссылку");
+        } finally {
+          shareBtn.disabled = false;
+        }
+      });
+
+      loadResult();
+    </script>
+  </body>
+</html>

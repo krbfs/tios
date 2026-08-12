@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Прохождение теста — Teamconstructor</title>
+    <link rel="stylesheet" href="/css/test.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="/test/start.html">Teamconstructor — тест</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <div class="progress-wrap">
+          <strong id="progress-label">Загрузка…</strong>
+          <div class="progress-bar"><span id="progress-fill"></span></div>
+        </div>
+
+        <div id="question-area" hidden>
+          <div class="statements">
+            <div class="statement">
+              <div class="statement-label">А</div>
+              <p id="left-text"></p>
+            </div>
+            <div class="statement">
+              <div class="statement-label">В</div>
+              <p id="right-text"></p>
+            </div>
+          </div>
+
+          <div class="slider-wrap">
+            <input id="answer-slider" type="range" min="-2" max="2" step="1" value="0" />
+            <div class="slider-labels">
+              <span>−2<br />А</span>
+              <span>−1</span>
+              <span>0</span>
+              <span>+1</span>
+              <span>+2<br />В</span>
+            </div>
+            <div id="slider-caption" class="slider-value">нейтрален</div>
+          </div>
+
+          <div class="actions">
+            <button id="next-btn" class="btn btn-primary" type="button">Далее</button>
+          </div>
+        </div>
+
+        <p id="error" class="error" hidden></p>
+
+        <p class="disclaimer">
+          Результаты данного тестирования носят информационно-рекомендательный
+          характер и не являются медицинским диагнозом.
+        </p>
+      </div>
+    </main>
+
+    <div id="fast-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h2>Слишком быстрые ответы</h2>
+        <p class="muted">
+          Более 10% ответов были даны менее чем за 2 секунды. Это может снизить
+          точность результата. Вы уверены, что хотите отправить ответы?
+        </p>
+        <div class="actions">
+          <button id="modal-back" class="btn btn-outline" type="button">Вернуться</button>
+          <button id="modal-submit" class="btn btn-primary" type="button">
+            Отправить всё равно
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { SLIDER_LABELS } from "/js/psychotypes.js";
+      import {
+        apiJson,
+        getSessionUuid,
+        hasConsent,
+      } from "/js/session.js";
+
+      if (!hasConsent()) {
+        window.location.href = "/test/start.html";
+      }
+
+      const TOTAL = 75;
+      const FAST_THRESHOLD_SEC = 2;
+      const FAST_RATIO_LIMIT = 0.1;
+
+      const progressLabel = document.getElementById("progress-label");
+      const progressFill = document.getElementById("progress-fill");
+      const questionArea = document.getElementById("question-area");
+      const leftText = document.getElementById("left-text");
+      const rightText = document.getElementById("right-text");
+      const slider = document.getElementById("answer-slider");
+      const sliderCaption = document.getElementById("slider-caption");
+      const nextBtn = document.getElementById("next-btn");
+      const errorEl = document.getElementById("error");
+      const fastModal = document.getElementById("fast-modal");
+
+      let questions = [];
+      let index = 0;
+      let answers = Array(TOTAL).fill(null);
+      let times = Array(TOTAL).fill(0);
+      let questionStartedAt = Date.now();
+
+      function updateSliderCaption() {
+        sliderCaption.textContent = SLIDER_LABELS[String(Number(slider.value))];
+      }
+
+      slider.addEventListener("input", updateSliderCaption);
+
+      function renderQuestion() {
+        const question = questions[index];
+        progressLabel.textContent = `Вопрос ${index + 1} из ${TOTAL}`;
+        progressFill.style.width = `${((index + 1) / TOTAL) * 100}%`;
+        leftText.textContent = question.left_text;
+        rightText.textContent = question.right_text;
+
+        const saved = answers[index];
+        slider.value = saved === null ? 0 : saved;
+        updateSliderCaption();
+        questionStartedAt = Date.now();
+      }
+
+      function showError(message) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+
+      async function submitAnswers() {
+        nextBtn.disabled = true;
+        try {
+          const payload = await apiJson("/api/test/submit", {
+            method: "POST",
+            body: JSON.stringify({
+              session_uuid: getSessionUuid(),
+              answers,
+              time_per_question: times,
+            }),
+          });
+          window.location.href = `/results.html?id=${encodeURIComponent(payload.result_id)}`;
+        } catch (err) {
+          showError(err instanceof Error ? err.message : "Ошибка отправки");
+          nextBtn.disabled = false;
+        }
+      }
+
+      function maybeSubmit() {
+        const fastCount = times.filter((time) => time < FAST_THRESHOLD_SEC).length;
+        if (fastCount / TOTAL > FAST_RATIO_LIMIT) {
+          fastModal.classList.add("open");
+          return;
+        }
+        submitAnswers();
+      }
+
+      nextBtn.addEventListener("click", () => {
+        errorEl.hidden = true;
+        const value = Number(slider.value);
+        const elapsedSec = (Date.now() - questionStartedAt) / 1000;
+        answers[index] = value;
+        times[index] = elapsedSec;
+
+        if (index < TOTAL - 1) {
+          index += 1;
+          renderQuestion();
+          return;
+        }
+
+        maybeSubmit();
+      });
+
+      document.getElementById("modal-back").addEventListener("click", () => {
+        fastModal.classList.remove("open");
+      });
+
+      document.getElementById("modal-submit").addEventListener("click", () => {
+        fastModal.classList.remove("open");
+        submitAnswers();
+      });
+
+      async function init() {
+        try {
+          questions = await apiJson("/api/test/questions");
+          if (!Array.isArray(questions) || questions.length !== TOTAL) {
+            throw new Error(`Ожидалось ${TOTAL} вопросов`);
+          }
+          questionArea.hidden = false;
+          renderQuestion();
+        } catch (err) {
+          showError(err instanceof Error ? err.message : "Не удалось загрузить вопросы");
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
