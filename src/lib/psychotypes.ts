@@ -25,14 +25,14 @@ export const SYSTEMIC_LABELS: Record<string, string> = {
 };
 
 export const RADAR_SCALE_ORDER = [
-  "extraversion",
-  "lability",
   "anxiety",
-  "sensitivity",
-  "introversion",
-  "rigidity",
-  "aggression",
+  "lability",
+  "extraversion",
   "spontaneity",
+  "aggression",
+  "rigidity",
+  "introversion",
+  "sensitivity",
 ] as const;
 
 type PsychotypeMeta = {
