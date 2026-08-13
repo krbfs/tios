@@ -167,12 +167,13 @@
         },
       };
 
-      function createAverageLinePlugin(averageValue) {
+      function createAverageLinePlugin(averageValue, datasetIndex = 1) {
         return {
           id: "averageLine",
           afterDatasetsDraw(chart) {
             const scale = chart.scales.r;
             if (!scale || !Number.isFinite(averageValue)) return;
+            if (!chart.isDatasetVisible(datasetIndex)) return;
 
             const { ctx } = chart;
             const centerX = scale.xCenter;
