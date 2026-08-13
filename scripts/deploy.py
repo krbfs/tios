@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""Deploy tc_26 to Google Cloud Run via Cloud Build only.
+"""Deploy tc_26 to Google Cloud Run via Cloud Build.
 
-Reads .env from project root. No third-party deps.
+--deploy ALWAYS runs tests first (no skip). Deploy aborts if tests fail.
 
 Usage:
+  python3 scripts/deploy.py --deploy   # tests → Cloud Build → Cloud Run
+  python3 scripts/deploy.py --test     # tests only
   python3 scripts/deploy.py --setup
-  python3 scripts/deploy.py --deploy
-  python3 scripts/deploy.py --setup --deploy
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,9 +29,10 @@ DEFAULTS = {
     "SERVICE": "tc26",
     "REPO": "tc26",
     "IMAGE": "tc26",
-    "PORT": "8080",
     "NEXT_PUBLIC_SITE_URL": "https://tc26-wppkmlz42a-ew.a.run.app",
 }
+
+RUNTIME_ENV_KEYS = ("DATABASE_URL", "DIRECT_URL", "JWT_SECRET", "JWT_EXPIRES_IN")
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -42,95 +46,62 @@ def load_env(path: Path) -> dict[str, str]:
         key, value = line.split("=", 1)
         data[key.strip()] = value.strip().strip('"').strip("'")
     for key in list(data):
-        if key in os.environ and os.environ[key] != "":
+        if os.environ.get(key):
             data[key] = os.environ[key]
     if not data.get("PROJECT_ID"):
         raise SystemExit("PROJECT_ID is empty in .env")
-    if not data.get("REGION"):
-        raise SystemExit("REGION is empty in .env")
     return data
 
 
-def run(
-    cmd: list[str],
-    *,
-    check: bool = True,
-    capture: bool = False,
-) -> subprocess.CompletedProcess[str]:
+def run(cmd: list[str], *, capture: bool = False) -> subprocess.CompletedProcess[str]:
     print("==>", " ".join(cmd), flush=True)
     return subprocess.run(
         cmd,
         cwd=ROOT,
-        check=check,
+        check=True,
         text=True,
         capture_output=capture,
     )
 
 
 def run_out(cmd: list[str]) -> str:
-    result = run(cmd, capture=True)
-    out = (result.stdout or "").strip()
-    if out:
-        print(out, flush=True)
-    return out
+    return (run(cmd, capture=True).stdout or "").strip()
 
 
-def ensure_billing(project: str) -> None:
-    result = subprocess.run(
-        [
-            "gcloud",
-            "billing",
-            "projects",
-            "describe",
-            project,
-            "--format=value(billingAccountName,billingEnabled)",
-        ],
+def validate_runtime_env(cfg: dict[str, str]) -> None:
+    if not cfg.get("JWT_SECRET") or cfg.get("JWT_SECRET") == "change-me-in-production":
+        raise SystemExit("JWT_SECRET missing in .env (openssl rand -base64 48)")
+    if not cfg.get("DATABASE_URL"):
+        raise SystemExit("DATABASE_URL missing in .env")
+    if not cfg.get("DIRECT_URL"):
+        raise SystemExit("DIRECT_URL missing in .env")
+
+
+def escape_yaml(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def image_tag() -> str:
+    cp = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
         cwd=ROOT,
         text=True,
         capture_output=True,
     )
-    line = (result.stdout or "").strip()
-    parts = line.split("\t") if line else []
-    enabled = parts[-1].lower() == "true" if parts else False
-    account = parts[0] if parts and parts[0] else ""
-
-    if result.returncode != 0 or not enabled:
-        print(
-            "\nERROR: billing не включён на проекте.\n"
-            f"  https://console.cloud.google.com/billing/linkedaccount?project={project}\n",
-            file=sys.stderr,
-            flush=True,
-        )
-        raise SystemExit(2)
-
-    print(f"==> Billing OK: {account}", flush=True)
+    tag = (cp.stdout or "").strip()
+    return tag or datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
 
 
-def bind_role(project: str, member: str, role: str) -> None:
-    run(
-        [
-            "gcloud",
-            "projects",
-            "add-iam-policy-binding",
-            project,
-            f"--member={member}",
-            f"--role={role}",
-            "--condition=None",
-            "--quiet",
-        ],
-        check=False,
-        capture=True,
-    )
+def ensure_gcloud_login() -> None:
+    account = run_out(["gcloud", "auth", "list", "--filter=status:ACTIVE", "--format=value(account)"])
+    if not account:
+        run(["gcloud", "auth", "login"])
 
 
 def setup(cfg: dict[str, str]) -> None:
-    project = cfg["PROJECT_ID"]
-    region = cfg["REGION"]
-    repo = cfg["REPO"]
-
+    project, region, repo = cfg["PROJECT_ID"], cfg["REGION"], cfg["REPO"]
+    ensure_gcloud_login()
     run(["gcloud", "config", "set", "project", project, "--quiet"])
-    ensure_billing(project)
-
     run(
         [
             "gcloud",
@@ -139,28 +110,16 @@ def setup(cfg: dict[str, str]) -> None:
             "run.googleapis.com",
             "cloudbuild.googleapis.com",
             "artifactregistry.googleapis.com",
-            "containerregistry.googleapis.com",
-            "storage.googleapis.com",
-            "iam.googleapis.com",
-            "serviceusage.googleapis.com",
-            "cloudresourcemanager.googleapis.com",
         ]
     )
-
-    describe = subprocess.run(
-        [
-            "gcloud",
-            "artifacts",
-            "repositories",
-            "describe",
-            repo,
-            f"--location={region}",
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-    )
-    if describe.returncode != 0:
+    if (
+        subprocess.run(
+            ["gcloud", "artifacts", "repositories", "describe", repo, f"--location={region}"],
+            cwd=ROOT,
+            capture_output=True,
+        ).returncode
+        != 0
+    ):
         run(
             [
                 "gcloud",
@@ -170,104 +129,92 @@ def setup(cfg: dict[str, str]) -> None:
                 repo,
                 "--repository-format=docker",
                 f"--location={region}",
-                "--description=Teamconstructor tc26 images",
             ]
         )
-    else:
-        print(f"==> Repository {repo} already exists", flush=True)
-
-    project_number = run_out(
-        ["gcloud", "projects", "describe", project, "--format=value(projectNumber)"]
-    )
-    cb_sa = f"serviceAccount:{project_number}@cloudbuild.gserviceaccount.com"
-    compute_sa = (
-        f"serviceAccount:{project_number}-compute@developer.gserviceaccount.com"
-    )
-
-    for member, role in (
-        (cb_sa, "roles/run.admin"),
-        (cb_sa, "roles/iam.serviceAccountUser"),
-        (cb_sa, "roles/artifactregistry.writer"),
-        (cb_sa, "roles/storage.admin"),
-        (compute_sa, "roles/run.admin"),
-        (compute_sa, "roles/artifactregistry.writer"),
-        (compute_sa, "roles/logging.logWriter"),
-        (compute_sa, "roles/iam.serviceAccountUser"),
-    ):
-        bind_role(project, member, role)
-
-    print("==> Setup done", flush=True)
-
-
-def image_tag() -> str:
-    """Tag for Artifact Registry. SHORT_SHA is empty on manual builds submit."""
-    result = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-    )
-    tag = (result.stdout or "").strip()
-    if tag:
-        return tag
-    from datetime import datetime, timezone
-
-    return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-
-
-RUNTIME_ENV_KEYS = (
-    "DATABASE_URL",
-    "DIRECT_URL",
-    "JWT_SECRET",
-    "JWT_EXPIRES_IN",
-)
+    print("Setup done", flush=True)
 
 
 def sync_runtime_env(cfg: dict[str, str]) -> None:
-    """Push DB/JWT vars from local .env to Cloud Run (not baked into the image)."""
-    lines: list[str] = []
-    for key in RUNTIME_ENV_KEYS:
-        value = cfg.get(key, "")
-        if not value:
-            continue
-        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-        lines.append(f'{key}: "{escaped}"')
-
-    if not cfg.get("JWT_SECRET"):
-        raise SystemExit(
-            "JWT_SECRET is empty in .env. Generate one:\n"
-            "  openssl rand -base64 48"
-        )
-    if not cfg.get("DATABASE_URL"):
-        raise SystemExit(
-            "DATABASE_URL is empty in .env. Copy from Neon console → Connect."
-        )
-
+    lines = [
+        f'{key}: "{escape_yaml(cfg[key])}"'
+        for key in RUNTIME_ENV_KEYS
+        if cfg.get(key)
+    ]
     env_file = ROOT / ".runtime-env.yaml"
     env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    cmd = [
+        "gcloud",
+        "run",
+        "services",
+        "update",
+        cfg["SERVICE"],
+        f"--region={cfg['REGION']}",
+        f"--project={cfg['PROJECT_ID']}",
+        f"--env-vars-file={env_file}",
+    ]
     try:
-        run(
-            [
-                "gcloud",
-                "run",
-                "services",
-                "update",
-                cfg["SERVICE"],
-                f"--region={cfg['REGION']}",
-                f"--env-vars-file={env_file}",
-            ]
-        )
+        last_err = ""
+        for attempt in range(1, 6):
+            print(f"==> sync env (attempt {attempt}/5)", flush=True)
+            proc = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True)
+            if proc.returncode == 0:
+                if proc.stdout:
+                    print(proc.stdout, flush=True)
+                return
+            last_err = (proc.stderr or proc.stdout or "").strip()
+            if attempt < 5:
+                time.sleep(5)
+        print(last_err, file=sys.stderr, flush=True)
+        raise SystemExit(f"sync_runtime_env failed: {last_err}")
     finally:
         env_file.unlink(missing_ok=True)
 
 
+def service_url(cfg: dict[str, str]) -> str:
+    return run_out(
+        [
+            "gcloud",
+            "run",
+            "services",
+            "describe",
+            cfg["SERVICE"],
+            f"--region={cfg['REGION']}",
+            f"--project={cfg['PROJECT_ID']}",
+            "--format=value(status.url)",
+        ]
+    )
+
+
+def run_tests() -> None:
+    """Mandatory pre-deploy gate. Do not bypass."""
+    print("==> vitest: calculations + encdata", flush=True)
+    run(["npm", "test"])
+    print("==> deploy.py unit tests", flush=True)
+    run(
+        [
+            sys.executable,
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test_*.py",
+            "-q",
+        ]
+    )
+    print("==> all tests passed", flush=True)
+
+
 def deploy(cfg: dict[str, str]) -> None:
+    run_tests()
+
+    validate_runtime_env(cfg)
+    ensure_gcloud_login()
     run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
-    ensure_billing(cfg["PROJECT_ID"])
+
     tag = image_tag()
     site_url = cfg.get("NEXT_PUBLIC_SITE_URL") or DEFAULTS["NEXT_PUBLIC_SITE_URL"]
-    print(f"==> Image tag: {tag}", flush=True)
-    print(f"==> Site URL:  {site_url}", flush=True)
     subs = (
         f"_REGION={cfg['REGION']},"
         f"_SERVICE={cfg['SERVICE']},"
@@ -276,69 +223,54 @@ def deploy(cfg: dict[str, str]) -> None:
         f"_TAG={tag},"
         f"_SITE_URL={site_url}"
     )
-    result = subprocess.run(
+    print(f"Deploy tag={tag} url={site_url}", flush=True)
+    run(
         [
             "gcloud",
             "builds",
             "submit",
             "--config=cloudbuild.yaml",
             f"--substitutions={subs}",
-        ],
-        cwd=ROOT,
-        text=True,
-    )
-    if result.returncode != 0:
-        print(
-            "\nERROR: gcloud builds submit failed.\n"
-            "Проверь billing и права Cloud Build, затем:\n"
-            "  python3 scripts/deploy.py --setup --deploy\n",
-            file=sys.stderr,
-            flush=True,
-        )
-        raise SystemExit(result.returncode)
-
-    sync_runtime_env(cfg)
-
-
-def print_url(cfg: dict[str, str]) -> None:
-    url = run_out(
-        [
-            "gcloud",
-            "run",
-            "services",
-            "describe",
-            cfg["SERVICE"],
-            f"--region={cfg['REGION']}",
-            "--format=value(status.url)",
         ]
     )
-    print(f"==> Live: {url}", flush=True)
+    sync_runtime_env(cfg)
+    print(f"Live: {service_url(cfg)}", flush=True)
+
+
+def sync_env_only(cfg: dict[str, str]) -> None:
+    validate_runtime_env(cfg)
+    ensure_gcloud_login()
+    run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
+    sync_runtime_env(cfg)
+    print(f"Live: {service_url(cfg)}", flush=True)
 
 
 def main() -> int:
+    if not shutil.which("gcloud"):
+        raise SystemExit("gcloud not found")
+
     parser = argparse.ArgumentParser(description="Deploy tc_26 to Cloud Run")
-    parser.add_argument("--setup", action="store_true", help="Enable APIs and registry")
+    parser.add_argument("--setup", action="store_true")
+    parser.add_argument("--deploy", action="store_true")
+    parser.add_argument("--test", action="store_true", help="npm test")
     parser.add_argument(
-        "--deploy",
+        "--sync-env",
         action="store_true",
-        help="Cloud Build + Cloud Run deploy",
+        help="Push DATABASE_URL/JWT from .env to Cloud Run (no rebuild)",
     )
     args = parser.parse_args()
-
-    if not args.setup and not args.deploy:
-        parser.error("укажи --setup и/или --deploy")
+    if not args.setup and not args.deploy and not args.test and not args.sync_env:
+        parser.error("укажи --setup, --deploy, --sync-env и/или --test")
 
     cfg = load_env(ENV_FILE)
-
-    print(f"==> Project: {cfg['PROJECT_ID']}", flush=True)
-    print(f"==> Region:  {cfg['REGION']}", flush=True)
-    print(f"==> Service: {cfg['SERVICE']}", flush=True)
-
     if args.setup:
         setup(cfg)
+    if args.test:
+        run_tests()
+    if args.sync_env:
+        sync_env_only(cfg)
     if args.deploy:
         deploy(cfg)
-        print_url(cfg)
     return 0
 
 
@@ -346,5 +278,4 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except subprocess.CalledProcessError as exc:
-        print(f"ERROR: command failed with code {exc.returncode}", file=sys.stderr)
         raise SystemExit(exc.returncode)

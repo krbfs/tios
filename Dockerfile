@@ -13,6 +13,7 @@ COPY . .
 ARG NEXT_PUBLIC_SITE_URL=https://tc26-wppkmlz42a-ew.a.run.app
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+RUN npx prisma generate
 RUN npm run build
 
 FROM base AS runner
