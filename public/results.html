@@ -66,6 +66,8 @@
           <p id="copy-status" class="muted" hidden></p>
         </section>
 
+        <div id="result-promo-root"></div>
+
         <div class="actions">
           <a class="btn btn-outline" href="/test/start.html">Пройти ещё раз</a>
         </div>
@@ -91,6 +93,7 @@
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
+      import { mountResultPromo } from "/js/result-promo.js";
 
       const params = new URLSearchParams(window.location.search);
       const encdataParam = params.get("encdata");
@@ -101,6 +104,7 @@
       const psychotypeTitle = document.getElementById("psychotype-title");
       const radarAverageEl = document.getElementById("radar-average");
       const contentBlocksEl = document.getElementById("content-blocks");
+      const resultPromoRoot = document.getElementById("result-promo-root");
       const adminNote = document.getElementById("admin-note");
       const adminNoteBody = document.getElementById("admin-note-body");
       const resultLinkSection = document.getElementById("result-link-section");
@@ -422,6 +426,7 @@
       });
 
       loadResult();
+      mountResultPromo(resultPromoRoot);
     </script>
   </body>
 </html>

@@ -15,11 +15,6 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "/results",
-        destination: "/results.html",
-        permanent: false,
-      },
-      {
         source: "/login",
         destination: "/login.html",
         permanent: false,
