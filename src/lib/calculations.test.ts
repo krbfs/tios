@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { getDemoAnswers } from "./encdata";
 import {
   calculate_scaled_scores,
   calculate_systemic_scores,
+  calculate_avg_intensity,
   determine_psychotype,
   fillAnswers,
   fillTimings,
@@ -79,8 +81,28 @@ describe("calculate_systemic_scores", () => {
   });
 });
 
+describe("calculate_avg_intensity", () => {
+  it("is sum of 8 scales divided by 8", () => {
+    expect(
+      calculate_avg_intensity({
+        extraversion: 30,
+        introversion: 0,
+        anxiety: 7.5,
+        aggression: 22.5,
+        sensitivity: 15,
+        spontaneity: 15,
+        lability: 22.5,
+        rigidity: 7.5,
+      }),
+    ).toBe(15);
+
+    const demo = calculate_scaled_scores(getDemoAnswers());
+    expect(calculate_avg_intensity(demo)).toBe(15);
+  });
+});
+
 describe("determine_psychotype", () => {
-  it("avg_intensity is arithmetic mean of 8 scales (TZ radar reference)", () => {
+  it("stores avg_intensity as mean of 8 scales", () => {
     const scores = calculate_scaled_scores(fillAnswers(0));
     const result = determine_psychotype(scores);
     expect(result.avg_intensity).toBe(15);

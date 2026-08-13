@@ -28,11 +28,22 @@ export const RADAR_SCALE_ORDER = [
   "spontaneity",
 ];
 
-/** Среднее арифметическое по 8 шкалам — линия на радаре (ТЗ §2.3). */
-export function calculateRadarAverage(scores) {
+const SCALE_KEYS = [
+  "extraversion",
+  "introversion",
+  "anxiety",
+  "aggression",
+  "sensitivity",
+  "spontaneity",
+  "lability",
+  "rigidity",
+];
+
+/** Средняя выраженность: сумма 8 шкал ÷ 8. */
+export function calculateAvgIntensity(scores) {
   return (
-    RADAR_SCALE_ORDER.reduce((sum, key) => sum + Number(scores[key] ?? 0), 0) /
-    RADAR_SCALE_ORDER.length
+    SCALE_KEYS.reduce((sum, key) => sum + Number(scores[key] ?? 0), 0) /
+    SCALE_KEYS.length
   );
 }
 

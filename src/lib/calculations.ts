@@ -169,10 +169,17 @@ function areAdjacent(a: PsychotypeCode, b: PsychotypeCode): boolean {
   return diff === 1 || diff === PSYCHOTYPE_PAIRS.length - 1;
 }
 
+/** Средняя выраженность / avg_intensity: сумма 8 шкал ÷ 8 (ответ методолога 13.08.2026). */
+export function calculate_avg_intensity(scaled_scores: ScaledScores): number {
+  return (
+    SCALE_KEYS.reduce((sum, key) => sum + scaled_scores[key], 0) / SCALE_KEYS.length
+  );
+}
+
 function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): string[] {
   const warnings: string[] = [];
+  const meanOf8 = avgIntensity;
   const values = SCALE_KEYS.map((key) => scores[key]);
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
 
   if (avgIntensity <= 7) {
     warnings.push(
@@ -200,9 +207,18 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
     warnings.push("Высокий риск конфликтов");
   }
 
-  const aboveMean = values.filter((value) => value > mean * 1.3);
+  const aboveMean = values.filter((value) => value > meanOf8 * 1.3);
   if (aboveMean.length >= 1) {
     warnings.push("Высокая вероятность нервного срыва");
+  }
+
+  const top4 = [...values].sort((a, b) => b - a).slice(0, 4);
+  if (
+    top4.length === 4 &&
+    avgIntensity > 0 &&
+    top4.every((value) => Math.abs(value - avgIntensity) / avgIntensity < 0.1)
+  ) {
+    warnings.push("Высокая вероятность ошибки прогноза");
   }
 
   if (values.every((value) => value < 5)) {
@@ -220,8 +236,7 @@ export function determine_psychotype(scaled_scores: ScaledScores): PsychotypeRes
 
   const leading = ranked[0];
   const secondary = ranked[1];
-  const avg_intensity =
-    SCALE_KEYS.reduce((sum, key) => sum + scaled_scores[key], 0) / SCALE_KEYS.length;
+  const avg_intensity = calculate_avg_intensity(scaled_scores);
 
   const leadingAhead =
     secondary.sum === 0

@@ -83,7 +83,6 @@
     <script type="module">
       import {
         formatPsychotypeTitle,
-        calculateRadarAverage,
         interpretScaleValue,
         RADAR_SCALE_ORDER,
         SCALE_LABELS,
@@ -199,10 +198,11 @@
       function buildRadarChart(scores) {
         const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
         const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
-        const averageValue = calculateRadarAverage(scores);
+        const averageValue =
+          values.reduce((sum, value) => sum + value, 0) / values.length;
         const averageRounded = Math.round(averageValue * 10) / 10;
 
-        radarAverageEl.textContent = `Среднее арифметическое по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — фиолетовая пунктирная линия на диаграмме`;
+        radarAverageEl.textContent = `Среднее по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — фиолетовая пунктирная линия`;
 
         const ctx = document.getElementById("radar-chart");
         if (radarChart) radarChart.destroy();
