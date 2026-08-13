@@ -18,14 +18,14 @@ export const SYSTEMIC_LABELS = {
 };
 
 export const RADAR_SCALE_ORDER = [
+  "introversion",
+  "sensitivity",
   "anxiety",
   "lability",
   "extraversion",
   "spontaneity",
   "aggression",
   "rigidity",
-  "introversion",
-  "sensitivity",
 ];
 
 const SCALE_KEYS = [
