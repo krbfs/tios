@@ -1,16 +1,25 @@
 /** Google Analytics 4 — init and event helpers. */
 
-const DEFAULT_MEASUREMENT_ID = "G-G5TG1F8M5N";
+const DEFAULT_MEASUREMENT_ID = "G-TYYGE7DS6E";
 
 let initialized = false;
 
-export function getMeasurementId() {
+function readMetaMeasurementId() {
   const meta = document.querySelector('meta[name="ga-measurement-id"]');
-  const fromMeta = meta?.getAttribute("content")?.trim();
-  return fromMeta || DEFAULT_MEASUREMENT_ID;
+  return meta?.getAttribute("content")?.trim() || "";
 }
 
-export function initGoogleAnalytics(measurementId = getMeasurementId()) {
+async function loadPublicGaConfig() {
+  try {
+    const response = await fetch("/api/public-config");
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+
+export function initGoogleAnalytics(measurementId) {
   if (initialized || !measurementId || typeof window === "undefined") {
     return;
   }
@@ -66,7 +75,22 @@ export function bindGaClickTracking(root = document) {
   );
 }
 
-export function initSiteAnalytics() {
-  initGoogleAnalytics();
+export async function initSiteAnalytics() {
+  const config = await loadPublicGaConfig();
+  if (config?.gaEnabled === false) {
+    return;
+  }
+
+  const measurementId =
+    config?.gaMeasurementId ||
+    readMetaMeasurementId() ||
+    DEFAULT_MEASUREMENT_ID;
+
+  initGoogleAnalytics(measurementId);
   bindGaClickTracking();
+}
+
+/** @deprecated use initSiteAnalytics */
+export function getMeasurementId() {
+  return readMetaMeasurementId() || DEFAULT_MEASUREMENT_ID;
 }

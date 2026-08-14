@@ -1,5 +1,13 @@
-export const GA_MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-G5TG1F8M5N";
+import { gaConfig } from "./ga-config";
+
+export { gaConfig, getPublicGaConfig, isGaDataApiConfigured } from "./ga-config";
+export {
+  getGaServiceAccountCredentials,
+  hasGaServiceAccountCredentials,
+} from "./ga-credentials";
+
+export const GA_MEASUREMENT_ID = gaConfig.measurementId;
+export const GA_ENABLED = gaConfig.enabled;
 
 declare global {
   interface Window {

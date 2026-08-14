@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
+    <meta name="ga-measurement-id" content="G-TYYGE7DS6E" />
     <title>Результат теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
@@ -190,39 +190,6 @@
         },
       };
 
-      function createAverageLinePlugin(averageValue, datasetIndex = 1) {
-        return {
-          id: "averageLine",
-          afterDatasetsDraw(chart) {
-            const scale = chart.scales.r;
-            if (!scale || !Number.isFinite(averageValue)) return;
-            if (!chart.isDatasetVisible(datasetIndex)) return;
-
-            const { ctx } = chart;
-            const centerX = scale.xCenter;
-            const centerY = scale.yCenter;
-            const axes = scale.getLabels().length;
-            const radius = scale.getDistanceFromCenterForValue(averageValue);
-
-            ctx.save();
-            ctx.strokeStyle = "#5b8df7";
-            ctx.lineWidth = 3;
-            ctx.setLineDash([8, 5]);
-            ctx.beginPath();
-            for (let i = 0; i <= axes; i += 1) {
-              const angle = scale.getIndexAngle(i);
-              const x = centerX + Math.cos(angle) * radius;
-              const y = centerY + Math.sin(angle) * radius;
-              if (i === 0) ctx.moveTo(x, y);
-              else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
-          },
-        };
-      }
-
       function buildRadarChart(scores) {
         const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
         const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
@@ -254,7 +221,7 @@
                 data: labels.map(() => averageRounded),
                 borderColor: "#5b8df7",
                 borderDash: [8, 5],
-                borderWidth: 0,
+                borderWidth: 2,
                 backgroundColor: "transparent",
                 pointRadius: 0,
                 pointHoverRadius: 4,
@@ -289,7 +256,7 @@
               },
             },
           },
-          plugins: [zonePlugin, createAverageLinePlugin(averageRounded)],
+          plugins: [zonePlugin],
         });
       }
 

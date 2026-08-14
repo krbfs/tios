@@ -38,6 +38,7 @@ yarn-error.log*
 .env.*.local
 !.env.example
 .runtime-env.yaml
+/secrets/
 
 # vercel
 .vercel

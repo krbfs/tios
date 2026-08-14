@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -30,9 +31,20 @@ DEFAULTS = {
     "REPO": "tc26",
     "IMAGE": "tc26",
     "NEXT_PUBLIC_SITE_URL": "https://tc26-wppkmlz42a-ew.a.run.app",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-TYYGE7DS6E",
+    "NEXT_PUBLIC_GA_ENABLED": "true",
 }
 
-RUNTIME_ENV_KEYS = ("DATABASE_URL", "DIRECT_URL", "JWT_SECRET", "JWT_EXPIRES_IN")
+RUNTIME_ENV_KEYS = (
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "JWT_SECRET",
+    "JWT_EXPIRES_IN",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID",
+    "NEXT_PUBLIC_GA_ENABLED",
+    "GA4_PROPERTY_ID",
+    "GA4_SERVICE_ACCOUNT_JSON",
+)
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -79,6 +91,36 @@ def validate_runtime_env(cfg: dict[str, str]) -> None:
 
 def escape_yaml(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def resolve_ga_service_account_json(cfg: dict[str, str]) -> None:
+    """Cloud Run gets minified JSON in GA4_SERVICE_ACCOUNT_JSON."""
+    if cfg.get("GA4_SERVICE_ACCOUNT_JSON"):
+        try:
+            cfg["GA4_SERVICE_ACCOUNT_JSON"] = json.dumps(
+                json.loads(cfg["GA4_SERVICE_ACCOUNT_JSON"]),
+                separators=(",", ":"),
+            )
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"GA4_SERVICE_ACCOUNT_JSON is not valid JSON: {exc}") from exc
+        return
+
+    json_file = cfg.get("GA4_SERVICE_ACCOUNT_JSON_FILE", "").strip()
+    if not json_file:
+        return
+
+    path = Path(json_file)
+    if not path.is_file():
+        path = ROOT / json_file
+    if not path.is_file():
+        raise SystemExit(f"GA4_SERVICE_ACCOUNT_JSON_FILE not found: {json_file}")
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"GA4 service account file is not valid JSON: {exc}") from exc
+
+    cfg["GA4_SERVICE_ACCOUNT_JSON"] = json.dumps(payload, separators=(",", ":"))
 
 
 def image_tag() -> str:
@@ -135,6 +177,7 @@ def setup(cfg: dict[str, str]) -> None:
 
 
 def sync_runtime_env(cfg: dict[str, str]) -> None:
+    resolve_ga_service_account_json(cfg)
     lines = [
         f'{key}: "{escape_yaml(cfg[key])}"'
         for key in RUNTIME_ENV_KEYS
@@ -215,13 +258,17 @@ def deploy(cfg: dict[str, str]) -> None:
 
     tag = image_tag()
     site_url = cfg.get("NEXT_PUBLIC_SITE_URL") or DEFAULTS["NEXT_PUBLIC_SITE_URL"]
+    ga_id = cfg.get("NEXT_PUBLIC_GA_MEASUREMENT_ID") or DEFAULTS["NEXT_PUBLIC_GA_MEASUREMENT_ID"]
+    ga_enabled = cfg.get("NEXT_PUBLIC_GA_ENABLED") or DEFAULTS["NEXT_PUBLIC_GA_ENABLED"]
     subs = (
         f"_REGION={cfg['REGION']},"
         f"_SERVICE={cfg['SERVICE']},"
         f"_REPO={cfg['REPO']},"
         f"_IMAGE={cfg['IMAGE']},"
         f"_TAG={tag},"
-        f"_SITE_URL={site_url}"
+        f"_SITE_URL={site_url},"
+        f"_GA_MEASUREMENT_ID={ga_id},"
+        f"_GA_ENABLED={ga_enabled}"
     )
     print(f"Deploy tag={tag} url={site_url}", flush=True)
     run(

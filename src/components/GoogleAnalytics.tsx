@@ -2,12 +2,17 @@
 
 import Script from "next/script";
 import { useEffect } from "react";
-import { bindGaClickTracking, GA_MEASUREMENT_ID } from "@/lib/analytics";
+import { bindGaClickTracking, GA_ENABLED, GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 export function GoogleAnalytics() {
   useEffect(() => {
+    if (!GA_ENABLED) return;
     bindGaClickTracking();
   }, []);
+
+  if (!GA_ENABLED) {
+    return null;
+  }
 
   return (
     <>
