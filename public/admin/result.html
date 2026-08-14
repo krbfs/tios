@@ -259,7 +259,7 @@
             },
           );
           applyResult(updated);
-          modeStatus.textContent = `Режим изменён на «${modeLabel(updated.mode)}». Контент перезагружен.`;
+          modeStatus.textContent = `Режим изменен на «${modeLabel(updated.mode)}». Контент перезагружен.`;
           modeStatus.className = "status-msg success";
         } catch (error) {
           modeSelect.value = resultData.mode;
@@ -305,7 +305,7 @@
             },
           );
           applyResult(updated);
-          commentStatus.textContent = "Комментарий сохранён";
+          commentStatus.textContent = "Комментарий сохранен";
           commentStatus.className = "status-msg success";
         } catch (error) {
           commentStatus.textContent = error.message;

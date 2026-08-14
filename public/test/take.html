@@ -6,7 +6,7 @@
     <title>Прохождение теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
   </head>
-  <body>
+  <body class="page-enter">
     <header class="site-header">
       <div class="container">
         <a href="/test/start.html">Teamconstructor — тест</a>
@@ -21,31 +21,33 @@
         </div>
 
         <div id="question-area" hidden>
-          <div class="statements">
-            <div class="statement">
-              <div class="statement-label">А</div>
-              <p id="left-text"></p>
+          <div id="question-content">
+            <div class="statements">
+              <div id="left-statement" class="statement">
+                <div class="statement-label">А</div>
+                <p id="left-text"></p>
+              </div>
+              <div id="right-statement" class="statement">
+                <div class="statement-label">В</div>
+                <p id="right-text"></p>
+              </div>
             </div>
-            <div class="statement">
-              <div class="statement-label">В</div>
-              <p id="right-text"></p>
-            </div>
-          </div>
 
-          <div class="slider-wrap">
-            <input id="answer-slider" type="range" min="-2" max="2" step="1" value="0" />
-            <div class="slider-labels">
-              <span>−2<br />А</span>
-              <span>−1</span>
-              <span>0</span>
-              <span>+1</span>
-              <span>+2<br />В</span>
+            <div class="slider-wrap">
+              <input id="answer-slider" type="range" min="-2" max="2" step="1" value="0" />
+              <div class="slider-labels">
+                <span>−2<br />А</span>
+                <span>−1</span>
+                <span>0</span>
+                <span>+1</span>
+                <span>+2<br />В</span>
+              </div>
+              <div id="slider-caption" class="slider-value">нейтрален</div>
             </div>
-            <div id="slider-caption" class="slider-value">нейтрален</div>
-          </div>
 
-          <div class="actions">
-            <button id="next-btn" class="btn btn-primary" type="button">Далее</button>
+            <div class="actions">
+              <button id="next-btn" class="btn btn-primary" type="button">Далее</button>
+            </div>
           </div>
         </div>
 
@@ -58,7 +60,7 @@
       </div>
     </main>
 
-    <div id="fast-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div id="fast-modal" class="modal-backdrop" role="dialog" aria-modal="true" hidden>
       <div class="modal">
         <h2>Слишком быстрые ответы</h2>
         <p class="muted">
@@ -68,9 +70,17 @@
         <div class="actions">
           <button id="modal-back" class="btn btn-outline" type="button">Вернуться</button>
           <button id="modal-submit" class="btn btn-primary" type="button">
-            Отправить всё равно
+            Отправить все равно
           </button>
         </div>
+      </div>
+    </div>
+
+    <div id="submit-overlay" class="submit-overlay" hidden>
+      <div class="submit-overlay-card">
+        <div class="submit-spinner" aria-hidden="true"></div>
+        <p><strong>Считаем ваш профиль…</strong></p>
+        <p class="muted" style="margin: 8px 0 0">Обычно это занимает несколько секунд</p>
       </div>
     </div>
 
@@ -81,6 +91,7 @@
         getSessionUuid,
         hasConsent,
       } from "/js/session.js";
+      import { prefersReducedMotion } from "/js/motion.js";
 
       if (!hasConsent()) {
         window.location.href = "/test/start.html";
@@ -89,10 +100,14 @@
       const TOTAL = 75;
       const FAST_THRESHOLD_SEC = 2;
       const FAST_RATIO_LIMIT = 0.1;
+      const reducedMotion = prefersReducedMotion();
 
       const progressLabel = document.getElementById("progress-label");
       const progressFill = document.getElementById("progress-fill");
       const questionArea = document.getElementById("question-area");
+      const questionContent = document.getElementById("question-content");
+      const leftStatement = document.getElementById("left-statement");
+      const rightStatement = document.getElementById("right-statement");
       const leftText = document.getElementById("left-text");
       const rightText = document.getElementById("right-text");
       const slider = document.getElementById("answer-slider");
@@ -100,20 +115,33 @@
       const nextBtn = document.getElementById("next-btn");
       const errorEl = document.getElementById("error");
       const fastModal = document.getElementById("fast-modal");
+      const submitOverlay = document.getElementById("submit-overlay");
 
       let questions = [];
       let index = 0;
       let answers = Array(TOTAL).fill(null);
       let times = Array(TOTAL).fill(0);
       let questionStartedAt = Date.now();
+      let isAnimating = false;
+
+      function updateStatementHighlight() {
+        const value = Number(slider.value);
+        leftStatement.classList.toggle("statement--active", value < 0);
+        rightStatement.classList.toggle("statement--active", value > 0);
+      }
 
       function updateSliderCaption() {
+        sliderCaption.classList.add("is-changing");
         sliderCaption.textContent = SLIDER_LABELS[String(Number(slider.value))];
+        window.setTimeout(() => {
+          sliderCaption.classList.remove("is-changing");
+        }, 150);
+        updateStatementHighlight();
       }
 
       slider.addEventListener("input", updateSliderCaption);
 
-      function renderQuestion() {
+      function applyQuestionContent() {
         const question = questions[index];
         progressLabel.textContent = `Вопрос ${index + 1} из ${TOTAL}`;
         progressFill.style.width = `${((index + 1) / TOTAL) * 100}%`;
@@ -124,6 +152,34 @@
         slider.value = saved === null ? 0 : saved;
         updateSliderCaption();
         questionStartedAt = Date.now();
+        nextBtn.textContent = index === TOTAL - 1 ? "Отправить" : "Далее";
+      }
+
+      function renderQuestion() {
+        applyQuestionContent();
+      }
+
+      function runQuestionTransition(onUpdated) {
+        if (reducedMotion) {
+          onUpdated();
+          renderQuestion();
+          return;
+        }
+
+        isAnimating = true;
+        questionContent.classList.remove("question-enter");
+        questionContent.classList.add("question-exit");
+
+        window.setTimeout(() => {
+          onUpdated();
+          renderQuestion();
+          questionContent.classList.remove("question-exit");
+          questionContent.classList.add("question-enter");
+          window.setTimeout(() => {
+            questionContent.classList.remove("question-enter");
+            isAnimating = false;
+          }, 280);
+        }, 220);
       }
 
       function showError(message) {
@@ -131,8 +187,17 @@
         errorEl.hidden = false;
       }
 
+      function showSubmitOverlay() {
+        submitOverlay.hidden = false;
+      }
+
+      function hideSubmitOverlay() {
+        submitOverlay.hidden = true;
+      }
+
       async function submitAnswers() {
         nextBtn.disabled = true;
+        showSubmitOverlay();
         try {
           const payload = await apiJson("/api/test/submit", {
             method: "POST",
@@ -144,21 +209,33 @@
           });
           window.location.href = `/quiz/result?encdata=${encodeURIComponent(payload.encdata)}`;
         } catch (err) {
+          hideSubmitOverlay();
           showError(err instanceof Error ? err.message : "Ошибка отправки");
           nextBtn.disabled = false;
         }
       }
 
+      function openFastModal() {
+        fastModal.hidden = false;
+        fastModal.classList.add("open");
+      }
+
+      function closeFastModal() {
+        fastModal.classList.remove("open");
+        fastModal.hidden = true;
+      }
+
       function maybeSubmit() {
         const fastCount = times.filter((time) => time < FAST_THRESHOLD_SEC).length;
         if (fastCount / TOTAL > FAST_RATIO_LIMIT) {
-          fastModal.classList.add("open");
+          openFastModal();
           return;
         }
         submitAnswers();
       }
 
       nextBtn.addEventListener("click", () => {
+        if (isAnimating) return;
         errorEl.hidden = true;
         const value = Number(slider.value);
         const elapsedSec = (Date.now() - questionStartedAt) / 1000;
@@ -167,7 +244,7 @@
 
         if (index < TOTAL - 1) {
           index += 1;
-          renderQuestion();
+          runQuestionTransition(() => {});
           return;
         }
 
@@ -175,11 +252,11 @@
       });
 
       document.getElementById("modal-back").addEventListener("click", () => {
-        fastModal.classList.remove("open");
+        closeFastModal();
       });
 
       document.getElementById("modal-submit").addEventListener("click", () => {
-        fastModal.classList.remove("open");
+        closeFastModal();
         submitAnswers();
       });
 

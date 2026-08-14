@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Результат теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
@@ -17,7 +18,7 @@
     </header>
 
     <main class="container">
-      <div class="card">
+      <div id="result-card" class="card">
         <h1 id="result-title">Загрузка результата…</h1>
         <p id="psychotype-title" class="muted"></p>
 
@@ -42,7 +43,7 @@
         <section id="result-link-section" class="result-link-section">
           <h2>Ссылка для доступа к вашему результату</h2>
           <p class="muted" style="margin: 0 0 12px">
-            Результат зашит в ссылку. Сохраните её — вход не нужен. Если вы
+            Результат зашит в ссылку. Сохраните ее — вход не нужен. Если вы
             залогинены, тот же результат также появится в
             <a href="/cabinet.html">личном кабинете</a>.
           </p>
@@ -69,7 +70,7 @@
         <div id="result-promo-root"></div>
 
         <div class="actions">
-          <a class="btn btn-outline" href="/test/start.html">Пройти ещё раз</a>
+          <a class="btn btn-outline" href="/test/start.html">Пройти еще раз</a>
         </div>
 
         <p id="error" class="error" hidden></p>
@@ -93,7 +94,11 @@
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
+      import { initGoogleAnalytics } from "/js/analytics.js";
+      import { initScrollReveal } from "/js/motion.js";
       import { mountResultPromo } from "/js/result-promo.js";
+
+      initGoogleAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const encdataParam = params.get("encdata");
@@ -105,6 +110,7 @@
       const radarAverageEl = document.getElementById("radar-average");
       const contentBlocksEl = document.getElementById("content-blocks");
       const resultPromoRoot = document.getElementById("result-promo-root");
+      const resultCard = document.getElementById("result-card");
       const adminNote = document.getElementById("admin-note");
       const adminNoteBody = document.getElementById("admin-note-body");
       const resultLinkSection = document.getElementById("result-link-section");
@@ -123,6 +129,17 @@
         cabinetLink.textContent = getStoredUser()?.email
           ? `Кабинет (${getStoredUser().email})`
           : "Личный кабинет";
+      }
+
+      const CHART_ANIMATION = {
+        duration: 1200,
+        easing: "easeOutQuart",
+      };
+
+      function markResultLoaded() {
+        resultCard.classList.add("result-loaded");
+        resultLinkSection.classList.add("result-link-section--highlight");
+        initScrollReveal(document);
       }
 
       function showError(message) {
@@ -244,6 +261,7 @@
           },
           options: {
             responsive: true,
+            animation: CHART_ANIMATION,
             scales: {
               r: {
                 min: 0,
@@ -293,6 +311,7 @@
           },
           options: {
             responsive: true,
+            animation: CHART_ANIMATION,
             scales: {
               y: {
                 beginAtZero: true,
@@ -347,18 +366,24 @@
         buildBarChart(result.scaled_systemic || {});
 
         contentBlocksEl.replaceChildren();
-        (result.content_blocks || []).forEach((block) => {
-          contentBlocksEl.appendChild(renderBlock(block));
+        (result.content_blocks || []).forEach((block, blockIndex) => {
+          const element = renderBlock(block);
+          element.classList.add("content-block--reveal");
+          element.style.animationDelay = `${420 + blockIndex * 100}ms`;
+          contentBlocksEl.appendChild(element);
         });
 
         if (result.admin_comment) {
           adminNoteBody.textContent = result.admin_comment;
           adminNote.hidden = false;
+          adminNote.classList.add("content-block--reveal");
+          adminNote.style.animationDelay = `${420 + (result.content_blocks?.length || 0) * 100}ms`;
         } else {
           adminNote.hidden = true;
         }
 
         updateResultLink(result);
+        markResultLoaded();
       }
 
       async function loadResult() {
@@ -411,11 +436,13 @@
 
           await navigator.clipboard.writeText(link);
           copyResultBtn.textContent = "Скопировано";
+          copyResultBtn.classList.add("btn--success");
           copyStatus.textContent =
-            "Ссылка скопирована. Сохраните её — по ней можно вернуться к результату.";
+            "Ссылка скопирована. Сохраните ее — по ней можно вернуться к результату.";
           copyStatus.hidden = false;
           setTimeout(() => {
             copyResultBtn.textContent = "Скопировать результат";
+            copyResultBtn.classList.remove("btn--success");
           }, 2000);
         } catch (err) {
           showError(

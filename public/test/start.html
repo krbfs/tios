@@ -6,7 +6,7 @@
     <title>Начало теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
   </head>
-  <body>
+  <body class="page-enter">
     <header class="site-header">
       <div class="container">
         <a href="/">Teamconstructor</a>
@@ -75,7 +75,9 @@
       document.getElementById("consent-text").textContent = CONSENT_TEXT;
 
       consentCheckbox.addEventListener("change", () => {
-        startBtn.disabled = !consentCheckbox.checked;
+        const enabled = consentCheckbox.checked;
+        startBtn.disabled = !enabled;
+        startBtn.classList.toggle("btn-ready", enabled);
       });
 
       startBtn.addEventListener("click", async () => {

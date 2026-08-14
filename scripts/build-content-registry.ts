@@ -83,9 +83,9 @@ const BLOCK_DEFS = [
   },
   {
     block_key: "partnership",
-    title: "Партнёрство: возможности и ограничения",
+    title: "Партнерство: возможности и ограничения",
     sort_order: 9,
-    pattern: /9\.\s*Партнёрство: возможности и ограничения:?\s*(.*)/,
+    pattern: /9\.\s*Партн[её]рство: возможности и ограничения:?\s*(.*)/,
   },
   {
     block_key: "attraction",
@@ -148,6 +148,8 @@ function extractParagraphs(docxPath: string): string[] {
 
 function normalizeContent(text: string): string {
   return text
+    .replace(/Ё/g, "Е")
+    .replace(/ё/g, "е")
     .replace(/\u00a0/g, " ")
     .replace(/–/g, "—")
     .replace(/\.([А-ЯA-Z«])/g, ". $1")

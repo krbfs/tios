@@ -17,7 +17,7 @@
 | `src/app/sitemap.ts` | sitemap.xml |
 | `src/app/robots.ts` | robots.txt + ссылка на sitemap и llms.txt |
 | `public/llms.txt` | короткий вход для LLM |
-| `public/llms-full.txt` | развёрнутое описание для LLM |
+| `public/llms-full.txt` | развернутое описание для LLM |
 | `public/ai.txt` | политика для AI-агентов |
 | `src/components/JsonLd.tsx` | schema.org на ключевых страницах |
 
@@ -53,7 +53,7 @@
 - старт теста: `/test` → `/test/take`
 - пример результата: `/results`
 - контакт: `support@teamconstructor.pro`
-- партнёр: ООО Инсайтер
+- партнер: ООО Инсайтер
 
 ## Structured data (JSON-LD)
 
@@ -90,7 +90,7 @@
 - инструкция респондента
 - описание шкалы −2…+2
 - карта разделов сайта
-- ограничения (нет бэкенда расчёта в этом прототипе — если актуально)
+- ограничения (нет бэкенда расчета в этом прототипе — если актуально)
 
 ### `ai.txt`
 
@@ -128,7 +128,7 @@
 
 - [ ] title/description уникальны на `/`, `/test`, `/test/take`, `/results`
 - [ ] `/login` = noindex
-- [ ] sitemap отдаёт 200
+- [ ] sitemap отдает 200
 - [ ] robots ссылается на sitemap и llms.txt
 - [ ] JSON-LD валиден (без хвостов trailing comma)
 - [ ] `NEXT_PUBLIC_SITE_URL` совпадает с продом
