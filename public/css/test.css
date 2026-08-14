@@ -348,6 +348,19 @@ input[type="range"] {
   white-space: normal;
 }
 
+.content-sections {
+  display: grid;
+  gap: 12px;
+}
+
+.content-section {
+  margin: 0;
+}
+
+.content-block-body:has(.content-sections) {
+  white-space: normal;
+}
+
 .efficiency-cards {
   display: grid;
   gap: 16px;
@@ -412,6 +425,55 @@ input[type="range"] {
 
 .chart-card canvas {
   max-width: 100%;
+}
+
+.radar-chart-layout {
+  display: grid;
+  gap: 20px;
+  align-items: center;
+}
+
+.radar-chart-panel {
+  min-width: 0;
+}
+
+.scale-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.scale-table th,
+.scale-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 400;
+}
+
+.scale-table th {
+  color: var(--foreground);
+  padding-right: 16px;
+}
+
+.scale-table td {
+  width: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.scale-table tr:last-child th,
+.scale-table tr:last-child td {
+  border-bottom: none;
+}
+
+@media (min-width: 768px) {
+  .radar-chart-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
+  }
 }
 
 .modal-backdrop {

@@ -84,12 +84,16 @@ export const PSYCHOTYPE_META: Record<PsychotypeCode, PsychotypeMeta> = {
   },
 };
 
-export function formatPsychotypeTitle(code: string): string {
+export function formatPsychotypeSummary(code: string): string {
   const meta = PSYCHOTYPE_META[code as PsychotypeCode];
   if (!meta) {
     return code;
   }
-  return `Вы — ${meta.name} (${meta.tendency1} + ${meta.tendency2})`;
+  return `${meta.name.toLowerCase()} (${meta.tendency1} + ${meta.tendency2})`;
+}
+
+export function formatPsychotypeTitle(code: string): string {
+  return `Основной психотип: ${formatPsychotypeSummary(code)}`;
 }
 
 export function interpretScaleValue(value: number): string {

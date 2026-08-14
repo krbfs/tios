@@ -27,7 +27,14 @@
         <div class="chart-card">
           <h2>8 шкал личности</h2>
           <p id="radar-average" class="muted" style="margin: 0 0 12px"></p>
-          <canvas id="radar-chart" height="360"></canvas>
+          <div class="radar-chart-layout">
+            <div class="radar-chart-panel">
+              <canvas id="radar-chart" height="360"></canvas>
+            </div>
+            <table class="scale-table" aria-label="Значения 8 шкал личности">
+              <tbody id="scale-table-body"></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="chart-card">
@@ -96,7 +103,9 @@
         interpretScaleValue,
         RADAR_SCALE_ORDER,
         SCALE_LABELS,
+        SCALE_TABLE_ORDER,
         SYSTEMIC_LABELS,
+        toDisplayScaleValue,
       } from "/js/psychotypes.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
@@ -115,6 +124,7 @@
       const resultTitle = document.getElementById("result-title");
       const psychotypeTitle = document.getElementById("psychotype-title");
       const radarAverageEl = document.getElementById("radar-average");
+      const scaleTableBody = document.getElementById("scale-table-body");
       const contentBlocksEl = document.getElementById("content-blocks");
       const resultPromoRoot = document.getElementById("result-promo-root");
       const resultCard = document.getElementById("result-card");
@@ -192,7 +202,26 @@
         },
       };
 
+      function buildScaleTable(scores) {
+        scaleTableBody.replaceChildren();
+
+        for (const key of SCALE_TABLE_ORDER) {
+          const row = document.createElement("tr");
+          const labelCell = document.createElement("th");
+          const valueCell = document.createElement("td");
+
+          labelCell.scope = "row";
+          labelCell.textContent = SCALE_LABELS[key].toLowerCase();
+          valueCell.textContent = String(toDisplayScaleValue(scores[key]));
+
+          row.append(labelCell, valueCell);
+          scaleTableBody.appendChild(row);
+        }
+      }
+
       function buildRadarChart(scores) {
+        buildScaleTable(scores);
+
         const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
         const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
         const averageValue =

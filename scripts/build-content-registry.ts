@@ -98,7 +98,7 @@ const BLOCK_DEFS = [
     title: "Что привлекает в профессиональном и личностном плане",
     sort_order: 10,
     pattern:
-      /10\.\s*Что привлекает(?: в профессиональном и личностном плане\??)?\s*(.*)/,
+      /10\.\s*Что привлекает(?:\s+в\s+профессиональном\s+и\s+личностном\s+плане)?\??\s*(.*)/,
   },
 ] as const;
 
@@ -154,6 +154,7 @@ function extractParagraphs(docxPath: string): string[] {
 
 function normalizeContent(text: string): string {
   return text
+    .replace(/^\?\s*/, "")
     .replace(/Ё/g, "Е")
     .replace(/ё/g, "е")
     .replace(/\u00a0/g, " ")

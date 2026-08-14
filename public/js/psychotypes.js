@@ -28,6 +28,23 @@ export const RADAR_SCALE_ORDER = [
   "rigidity",
 ];
 
+/** Table order next to the radar chart (0–10 display scale). */
+export const SCALE_TABLE_ORDER = [
+  "anxiety",
+  "lability",
+  "extraversion",
+  "spontaneity",
+  "aggression",
+  "rigidity",
+  "introversion",
+  "sensitivity",
+];
+
+/** Raw scale is 0–30; display as 0–10. */
+export function toDisplayScaleValue(rawValue) {
+  return Math.round(Number(rawValue ?? 0) / 3);
+}
+
 const SCALE_KEYS = [
   "extraversion",
   "introversion",
@@ -90,12 +107,16 @@ export const PSYCHOTYPE_META = {
   },
 };
 
-export function formatPsychotypeTitle(code) {
+export function formatPsychotypeSummary(code) {
   const meta = PSYCHOTYPE_META[code];
   if (!meta) {
     return code;
   }
-  return `Вы — ${meta.name} (${meta.tendency1} + ${meta.tendency2})`;
+  return `${meta.name.toLowerCase()} (${meta.tendency1} + ${meta.tendency2})`;
+}
+
+export function formatPsychotypeTitle(code) {
+  return `Основной психотип: ${formatPsychotypeSummary(code)}`;
 }
 
 export function interpretScaleValue(value) {
