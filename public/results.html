@@ -235,33 +235,21 @@
           if (!scale || RADAR_TICK_AXIS_INDEX < 0) return;
 
           const { ctx } = chart;
-          const angle = scale.getIndexAngle(RADAR_TICK_AXIS_INDEX);
-          const centerX = scale.xCenter;
-          const centerY = scale.yCenter;
           const labelOffset = 12;
 
           ctx.save();
           ctx.fillStyle = "#64748b";
           ctx.font = "11px system-ui, sans-serif";
-          ctx.textAlign = "center";
+          ctx.textAlign = "left";
           ctx.textBaseline = "middle";
 
           for (const value of RADAR_TICK_VALUES) {
             const radius = scale.getDistanceFromCenterForValue(value);
-            const x =
-              centerX +
-              Math.cos(angle) * radius +
-              Math.cos(angle + Math.PI / 2) * labelOffset;
-            const y =
-              centerY +
-              Math.sin(angle) * radius +
-              Math.sin(angle + Math.PI / 2) * labelOffset;
-
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(angle + Math.PI / 2);
-            ctx.fillText(String(value), 0, 0);
-            ctx.restore();
+            const point = scale.getPointPosition(RADAR_TICK_AXIS_INDEX, radius);
+            const offsetAngle = point.angle + Math.PI / 2;
+            const x = point.x + Math.cos(offsetAngle) * labelOffset;
+            const y = point.y + Math.sin(offsetAngle) * labelOffset;
+            ctx.fillText(String(value), x, y);
           }
 
           ctx.restore();
@@ -282,21 +270,17 @@
             { max: 6, color: "rgba(255, 255, 255, 0)" },
           ];
 
-          const centerX = scale.xCenter;
-          const centerY = scale.yCenter;
           const axes = scale.getLabels().length;
 
           ctx.save();
           for (const band of bands) {
             ctx.fillStyle = band.color;
             ctx.beginPath();
+            const radius = scale.getDistanceFromCenterForValue(band.max);
             for (let i = 0; i <= axes; i += 1) {
-              const angle = scale.getIndexAngle(i);
-              const radius = scale.getDistanceFromCenterForValue(band.max);
-              const x = centerX + Math.cos(angle) * radius;
-              const y = centerY + Math.sin(angle) * radius;
-              if (i === 0) ctx.moveTo(x, y);
-              else ctx.lineTo(x, y);
+              const point = scale.getPointPosition(i % axes, radius);
+              if (i === 0) ctx.moveTo(point.x, point.y);
+              else ctx.lineTo(point.x, point.y);
             }
             ctx.closePath();
             ctx.fill();
@@ -386,7 +370,6 @@
               r: {
                 min: 0,
                 max: 30,
-                startAngle: -90,
                 ticks: { display: false, stepSize: 6 },
                 pointLabels: { font: { size: 12 } },
               },

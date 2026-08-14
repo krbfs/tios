@@ -35,7 +35,7 @@ export const SYSTEMIC_COLORS: Record<
   sys_delegation: { from: "#22d3ee", to: "#06b6d4", value: "#0e7490" },
 };
 
-/** Radar vertex order clockwise from top (12 o'clock). */
+/** Radar vertex order clockwise from top (12 o'clock) in Chart.js 4. */
 export const RADAR_SCALE_ORDER = [
   "anxiety",
   "lability",
