@@ -8,15 +8,22 @@
     <link rel="stylesheet" href="/css/test.css" />
   </head>
   <body class="page-enter">
-    <header class="site-header">
-      <div class="container site-header-nav">
-        <a href="/test/start.html" class="site-header-logo">
-          <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
-        </a>
-        <span class="site-header-spacer"></span>
-        <a href="/login.html" class="btn btn-outline" data-ga-event="cta_test_login_optional">Войти</a>
-      </div>
-    </header>
+    <!-- chrome:header-public logoHref=/test/start.html loginAttrs=data-ga-event="cta_test_login_optional" -->
+<header class="site-header">
+  <div class="container site-header-nav">
+    <a href="/test/start.html" class="site-header-logo">
+      <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
+    </a>
+    <nav class="site-header-menu" aria-label="Основное меню">
+      <a href="/">Главная</a>
+      <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест</a>
+      <a href="/cabinet.html" data-ga-event="cta_header_cabinet">Личный кабинет</a>
+    </nav>
+    <span class="site-header-spacer"></span>
+    <a href="/login.html" class="btn btn-outline" data-ga-event="cta_test_login_optional">Войти</a>
+  </div>
+</header>
+<!-- /chrome:header-public -->
 
     <main class="container">
       <div class="card">
@@ -93,6 +100,20 @@
         <p class="muted" style="margin: 8px 0 0">Обычно это занимает несколько секунд</p>
       </div>
     </div>
+
+    <!-- chrome:footer -->
+<footer class="site-footer">
+  <div class="container site-footer-grid">
+    <div class="site-footer-copy">© 2026 | TC26</div>
+    <div class="site-footer-center">
+      <a href="https://insighter.by/" rel="noopener noreferrer" target="_blank">Insighter</a>
+    </div>
+    <div class="site-footer-right">
+      <a href="mailto:support@tc26.pro">support@tc26.pro</a>
+    </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
 
     <script type="module">
       import { initSiteAnalytics } from "/js/analytics.js";

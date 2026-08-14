@@ -9,7 +9,7 @@ body {
   margin: 0;
   font-family: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   color: var(--foreground);
-  background: var(--surface);
+  background: var(--white);
   line-height: 1.5;
 }
 
@@ -19,16 +19,53 @@ body {
   padding: 24px 24px 48px;
 }
 
-.site-header,
-.site-footer {
+.site-header {
   background: var(--white);
   border-bottom: 1px solid var(--border);
 }
 
 .site-footer {
-  border-top: 1px solid var(--border);
+  background: var(--footer-bg);
+  color: var(--footer-text);
+  border-top: none;
   border-bottom: none;
   margin-top: 32px;
+}
+
+.site-footer-grid {
+  display: grid;
+  gap: 12px;
+  padding: 20px 0;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.site-footer-copy {
+  color: var(--footer-text);
+}
+
+.site-footer-center {
+  text-align: center;
+}
+
+.site-footer-right {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+    text-align: left;
+  }
+
+  .site-footer-center {
+    text-align: center;
+  }
+
+  .site-footer-right {
+    text-align: right;
+  }
 }
 
 .site-header .container,
@@ -45,6 +82,42 @@ body {
   align-items: center;
   gap: 16px;
   width: 100%;
+  flex-wrap: wrap;
+}
+
+.site-header-menu {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-left: 8px;
+}
+
+.site-header-menu a {
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-header-menu a:hover {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+@media (max-width: 767px) {
+  .site-header-menu {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    padding: 4px 0 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .site-header-nav .btn {
+    margin-left: auto;
+  }
 }
 
 .site-header-spacer {
@@ -76,16 +149,25 @@ body {
   width: auto;
 }
 
-.site-header a,
-.site-footer a {
+.site-header a {
   color: var(--link);
   text-decoration: none;
   font-weight: 600;
 }
 
-.site-header a:hover,
-.site-footer a:hover {
+.site-header a:hover {
   color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.site-footer a {
+  color: var(--footer-link);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-footer a:hover {
+  color: var(--primary-light);
   text-decoration: underline;
 }
 

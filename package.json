@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "dev": "npm run chrome:assemble && next dev --turbopack",
+    "build": "npm run chrome:assemble && next build",
     "start": "next start -p ${PORT:-8080}",
     "lint": "next lint",
     "test": "vitest run",
@@ -26,7 +26,8 @@
     "db:import-questions": "tsx scripts/import_questions.ts",
     "db:import-content": "tsx scripts/import_content.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
-    "content:build-registry": "tsx scripts/build-content-registry.ts"
+    "content:build-registry": "tsx scripts/build-content-registry.ts",
+    "chrome:assemble": "tsx scripts/assemble-chrome.ts"
   },
   "postinstall": "node scripts/ensure-playwright.mjs",
   "dependencies": {

@@ -9,15 +9,22 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
   <body>
-    <header class="site-header">
-      <div class="container site-header-nav">
-        <a href="/" class="site-header-logo">
-          <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
-        </a>
-        <span class="site-header-spacer"></span>
-        <a id="cabinet-link" href="/login.html" class="btn btn-outline" data-ga-event="cta_result_header_login">Войти</a>
-      </div>
-    </header>
+    <!-- chrome:header-public logoHref=/ loginAttrs=id= data-ga-event=cta_result_header_login -->
+<header class="site-header">
+  <div class="container site-header-nav">
+    <a href="/" class="site-header-logo">
+      <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
+    </a>
+    <nav class="site-header-menu" aria-label="Основное меню">
+      <a href="/">Главная</a>
+      <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест</a>
+      <a href="/cabinet.html" data-ga-event="cta_header_cabinet">Личный кабинет</a>
+    </nav>
+    <span class="site-header-spacer"></span>
+    <a href="/login.html" class="btn btn-outline" id=>Войти</a>
+  </div>
+</header>
+<!-- /chrome:header-public -->
 
     <main class="container">
       <div id="result-card" class="card">
@@ -96,6 +103,20 @@
         </p>
       </div>
     </main>
+
+    <!-- chrome:footer -->
+<footer class="site-footer">
+  <div class="container site-footer-grid">
+    <div class="site-footer-copy">© 2026 | TC26</div>
+    <div class="site-footer-center">
+      <a href="https://insighter.by/" rel="noopener noreferrer" target="_blank">Insighter</a>
+    </div>
+    <div class="site-footer-right">
+      <a href="mailto:support@tc26.pro">support@tc26.pro</a>
+    </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
 
     <script type="module">
       import {

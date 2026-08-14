@@ -9,8 +9,8 @@
   --muted: #64748b;
   --border: #e5e7eb;
   --bg: #ffffff;
-  --surface: #f8f9fa;
-  --surface-alt: #f3f4f6;
+  --surface: #ffffff;
+  --surface-alt: #f8f9fa;
   --white: #ffffff;
   --danger: #dc3545;
   --success: #28a745;
@@ -19,6 +19,9 @@
   --btn-height: 48px;
   --container: 1024px;
   --header-height: 64px;
+  --footer-bg: #17255a;
+  --footer-text: rgba(255, 255, 255, 0.82);
+  --footer-link: #ffffff;
   --chart-primary: #1a54d8;
   --chart-average: #5b8df7;
 }

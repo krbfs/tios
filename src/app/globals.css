@@ -9,8 +9,8 @@
   --link: #3b63a8;
   --muted: #64748b;
   --border: #e5e7eb;
-  --surface: #f8f9fa;
-  --surface-alt: #f3f4f6;
+  --surface: #ffffff;
+  --surface-alt: #f8f9fa;
 }
 
 @theme inline {

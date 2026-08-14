@@ -70,7 +70,7 @@ export default function HomePage() {
     <>
       <section
         id="main"
-        className="space-y-6 bg-surface pb-20 pt-3 md:pb-12 md:pt-8 lg:py-32"
+        className="space-y-6 bg-white pb-20 pt-3 md:pb-12 md:pt-8 lg:py-32"
       >
         <div className="container-page flex max-w-[1024px] flex-col items-center gap-4 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -141,7 +141,7 @@ export default function HomePage() {
 
       <section
         id="features"
-        className="container mx-auto space-y-6 rounded-2xl bg-slate-50 px-4 py-8 md:py-12 lg:py-24"
+        className="container mx-auto space-y-6 rounded-2xl bg-white px-4 py-8 md:py-12 lg:py-24"
       >
         <RevealOnScroll>
           <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">

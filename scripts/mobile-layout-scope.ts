@@ -4,6 +4,8 @@ import { execSync } from "node:child_process";
 export const RUN_ALL_TRIGGERS = [
   "scripts/test-mobile-layout.ts",
   "scripts/mobile-layout-scope.ts",
+  "scripts/assemble-chrome.ts",
+  "chrome/",
   "next.config.ts",
   "src/app/layout.tsx",
   "public/css/tokens.css",

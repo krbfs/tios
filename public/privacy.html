@@ -7,13 +7,19 @@
     <link rel="stylesheet" href="/css/test.css" />
   </head>
   <body>
-    <header class="site-header">
-      <div class="container">
-        <a href="/test/start.html" class="site-header-logo">
-          <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
-        </a>
-      </div>
-    </header>
+    <!-- chrome:header-minimal logoHref=/test/start.html -->
+<header class="site-header">
+  <div class="container site-header-nav">
+    <a href="/test/start.html" class="site-header-logo">
+      <img src="/tc-logo-full.svg" alt="TC26" width="108" height="34" />
+    </a>
+    <nav class="site-header-menu" aria-label="Основное меню">
+      <a href="/">Главная</a>
+      <a href="/test/start.html">Пройти тест</a>
+    </nav>
+  </div>
+</header>
+<!-- /chrome:header-minimal -->
 
     <main class="container">
       <div class="card">
@@ -59,5 +65,19 @@
         <p><a href="/test/start.html">← Вернуться к началу теста</a></p>
       </div>
     </main>
+
+    <!-- chrome:footer -->
+<footer class="site-footer">
+  <div class="container site-footer-grid">
+    <div class="site-footer-copy">© 2026 | TC26</div>
+    <div class="site-footer-center">
+      <a href="https://insighter.by/" rel="noopener noreferrer" target="_blank">Insighter</a>
+    </div>
+    <div class="site-footer-right">
+      <a href="mailto:support@tc26.pro">support@tc26.pro</a>
+    </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
   </body>
 </html>

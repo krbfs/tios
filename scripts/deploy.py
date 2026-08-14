@@ -230,6 +230,8 @@ def service_url(cfg: dict[str, str]) -> str:
 
 def run_tests() -> None:
     """Mandatory pre-deploy gate. Do not bypass."""
+    print("==> assemble site chrome (header/footer)", flush=True)
+    run(["npm", "run", "chrome:assemble"])
     print("==> vitest: calculations, encdata, API routes", flush=True)
     run(["npm", "test"])
     print("==> deploy.py unit tests", flush=True)
