@@ -40,6 +40,29 @@ body {
   padding-bottom: 0;
 }
 
+.site-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.site-header-spacer {
+  flex: 1;
+}
+
+.site-header-logo {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.site-header-logo img {
+  display: block;
+  height: 34px;
+  width: auto;
+}
+
 .site-header a,
 .site-footer a {
   color: var(--link);
