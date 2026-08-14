@@ -25,7 +25,12 @@ async function main() {
     { timeout: 60_000 },
   );
   await page.waitForFunction(() => Chart.getChart("radar-chart") != null);
-  await page.waitForFunction(() => Chart.getChart("bar-chart") != null);
+  await page.evaluate(() => {
+    document.querySelector(".chart-card--systemic")?.scrollIntoView({ block: "center" });
+  });
+  await page.waitForFunction(
+    () => document.querySelector(".chart-card--systemic.chart-card--in-view") != null,
+  );
   await page.waitForTimeout(800);
 
   await page.addStyleTag({

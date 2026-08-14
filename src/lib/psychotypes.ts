@@ -24,6 +24,17 @@ export const SYSTEMIC_LABELS: Record<string, string> = {
   sys_delegation: "Делегирование",
 };
 
+export const SYSTEMIC_COLORS: Record<
+  string,
+  { from: string; to: string; value: string }
+> = {
+  sys_energy: { from: "#fb923c", to: "#f97316", value: "#ea580c" },
+  sys_result: { from: "#4ade80", to: "#22c55e", value: "#15803d" },
+  sys_quality: { from: "#a78bfa", to: "#8b5cf6", value: "#6d28d9" },
+  sys_rules: { from: "#64748b", to: "#475569", value: "#334155" },
+  sys_delegation: { from: "#22d3ee", to: "#06b6d4", value: "#0e7490" },
+};
+
 export const RADAR_SCALE_ORDER = [
   "introversion",
   "sensitivity",

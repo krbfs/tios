@@ -31,7 +31,7 @@
         <h1 id="result-title">Загрузка результата…</h1>
         <p id="psychotype-title" class="muted"></p>
 
-        <div class="chart-card">
+        <div class="chart-card chart-card--radar">
           <h2>8 шкал личности</h2>
           <p id="radar-average" class="muted" style="margin: 0 0 12px"></p>
           <div class="radar-chart-layout">
@@ -44,9 +44,9 @@
           </div>
         </div>
 
-        <div class="chart-card">
+        <div class="chart-card chart-card--systemic">
           <h2>5 системных свойств</h2>
-          <canvas id="bar-chart" height="280"></canvas>
+          <div id="systemic-bars" class="systemic-bars" aria-label="5 системных свойств"></div>
         </div>
 
         <section id="content-blocks"></section>
@@ -126,13 +126,14 @@
         SCALE_LABELS,
         SCALE_TABLE_ORDER,
         SYSTEMIC_LABELS,
-        toDisplayScaleValue,
+        SYSTEMIC_COLORS,
+        formatScaleValue,
       } from "/js/psychotypes.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
       import { initSiteAnalytics } from "/js/analytics.js";
-      import { initScrollReveal, prefersReducedMotion } from "/js/motion.js";
+      import { initScrollReveal, observeOnReveal, prefersReducedMotion } from "/js/motion.js";
       import { mountResultPromo } from "/js/result-promo.js";
 
       initSiteAnalytics();
@@ -159,7 +160,6 @@
 
       let resultData = null;
       let radarChart = null;
-      let barChart = null;
 
       const cabinetLink = document.getElementById("cabinet-link");
       if (getAccessToken()) {
@@ -170,10 +170,31 @@
           : "Личный кабинет";
       }
 
-      const CHART_REVEAL_MS = {
-        radar: 240,
-        bar: 340,
-      };
+      function initChartReveal(result) {
+        const scores = result.scaled_scores || {};
+        const systemic = result.scaled_systemic || {};
+        const radarCard = document.querySelector(".chart-card--radar");
+        const systemicCard = document.querySelector(".chart-card--systemic");
+
+        function revealRadar() {
+          radarCard?.classList.add("chart-card--in-view");
+          buildRadarChart(scores);
+        }
+
+        function revealSystemic() {
+          systemicCard?.classList.add("chart-card--in-view");
+          buildSystemicBars(systemic);
+        }
+
+        if (prefersReducedMotion()) {
+          revealRadar();
+          revealSystemic();
+          return;
+        }
+
+        observeOnReveal(radarCard, revealRadar);
+        observeOnReveal(systemicCard, revealSystemic);
+      }
 
       function chartAnimation() {
         if (prefersReducedMotion()) {
@@ -183,20 +204,6 @@
           duration: 1400,
           easing: "easeOutQuart",
         };
-      }
-
-      function scheduleCharts(result) {
-        const scores = result.scaled_scores || {};
-        const systemic = result.scaled_systemic || {};
-
-        if (prefersReducedMotion()) {
-          buildRadarChart(scores);
-          buildBarChart(systemic);
-          return;
-        }
-
-        window.setTimeout(() => buildRadarChart(scores), CHART_REVEAL_MS.radar);
-        window.setTimeout(() => buildBarChart(systemic), CHART_REVEAL_MS.bar);
       }
 
       function markResultLoaded() {
@@ -209,6 +216,49 @@
         errorEl.textContent = message;
         errorEl.hidden = false;
       }
+
+      const RADAR_TICK_AXIS_INDEX = RADAR_SCALE_ORDER.indexOf("anxiety");
+      const RADAR_TICK_VALUES = [6, 12, 18, 24, 30];
+
+      const radialTicksPlugin = {
+        id: "radarVerticalTicks",
+        afterDraw(chart) {
+          const scale = chart.scales.r;
+          if (!scale || RADAR_TICK_AXIS_INDEX < 0) return;
+
+          const { ctx } = chart;
+          const angle = scale.getIndexAngle(RADAR_TICK_AXIS_INDEX);
+          const centerX = scale.xCenter;
+          const centerY = scale.yCenter;
+          const labelOffset = 12;
+
+          ctx.save();
+          ctx.fillStyle = "#64748b";
+          ctx.font = "11px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          for (const value of RADAR_TICK_VALUES) {
+            const radius = scale.getDistanceFromCenterForValue(value);
+            const x =
+              centerX +
+              Math.cos(angle) * radius +
+              Math.cos(angle + Math.PI / 2) * labelOffset;
+            const y =
+              centerY +
+              Math.sin(angle) * radius +
+              Math.sin(angle + Math.PI / 2) * labelOffset;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(String(value), 0, 0);
+            ctx.restore();
+          }
+
+          ctx.restore();
+        },
+      };
 
       const zonePlugin = {
         id: "radarZones",
@@ -257,8 +307,8 @@
 
           labelCell.scope = "row";
           labelCell.textContent = SCALE_LABELS[key].toLowerCase();
-          valueCell.textContent = String(toDisplayScaleValue(scores[key]));
-          row.style.setProperty("--scale-row-delay", `${320 + index * 50}ms`);
+          valueCell.textContent = formatScaleValue(scores[key]);
+          row.style.setProperty("--scale-row-delay", `${80 + index * 50}ms`);
 
           row.append(labelCell, valueCell);
           scaleTableBody.appendChild(row);
@@ -329,7 +379,7 @@
                 min: 0,
                 max: 30,
                 startAngle: -90,
-                ticks: { stepSize: 6 },
+                ticks: { display: false, stepSize: 6 },
                 pointLabels: { font: { size: 12 } },
               },
             },
@@ -345,56 +395,45 @@
               },
             },
           },
-          plugins: [zonePlugin],
+          plugins: [zonePlugin, radialTicksPlugin],
         });
       }
 
-      function buildBarChart(systemic) {
-        const keys = Object.keys(SYSTEMIC_LABELS);
-        const labels = keys.map((key) => SYSTEMIC_LABELS[key]);
-        const values = keys.map((key) => Number(systemic[key] ?? 0));
+      function buildSystemicBars(systemic) {
+        const root = document.getElementById("systemic-bars");
+        root.replaceChildren();
 
-        const ctx = document.getElementById("bar-chart");
-        if (barChart) barChart.destroy();
+        for (const [index, key] of Object.keys(SYSTEMIC_LABELS).entries()) {
+          const raw = Number(systemic[key] ?? 0);
+          const barTarget = `${Math.max(0, Math.min(100, (raw / 30) * 100))}%`;
 
-        barChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Системные свойства",
-                data: values,
-                backgroundColor: "rgba(26, 84, 216, 0.7)",
-                borderColor: "#1a54d8",
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            animation: chartAnimation(),
-            animations: prefersReducedMotion()
-              ? undefined
-              : {
-                  y: {
-                    duration: 1200,
-                    easing: "easeOutQuart",
-                    from: (ctx) =>
-                      ctx.chart.scales.y ? ctx.chart.scales.y.getPixelForValue(0) : undefined,
-                  },
-                },
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 30,
-              },
-            },
-            plugins: {
-              legend: { display: false },
-            },
-          },
-        });
+          const colors = SYSTEMIC_COLORS[key];
+          const row = document.createElement("div");
+          row.className = "systemic-row";
+          row.style.setProperty("--systemic-row-delay", `${80 + index * 70}ms`);
+          row.style.setProperty("--systemic-bar-target", barTarget);
+          row.style.setProperty("--systemic-fill-from", colors.from);
+          row.style.setProperty("--systemic-fill-to", colors.to);
+          row.style.setProperty("--systemic-value-color", colors.value);
+
+          const label = document.createElement("span");
+          label.className = "systemic-label";
+          label.textContent = SYSTEMIC_LABELS[key];
+
+          const track = document.createElement("span");
+          track.className = "systemic-track";
+          track.setAttribute("aria-hidden", "true");
+          const fill = document.createElement("span");
+          fill.className = "systemic-fill";
+          track.appendChild(fill);
+
+          const value = document.createElement("span");
+          value.className = "systemic-value";
+          value.textContent = formatScaleValue(raw);
+
+          row.append(label, track, value);
+          root.appendChild(row);
+        }
       }
 
       function renderBlock(block) {
@@ -438,25 +477,23 @@
         updateRadarAverage(result.scaled_scores || {});
 
         contentBlocksEl.replaceChildren();
-        (result.content_blocks || []).forEach((block, blockIndex) => {
+        (result.content_blocks || []).forEach((block) => {
           const element = renderBlock(block);
-          element.classList.add("content-block--reveal");
-          element.style.animationDelay = `${420 + blockIndex * 100}ms`;
+          element.classList.add("motion-reveal");
           contentBlocksEl.appendChild(element);
         });
 
         if (result.admin_comment) {
           adminNoteBody.textContent = result.admin_comment;
           adminNote.hidden = false;
-          adminNote.classList.add("content-block--reveal");
-          adminNote.style.animationDelay = `${420 + (result.content_blocks?.length || 0) * 100}ms`;
+          adminNote.classList.add("motion-reveal");
         } else {
           adminNote.hidden = true;
         }
 
         updateResultLink(result);
         markResultLoaded();
-        scheduleCharts(result);
+        initChartReveal(result);
       }
 
       async function loadResult() {

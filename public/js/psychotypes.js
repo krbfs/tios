@@ -17,6 +17,15 @@ export const SYSTEMIC_LABELS = {
   sys_delegation: "Делегирование",
 };
 
+/** Bar colors matched to each systemic property meaning. */
+export const SYSTEMIC_COLORS = {
+  sys_energy: { from: "#fb923c", to: "#f97316", value: "#ea580c" },
+  sys_result: { from: "#4ade80", to: "#22c55e", value: "#15803d" },
+  sys_quality: { from: "#a78bfa", to: "#8b5cf6", value: "#6d28d9" },
+  sys_rules: { from: "#64748b", to: "#475569", value: "#334155" },
+  sys_delegation: { from: "#22d3ee", to: "#06b6d4", value: "#0e7490" },
+};
+
 export const RADAR_SCALE_ORDER = [
   "introversion",
   "sensitivity",
@@ -28,7 +37,7 @@ export const RADAR_SCALE_ORDER = [
   "rigidity",
 ];
 
-/** Table order next to the radar chart (0–10 display scale). */
+/** Table order next to the radar chart (raw 0–30). */
 export const SCALE_TABLE_ORDER = [
   "anxiety",
   "lability",
@@ -40,9 +49,10 @@ export const SCALE_TABLE_ORDER = [
   "sensitivity",
 ];
 
-/** Raw scale is 0–30; display as 0–10. */
-export function toDisplayScaleValue(rawValue) {
-  return Math.round(Number(rawValue ?? 0) / 3);
+/** Raw scale is 0–30 (8 шкал Собчик и 5 системных свойств). */
+export function formatScaleValue(rawValue) {
+  const value = Number(rawValue ?? 0);
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
 }
 
 const SCALE_KEYS = [

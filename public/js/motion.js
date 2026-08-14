@@ -35,3 +35,33 @@ export function revealStaggered(items, baseDelayMs = 100) {
   });
   initScrollReveal(items[0]?.parentElement || document);
 }
+
+export function observeOnReveal(element, onReveal, options = {}) {
+  if (!element || typeof onReveal !== "function") {
+    return () => {};
+  }
+
+  if (prefersReducedMotion()) {
+    onReveal();
+    return () => {};
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          onReveal();
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.18,
+      rootMargin: "0px 0px -6% 0px",
+      ...options,
+    },
+  );
+
+  observer.observe(element);
+  return () => observer.disconnect();
+}
