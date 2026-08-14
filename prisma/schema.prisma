@@ -44,8 +44,8 @@ model TestSession {
   startedAt   DateTime  @default(now()) @map("started_at")
   completedAt DateTime? @map("completed_at")
 
-  user   User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  result TestResult?
+  user   User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  results TestResult[]
 
   @@index([userId])
   @@map("test_sessions")
@@ -54,7 +54,7 @@ model TestSession {
 /// 3. TestResult
 model TestResult {
   id                   String   @id @default(cuid())
-  sessionId            String   @unique @map("session_id")
+  sessionId            String   @map("session_id")
   answers              Json     @db.JsonB
   scaledScores         Json?    @map("scaled_scores") @db.JsonB
   scaledSystemic       Json?    @map("scaled_systemic") @db.JsonB
@@ -72,6 +72,7 @@ model TestResult {
 
   session TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
   @@index([psychotypeCode])
   @@index([mode])
   @@map("test_results")

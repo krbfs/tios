@@ -61,18 +61,11 @@ export async function POST(request: Request) {
         completedAt: new Date(),
       },
     });
-  } else if (!session.completedAt) {
+  } else {
     session = await db.testSession.update({
       where: { id: session.id },
       data: { completedAt: new Date() },
     });
-  }
-
-  const existingForSession = await db.testResult.findUnique({
-    where: { sessionId: session.id },
-  });
-  if (existingForSession) {
-    return error("Session already has a submitted result", 409);
   }
 
   const result = await db.testResult.create({
