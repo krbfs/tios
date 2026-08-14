@@ -1,4 +1,4 @@
-// Prisma models for Teamconstructor 2.0 (Next.js).
+// Prisma models for TC26 2.0 (Next.js).
 // Equivalent of Django models.py — stack is Next + Neon, not Django.
 
 generator client {

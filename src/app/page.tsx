@@ -114,7 +114,7 @@ export default function HomePage() {
       >
         <RevealOnScroll>
           <h2 className="mb-6 text-center text-3xl leading-[1.1] sm:text-3xl md:text-4xl">
-            Почему стоит пройти тест Teamconstructor
+            Почему стоит пройти тест TC26
           </h2>
         </RevealOnScroll>
         <ul className="mx-auto max-w-2xl list-none p-0">
@@ -235,18 +235,24 @@ export default function HomePage() {
         className="container mx-auto px-4 py-8 md:py-12 lg:py-24"
       >
         <RevealOnScroll>
-          <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center">
-            <p className="max-w-[85%] text-2xl leading-normal text-muted sm:leading-7">
-              Наш партнер -{" "}
-              <a
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4"
-                href="https://insighter-service.com/"
-              >
-                ООО Инсайтер
-              </a>
+          <div className="mx-auto max-w-[58rem] rounded-lg border border-solid border-border bg-white p-8 text-center md:p-10">
+            <p className="text-sm font-semibold uppercase tracking-wide text-muted">
+              Партнер проекта
             </p>
+            <h2 className="mt-2 text-2xl font-bold md:text-3xl">Insighter</h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted sm:text-lg sm:leading-7">
+              Поведенческая аналитика, исследования аудитории и инструменты для
+              развития команд и руководителей.
+            </p>
+            <a
+              href="https://insighter.by/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-lg mt-6 font-bold"
+              data-ga-event="cta_home_partner_insighter"
+            >
+              Перейти на insighter.by
+            </a>
           </div>
         </RevealOnScroll>
       </section>

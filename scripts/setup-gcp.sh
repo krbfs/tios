@@ -33,7 +33,7 @@ else
   gcloud artifacts repositories create "${REPO}" \
     --repository-format=docker \
     --location="${REGION}" \
-    --description="Teamconstructor tc26 images"
+    --description="TC26 tc26 images"
 fi
 
 PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"

@@ -1,4 +1,4 @@
-# Teamconstructor 2.0 — UI prototype (`tc_26`)
+# TC26 — UI prototype (`tc_26`)
 
 Визуальная копия ключевых страниц без бэкенда:
 

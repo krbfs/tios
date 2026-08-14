@@ -103,7 +103,7 @@ function siteBase(baseUrl?: string): string {
   );
 }
 
-/** Public result URL (teamconstructor.pro style). */
+/** Public result URL (tc26-wppkmlz42a-ew.a.run.app style). */
 export function buildResultUrl(encdata: string, baseUrl?: string): string {
   return `${siteBase(baseUrl)}${RESULT_PATH}?encdata=${encodeURIComponent(encdata)}`;
 }

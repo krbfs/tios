@@ -4,7 +4,7 @@ export function Footer() {
       <div className="container-page py-4 text-xs">
         <div className="grid gap-3 md:grid-cols-3">
           <div className="text-center text-muted md:text-left">
-            © 2026 | Teamconstructor
+            © 2026 | TC26
           </div>
           <div className="text-center">
             <a
@@ -19,9 +19,9 @@ export function Footer() {
           <div className="text-center md:text-right">
             <a
               className="text-muted underline underline-offset-2 hover:text-primary"
-              href="mailto:support@teamconstructor.pro"
+              href="mailto:support@tc26.pro"
             >
-              support@teamconstructor.pro
+              support@tc26.pro
             </a>
           </div>
         </div>

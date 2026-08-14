@@ -45,9 +45,9 @@ export const metadata: Metadata = {
     images: [
       {
         url: absoluteUrl("/tc-logo-full.svg"),
-        width: 109,
+        width: 108,
         height: 34,
-        alt: "Teamconstructor",
+        alt: "TC26",
       },
     ],
   },

@@ -11,13 +11,13 @@ export function Header() {
   return (
     <header className="z-40 border-0 border-b border-solid border-border bg-white">
       <div className="container-page flex min-h-16 items-center justify-between py-0">
-        <Link href="/" className="block">
+        <Link href="/" className="inline-flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            alt="teamconstructor logo"
-            width={109}
+            alt="TC26"
+            width={108}
             height={34}
-            className="mr-2 inline-block"
+            className="block h-[34px] w-auto"
             src="/tc-logo-full.svg"
           />
         </Link>

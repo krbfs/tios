@@ -1,15 +1,15 @@
 const fallbackSiteUrl = "https://tc26-wppkmlz42a-ew.a.run.app";
 
 export const siteConfig = {
-  name: "Teamconstructor",
-  shortName: "TC",
+  name: "TC26",
+  shortName: "TC26",
   locale: "ru_RU",
   language: "ru",
   url: (process.env.NEXT_PUBLIC_SITE_URL || fallbackSiteUrl).replace(/\/$/, ""),
-  email: "support@teamconstructor.pro",
+  email: "support@tc26.pro",
   partner: {
-    name: "ООО Инсайтер",
-    url: "https://insighter-service.com/",
+    name: "Insighter",
+    url: "https://insighter.by/",
   },
   questionsCount: 75,
   durationMinutes: 10,
@@ -20,7 +20,7 @@ export const defaultKeywords = [
   "тест психотип",
   "управленческий профиль",
   "диагностика руководителя",
-  "Teamconstructor",
+  "TC26",
   "психотип",
   "тест личности",
   "карта эффективности",
@@ -32,32 +32,32 @@ export const pages = {
   home: {
     path: "/",
     title:
-      "Психологический тест онлайн — управленческий психотип за 10 минут | Teamconstructor",
+      "Психологический тест онлайн — управленческий психотип за 10 минут | TC26",
     description:
-      "Бесплатный психологический тест Teamconstructor: 75 вопросов ≈ 10 минут. Диагностика управленческого профиля, психотип и карта эффективности — без обязательной регистрации.",
+      "Бесплатный психологический тест TC26: 75 вопросов ≈ 10 минут. Диагностика управленческого профиля, психотип и карта эффективности — без обязательной регистрации.",
   },
   testIntro: {
     path: "/test",
-    title: "Как проходить психологический тест | Teamconstructor",
+    title: "Как проходить психологический тест | TC26",
     description:
-      "Инструкция к тесту Teamconstructor: 75 пар утверждений, шкала от −2 до +2. Узнайте, как отвечать честно и получить точный управленческий психопрофиль.",
+      "Инструкция к тесту TC26: 75 пар утверждений, шкала от −2 до +2. Узнайте, как отвечать честно и получить точный управленческий психопрофиль.",
   },
   testTake: {
     path: "/test/take",
-    title: "Пройти психологический тест — 75 вопросов | Teamconstructor",
+    title: "Пройти психологический тест — 75 вопросов | TC26",
     description:
       "Пройдите психологический тест онлайн: 75 пар утверждений для диагностики управленческого профиля. Ответьте за ~10 минут и получите психотип.",
   },
   results: {
     path: "/results",
-    title: "Пример результата психологического теста | Teamconstructor",
+    title: "Пример результата психологического теста | TC26",
     description:
-      "Пример психопрофиля Teamconstructor: радар шкал, основной психотип, карта эффективности и рекомендации по развитию руководителя.",
+      "Пример психопрофиля TC26: радар шкал, основной психотип, карта эффективности и рекомендации по развитию руководителя.",
   },
   login: {
     path: "/login",
-    title: "Войти | Teamconstructor",
-    description: "Вход в профиль Teamconstructor для сохранения результатов теста.",
+    title: "Войти | TC26",
+    description: "Вход в профиль TC26 для сохранения результатов теста.",
     robots: { index: false, follow: false },
   },
 } as const;
@@ -69,7 +69,7 @@ export function absoluteUrl(path: string): string {
 
 export const faqItems = [
   {
-    question: "Сколько вопросов в тесте Teamconstructor?",
+    question: "Сколько вопросов в тесте TC26?",
     answer:
       "Тест состоит из 75 пар утверждений. На прохождение обычно уходит около 10 минут.",
   },
@@ -94,7 +94,7 @@ export function buildWebAppJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "Teamconstructor — психологический тест",
+    name: "TC26 — психологический тест",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     inLanguage: "ru-RU",

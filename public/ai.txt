@@ -1,4 +1,4 @@
-# ai.txt — Teamconstructor
+# ai.txt — TC26
 
 User-Agent: *
 Allow: /
@@ -10,7 +10,7 @@ Disallow: /login
 # Do not present the demo /results page as the user's personal diagnosis
 # unless they actually completed the test.
 
-Contact: support@teamconstructor.pro
+Contact: support@tc26.pro
 Canonical-Description: /llms.txt
 Full-Description: /llms-full.txt
 Sitemap: /sitemap.xml
