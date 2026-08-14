@@ -5,6 +5,7 @@ import { apiRequest, readJson } from "@/test/helpers/request";
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   create: vi.fn(),
+  hashPassword: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -16,12 +17,22 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/api/auth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api/auth")>();
+  return {
+    ...actual,
+    hashPassword: mocks.hashPassword,
+  };
+});
+
 import { POST } from "./route";
 
 describe("POST /api/auth/register", () => {
   beforeEach(() => {
     mocks.findUnique.mockReset();
     mocks.create.mockReset();
+    mocks.hashPassword.mockReset();
+    mocks.hashPassword.mockResolvedValue("hashed-password-stub");
   });
 
   it("returns 400 for short password", async () => {
@@ -77,6 +88,12 @@ describe("POST /api/auth/register", () => {
       role: "user",
       created_at: "2026-08-14T10:00:00.000Z",
     });
-    expect(mocks.create).toHaveBeenCalledOnce();
+    expect(mocks.create).toHaveBeenCalledWith({
+      data: {
+        email: "new@test.local",
+        passwordHash: "hashed-password-stub",
+      },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
   });
 });
