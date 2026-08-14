@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:mobile": "tsx scripts/test-mobile-layout.ts",
     "export:demo-pdf": "tsx scripts/export-demo-result-pdf.ts",
     "docker:build": "./scripts/docker-local.sh build",
     "docker:run": "./scripts/docker-local.sh run",

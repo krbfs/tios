@@ -230,7 +230,7 @@ def service_url(cfg: dict[str, str]) -> str:
 
 def run_tests() -> None:
     """Mandatory pre-deploy gate. Do not bypass."""
-    print("==> vitest: calculations + encdata", flush=True)
+    print("==> vitest: calculations, encdata, API routes", flush=True)
     run(["npm", "test"])
     print("==> deploy.py unit tests", flush=True)
     run(
@@ -246,6 +246,8 @@ def run_tests() -> None:
             "-q",
         ]
     )
+    print("==> mobile layout tests (playwright)", flush=True)
+    run(["npm", "run", "test:mobile"])
     print("==> all tests passed", flush=True)
 
 
