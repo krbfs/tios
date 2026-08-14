@@ -19,6 +19,8 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -229,6 +231,36 @@ def service_url(cfg: dict[str, str]) -> str:
     )
 
 
+def wait_for_live_url(url: str, *, attempts: int = 30, delay_sec: float = 2.0) -> None:
+    """Wait until Cloud Run serves HTTP after a fresh deploy."""
+    probe = url.rstrip("/") + "/"
+    last_error = "unknown error"
+
+    for attempt in range(1, attempts + 1):
+        try:
+            with urllib.request.urlopen(probe, timeout=8) as response:
+                if 200 <= response.status < 500:
+                    print(f"==> live URL ready: {probe}", flush=True)
+                    return
+                last_error = f"HTTP {response.status}"
+        except urllib.error.HTTPError as exc:
+            if 200 <= exc.code < 500:
+                print(f"==> live URL ready: {probe}", flush=True)
+                return
+            last_error = f"HTTP {exc.code}"
+        except OSError as exc:
+            last_error = str(exc)
+
+        if attempt < attempts:
+            print(
+                f"==> waiting for live URL ({attempt}/{attempts}): {last_error}",
+                flush=True,
+            )
+            time.sleep(delay_sec)
+
+    raise SystemExit(f"Live URL not reachable after deploy: {probe} ({last_error})")
+
+
 def mobile_layout_base_url(cfg: dict[str, str]) -> str:
     """URL for Playwright mobile layout tests (live site, not local build)."""
     explicit = os.environ.get("BASE_URL", "").strip()
@@ -265,6 +297,8 @@ def run_mobile_layout_tests(cfg: dict[str, str], *, base_url: str | None = None)
     print(f"==> mobile layout tests (playwright, {url})", flush=True)
     env = os.environ.copy()
     env["BASE_URL"] = url
+    # Compare only the commit being deployed vs its parent (main === HEAD on deploy).
+    env.setdefault("MOBILE_TEST_BASE", "HEAD~1")
     subprocess.run(
         ["npm", "run", "test:mobile"],
         cwd=ROOT,
@@ -313,6 +347,7 @@ def deploy(cfg: dict[str, str]) -> None:
     )
     sync_runtime_env(cfg)
     live_url = service_url(cfg)
+    wait_for_live_url(live_url)
     run_mobile_layout_tests(cfg, base_url=live_url)
     print(f"Live: {live_url}", flush=True)
 

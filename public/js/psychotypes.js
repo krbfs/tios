@@ -26,15 +26,16 @@ export const SYSTEMIC_COLORS = {
   sys_delegation: { from: "#22d3ee", to: "#06b6d4", value: "#0e7490" },
 };
 
+/** Radar vertex order clockwise from top (12 o'clock). */
 export const RADAR_SCALE_ORDER = [
-  "introversion",
-  "sensitivity",
   "anxiety",
   "lability",
   "extraversion",
   "spontaneity",
   "aggression",
   "rigidity",
+  "introversion",
+  "sensitivity",
 ];
 
 /** Table order next to the radar chart (raw 0–30). */
@@ -49,10 +50,9 @@ export const SCALE_TABLE_ORDER = [
   "sensitivity",
 ];
 
-/** Raw scale is 0–30 (8 шкал Собчик и 5 системных свойств). */
+/** Raw scale is 0–30; display ceiled to whole numbers. */
 export function formatScaleValue(rawValue) {
-  const value = Number(rawValue ?? 0);
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return String(Math.ceil(Number(rawValue ?? 0)));
 }
 
 const SCALE_KEYS = [

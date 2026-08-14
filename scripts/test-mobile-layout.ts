@@ -125,12 +125,21 @@ function sleep(ms: number) {
 }
 
 async function isServerUp(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
-    return response.ok;
-  } catch {
-    return false;
+  const attempts = process.env.BASE_URL ? 15 : 1;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (response.ok) {
+        return true;
+      }
+    } catch {
+      // retry below
+    }
+    if (attempt < attempts - 1) {
+      await sleep(2000);
+    }
   }
+  return false;
 }
 
 function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {

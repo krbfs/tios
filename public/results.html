@@ -182,8 +182,12 @@
         }
 
         function revealSystemic() {
-          systemicCard?.classList.add("chart-card--in-view");
           buildSystemicBars(systemic);
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              systemicCard?.classList.add("chart-card--in-view");
+            });
+          });
         }
 
         if (prefersReducedMotion()) {
@@ -251,7 +255,7 @@
 
             ctx.save();
             ctx.translate(x, y);
-            ctx.rotate(-Math.PI / 2);
+            ctx.rotate(angle + Math.PI / 2);
             ctx.fillText(String(value), 0, 0);
             ctx.restore();
           }

@@ -21,19 +21,13 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
     "src/components/Footer.tsx",
     "src/components/RevealOnScroll.tsx",
     "src/components/JsonLd.tsx",
-    "public/css/test.css",
-    "public/css/tokens.css",
   ],
   "test-start": [
     "public/test/start.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/js/analytics.js",
   ],
   "test-take": [
     "public/test/take.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/js/analytics.js",
     "public/js/psychotypes.js",
     "public/js/motion.js",
@@ -41,16 +35,12 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
   ],
   login: [
     "public/login.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/css/admin.css",
     "public/js/analytics.js",
     "public/js/user-auth.js",
   ],
   cabinet: [
     "public/cabinet.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/css/admin.css",
     "public/js/analytics.js",
     "public/js/user-auth.js",
@@ -59,16 +49,12 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
   ],
   "admin-login": [
     "public/admin/login.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/css/admin.css",
     "public/js/analytics.js",
     "public/js/admin-auth.js",
   ],
   "admin-results": [
     "public/admin/index.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/css/admin.css",
     "public/js/analytics.js",
     "public/js/admin-auth.js",
@@ -77,8 +63,6 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
   ],
   "demo-result": [
     "public/results.html",
-    "public/css/test.css",
-    "public/css/tokens.css",
     "public/js/analytics.js",
     "public/js/block-templates.js",
     "public/js/session.js",
@@ -123,22 +107,43 @@ function isGitRepo(): boolean {
   }
 }
 
+function gitRev(rev: string): string | null {
+  try {
+    return execSync(`git rev-parse ${rev}`, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
 function resolveDiffBase(): string | null {
   const fromEnv = process.env.MOBILE_TEST_BASE?.trim();
   if (fromEnv) {
     return fromEnv;
   }
 
-  for (const candidate of ["origin/main", "main", "HEAD~1"]) {
-    try {
-      execSync(`git rev-parse --verify ${candidate}`, { stdio: "ignore" });
+  const head = gitRev("HEAD");
+  for (const candidate of ["origin/main", "main"]) {
+    const baseRev = gitRev(candidate);
+    if (baseRev && head && baseRev !== head) {
       return candidate;
-    } catch {
-      // try next
     }
   }
 
-  return null;
+  return gitRev("HEAD~1") ? "HEAD~1" : null;
+}
+
+function collectCommitRangeFiles(base: string, files: Set<string>): void {
+  for (const line of gitLines(["diff", "--name-only", `${base}...HEAD`])) {
+    files.add(normalizeChangedPath(line));
+  }
+  if (files.size === 0) {
+    for (const line of gitLines(["diff", "--name-only", `${base}..HEAD`])) {
+      files.add(normalizeChangedPath(line));
+    }
+  }
 }
 
 export function collectChangedFiles(): string[] {
@@ -147,16 +152,24 @@ export function collectChangedFiles(): string[] {
   }
 
   const files = new Set<string>();
-  for (const line of gitLines(["diff", "--name-only", "HEAD"])) {
-    files.add(normalizeChangedPath(line));
-  }
-  for (const line of gitLines(["diff", "--name-only", "--cached", "HEAD"])) {
-    files.add(normalizeChangedPath(line));
+  const deployMode = Boolean(process.env.BASE_URL?.trim());
+
+  if (!deployMode) {
+    for (const line of gitLines(["diff", "--name-only", "HEAD"])) {
+      files.add(normalizeChangedPath(line));
+    }
+    for (const line of gitLines(["diff", "--name-only", "--cached", "HEAD"])) {
+      files.add(normalizeChangedPath(line));
+    }
   }
 
   const base = resolveDiffBase();
   if (base) {
-    for (const line of gitLines(["diff", "--name-only", `${base}...HEAD`])) {
+    collectCommitRangeFiles(base, files);
+  }
+
+  if (files.size === 0 && gitRev("HEAD~1")) {
+    for (const line of gitLines(["diff", "--name-only", "HEAD~1", "HEAD"])) {
       files.add(normalizeChangedPath(line));
     }
   }
@@ -183,7 +196,7 @@ export function selectPageNames(changedFiles: string[]): PageSelection {
   }
 
   if (changedFiles.length === 0) {
-    return { mode: "all", reason: "no git changes detected" };
+    return { mode: "skip", reason: "no git changes detected" };
   }
 
   if (shouldRunAll(changedFiles)) {

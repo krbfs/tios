@@ -35,15 +35,16 @@ export const SYSTEMIC_COLORS: Record<
   sys_delegation: { from: "#22d3ee", to: "#06b6d4", value: "#0e7490" },
 };
 
+/** Radar vertex order clockwise from top (12 o'clock). */
 export const RADAR_SCALE_ORDER = [
-  "introversion",
-  "sensitivity",
   "anxiety",
   "lability",
   "extraversion",
   "spontaneity",
   "aggression",
   "rigidity",
+  "introversion",
+  "sensitivity",
 ] as const;
 
 type PsychotypeMeta = {
