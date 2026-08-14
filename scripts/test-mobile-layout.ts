@@ -3,11 +3,11 @@
  * Checks horizontal overflow, header separation, and key UI visibility.
  *
  * Usage:
- *   npm run test:mobile              # only pages affected by git changes
+ *   npm run test:mobile              # local build + server (default)
  *   npm run test:mobile:all          # all pages × all viewports
  *   MOBILE_TEST_BASE=origin/main npm run test:mobile
- *   BASE_URL=http://localhost:3000 npm run test:mobile
- *   SKIP_BUILD=1 npm run test:mobile   # reuse existing .next build
+ *   BASE_URL=https://… npm run test:mobile   # live prod/staging, no local build
+ *   SKIP_BUILD=1 npm run test:mobile         # reuse existing .next build locally
  */
 
 import { spawn, type ChildProcess } from "node:child_process";

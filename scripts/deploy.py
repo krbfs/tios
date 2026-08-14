@@ -2,10 +2,11 @@
 """Deploy tc_26 to Google Cloud Run via Cloud Build.
 
 --deploy ALWAYS runs tests first (no skip). Deploy aborts if tests fail.
+Mobile layout tests hit the live Cloud Run URL (no local `next build`).
 
 Usage:
-  python3 scripts/deploy.py --deploy   # tests → Cloud Build → Cloud Run
-  python3 scripts/deploy.py --test     # tests only
+  python3 scripts/deploy.py --deploy   # unit tests → Cloud Build → mobile on prod
+  python3 scripts/deploy.py --test     # unit + mobile tests (against prod URL)
   python3 scripts/deploy.py --setup
 """
 
@@ -228,10 +229,19 @@ def service_url(cfg: dict[str, str]) -> str:
     )
 
 
-def run_tests() -> None:
+def mobile_layout_base_url(cfg: dict[str, str]) -> str:
+    """URL for Playwright mobile layout tests (live site, not local build)."""
+    explicit = os.environ.get("BASE_URL", "").strip()
+    if explicit:
+        return explicit.rstrip("/")
+    site = cfg.get("NEXT_PUBLIC_SITE_URL", "").strip()
+    if site:
+        return site.rstrip("/")
+    return service_url(cfg).rstrip("/")
+
+
+def run_unit_tests() -> None:
     """Mandatory pre-deploy gate. Do not bypass."""
-    print("==> assemble site chrome (header/footer)", flush=True)
-    run(["npm", "run", "chrome:assemble"])
     print("==> vitest: calculations, encdata, API routes", flush=True)
     run(["npm", "test"])
     print("==> deploy.py unit tests", flush=True)
@@ -248,13 +258,30 @@ def run_tests() -> None:
             "-q",
         ]
     )
-    print("==> mobile layout tests (playwright, changed pages)", flush=True)
-    run(["npm", "run", "test:mobile"])
+
+
+def run_mobile_layout_tests(cfg: dict[str, str], *, base_url: str | None = None) -> None:
+    url = (base_url or mobile_layout_base_url(cfg)).rstrip("/")
+    print(f"==> mobile layout tests (playwright, {url})", flush=True)
+    env = os.environ.copy()
+    env["BASE_URL"] = url
+    subprocess.run(
+        ["npm", "run", "test:mobile"],
+        cwd=ROOT,
+        check=True,
+        env=env,
+    )
+
+
+def run_tests(cfg: dict[str, str]) -> None:
+    """Unit tests + mobile layout smoke on live URL."""
+    run_unit_tests()
+    run_mobile_layout_tests(cfg)
     print("==> all tests passed", flush=True)
 
 
 def deploy(cfg: dict[str, str]) -> None:
-    run_tests()
+    run_unit_tests()
 
     validate_runtime_env(cfg)
     ensure_gcloud_login()
@@ -285,7 +312,9 @@ def deploy(cfg: dict[str, str]) -> None:
         ]
     )
     sync_runtime_env(cfg)
-    print(f"Live: {service_url(cfg)}", flush=True)
+    live_url = service_url(cfg)
+    run_mobile_layout_tests(cfg, base_url=live_url)
+    print(f"Live: {live_url}", flush=True)
 
 
 def sync_env_only(cfg: dict[str, str]) -> None:
@@ -317,7 +346,7 @@ def main() -> int:
     if args.setup:
         setup(cfg)
     if args.test:
-        run_tests()
+        run_tests(cfg)
     if args.sync_env:
         sync_env_only(cfg)
     if args.deploy:

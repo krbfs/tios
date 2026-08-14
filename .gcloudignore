@@ -10,5 +10,7 @@ node_modules
 coverage
 npm-debug.log*
 docker-compose.yml
-scripts
+scripts/*
+!scripts/assemble-chrome.ts
+!scripts/ensure-playwright.mjs
 deploy

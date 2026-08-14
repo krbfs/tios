@@ -7,8 +7,10 @@ node_modules
 Dockerfile
 docker-compose.yml
 cloudbuild.yaml
+scripts/*
+!scripts/assemble-chrome.ts
+!scripts/ensure-playwright.mjs
 deploy
-scripts
 *.md
 .env*
 npm-debug.log*
