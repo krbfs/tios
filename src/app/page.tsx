@@ -90,13 +90,18 @@ export default function HomePage() {
             рекомендации по их оптимизации
           </p>
           <div className="motion-fade-up motion-delay-3 space-x-4">
-            <Link href="/test" className="btn btn-primary btn-lg font-bold">
-              Узнать свой психотип
-            </Link>
-            <Link
-              href={`/quiz/result?encdata=${encodeURIComponent(getDemoEncdata())}`}
-              className="btn btn-outline btn-lg font-bold"
-            >
+          <Link
+            href="/test"
+            className="btn btn-primary btn-lg font-bold"
+            data-ga-event="cta_home_start_test"
+          >
+            Узнать свой психотип
+          </Link>
+          <Link
+            href={`/quiz/result?encdata=${encodeURIComponent(getDemoEncdata())}`}
+            className="btn btn-outline btn-lg font-bold"
+            data-ga-event="cta_home_demo_result"
+          >
               Пример результата
             </Link>
           </div>
@@ -186,7 +191,11 @@ export default function HomePage() {
             результаты и наблюдать за динамикой изменения своего состояния.
           </p>
           <div className="mt-6 space-x-4 text-center">
-            <Link href="/test" className="btn btn-primary btn-lg font-bold">
+            <Link
+              href="/test"
+              className="btn btn-primary btn-lg font-bold"
+              data-ga-event="cta_home_start_test_footer"
+            >
               Пройти тест
             </Link>
           </div>

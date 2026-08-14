@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import {
@@ -81,6 +82,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={`${openSans.variable} antialiased`}>
+        <GoogleAnalytics />
         <JsonLd data={[buildWebsiteJsonLd(), buildWebAppJsonLd()]} />
         <div className="app-shell">
           <Header />

@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Начало теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
   </head>
@@ -46,10 +47,16 @@
         </p>
 
         <div class="actions">
-          <button id="start-btn" class="btn btn-primary" type="button" disabled>
+          <button
+            id="start-btn"
+            class="btn btn-primary"
+            type="button"
+            disabled
+            data-ga-event="cta_test_start"
+          >
             Начать тест
           </button>
-          <a class="btn btn-outline" href="/login.html">Войти (необязательно)</a>
+          <a class="btn btn-outline" href="/login.html" data-ga-event="cta_test_login_optional">Войти (необязательно)</a>
         </div>
 
         <p id="error" class="error" hidden></p>
@@ -61,6 +68,7 @@
     </footer>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import {
         CONSENT_TEXT,
         CONSENT_VERSION,
@@ -68,6 +76,8 @@
         getSessionUuid,
         markConsentGiven,
       } from "/js/session.js";
+
+      initSiteAnalytics();
 
       const consentCheckbox = document.getElementById("consent");
       const startBtn = document.getElementById("start-btn");

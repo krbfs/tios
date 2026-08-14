@@ -22,7 +22,7 @@ export function Header() {
           />
         </Link>
         <div>
-          <Link href={loginHref} className="btn btn-outline">
+          <Link href={loginHref} className="btn btn-outline" data-ga-event="cta_header_login">
             Войти
           </Link>
         </div>

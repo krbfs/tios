@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Вход — Админ Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -22,14 +23,17 @@
             Пароль
             <input id="password" type="password" required autocomplete="current-password" />
           </label>
-          <button class="btn btn-primary" type="submit">Войти</button>
+          <button class="btn btn-primary" type="submit" data-ga-event="cta_admin_login_submit">Войти</button>
           <p id="error" class="error" hidden></p>
         </form>
       </div>
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { getStoredUser, isAdmin, login } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const next = params.get("next") || "/admin/index.html";

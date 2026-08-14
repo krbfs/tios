@@ -13,7 +13,7 @@
       <div class="container admin-nav">
         <a href="/">Teamconstructor</a>
         <span class="admin-nav-spacer"></span>
-        <a id="cabinet-link" href="/login.html">Войти</a>
+        <a id="cabinet-link" href="/login.html" data-ga-event="cta_result_header_login">Войти</a>
       </div>
     </header>
 
@@ -45,7 +45,7 @@
           <p class="muted" style="margin: 0 0 12px">
             Результат зашит в ссылку. Сохраните ее — вход не нужен. Если вы
             залогинены, тот же результат также появится в
-            <a href="/cabinet.html">личном кабинете</a>.
+            <a href="/cabinet.html" data-ga-event="cta_result_cabinet_link">личном кабинете</a>.
           </p>
           <div class="result-link-row">
             <input
@@ -56,7 +56,12 @@
               placeholder="https://teamconstructor.pro/quiz/result?encdata=…"
               aria-label="Ссылка на ваш результат"
             />
-            <button id="copy-result-btn" class="btn btn-primary" type="button">
+            <button
+              id="copy-result-btn"
+              class="btn btn-primary"
+              type="button"
+              data-ga-event="cta_result_copy"
+            >
               Скопировать результат
             </button>
           </div>
@@ -70,7 +75,7 @@
         <div id="result-promo-root"></div>
 
         <div class="actions">
-          <a class="btn btn-outline" href="/test/start.html">Пройти еще раз</a>
+          <a class="btn btn-outline" href="/test/start.html" data-ga-event="cta_result_retake">Пройти еще раз</a>
         </div>
 
         <p id="error" class="error" hidden></p>
@@ -94,11 +99,11 @@
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
-      import { initGoogleAnalytics } from "/js/analytics.js";
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { initScrollReveal } from "/js/motion.js";
       import { mountResultPromo } from "/js/result-promo.js";
 
-      initGoogleAnalytics();
+      initSiteAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const encdataParam = params.get("encdata");
@@ -126,6 +131,7 @@
       const cabinetLink = document.getElementById("cabinet-link");
       if (getAccessToken()) {
         cabinetLink.href = "/cabinet.html";
+        cabinetLink.dataset.gaEvent = "cta_result_header_cabinet";
         cabinetLink.textContent = getStoredUser()?.email
           ? `Кабинет (${getStoredUser().email})`
           : "Личный кабинет";

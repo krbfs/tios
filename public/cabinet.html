@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Личный кабинет — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -14,7 +15,7 @@
         <strong><a href="/">Teamconstructor</a></strong>
         <span class="admin-nav-spacer"></span>
         <span id="user-email" class="muted"></span>
-        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+        <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_cabinet_logout">Выйти</button>
       </div>
     </header>
 
@@ -46,12 +47,13 @@
         </div>
         <p id="status" class="status-msg muted"></p>
         <div class="actions">
-          <a class="btn btn-primary" href="/test/start.html">Пройти тест</a>
+          <a class="btn btn-primary" href="/test/start.html" data-ga-event="cta_cabinet_start_test">Пройти тест</a>
         </div>
       </div>
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { PSYCHOTYPE_META } from "/js/psychotypes.js";
       import { formatDate } from "/js/session.js";
       import {
@@ -61,6 +63,8 @@
         logoutUser,
         requireUser,
       } from "/js/user-auth.js";
+
+      initSiteAnalytics();
 
       const historyBody = document.getElementById("history-body");
       const statusEl = document.getElementById("status");
@@ -101,7 +105,7 @@
             }</td>
             <td>${
               url
-                ? `<a href="${url}">Открыть</a> · <button type="button" class="btn btn-outline copy-btn" data-url="${url.replace(/"/g, "&quot;")}">Скопировать</button>`
+                ? `<a href="${url}" data-ga-event="cta_cabinet_open_result">Открыть</a> · <button type="button" class="btn btn-outline copy-btn" data-url="${url.replace(/"/g, "&quot;")}" data-ga-event="cta_cabinet_copy_result">Скопировать</button>`
                 : ""
             }</td>
           `;

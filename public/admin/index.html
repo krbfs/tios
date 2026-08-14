@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Результаты — Админ Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -16,7 +17,7 @@
         <a href="/admin/content.html">Контент</a>
         <span class="admin-nav-spacer"></span>
         <span id="admin-email" class="muted"></span>
-        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+        <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_admin_logout">Выйти</button>
       </div>
     </header>
 
@@ -40,8 +41,8 @@
                 <option value="">Все</option>
               </select>
             </label>
-            <button class="btn btn-primary" type="submit">Применить</button>
-            <button id="reset-filters" class="btn btn-outline" type="button">Сбросить</button>
+            <button class="btn btn-primary" type="submit" data-ga-event="cta_admin_filter_apply">Применить</button>
+            <button id="reset-filters" class="btn btn-outline" type="button" data-ga-event="cta_admin_filter_reset">Сбросить</button>
           </div>
         </form>
 
@@ -68,6 +69,7 @@
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { PSYCHOTYPE_META } from "/js/psychotypes.js";
       import { formatDate } from "/js/session.js";
       import {
@@ -77,6 +79,8 @@
         modeLabel,
         requireAdmin,
       } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
 
       const resultsBody = document.getElementById("results-body");
       const statusEl = document.getElementById("status");
@@ -134,7 +138,7 @@
             <td>${psychotypeName}</td>
             <td>${modeLabel(result.mode)}</td>
             <td>${result.user?.email || "Аноним"}</td>
-            <td><a href="/admin/result.html?id=${result.id}">Открыть</a></td>
+            <td><a href="/admin/result.html?id=${result.id}" data-ga-event="cta_admin_open_result">Открыть</a></td>
           `;
           resultsBody.appendChild(row);
         }

@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Прохождение теста — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
   </head>
@@ -46,7 +47,12 @@
             </div>
 
             <div class="actions">
-              <button id="next-btn" class="btn btn-primary" type="button">Далее</button>
+              <button
+                id="next-btn"
+                class="btn btn-primary"
+                type="button"
+                data-ga-event="cta_test_next"
+              >Далее</button>
             </div>
           </div>
         </div>
@@ -68,8 +74,8 @@
           точность результата. Вы уверены, что хотите отправить ответы?
         </p>
         <div class="actions">
-          <button id="modal-back" class="btn btn-outline" type="button">Вернуться</button>
-          <button id="modal-submit" class="btn btn-primary" type="button">
+          <button id="modal-back" class="btn btn-outline" type="button" data-ga-event="cta_test_modal_back">Вернуться</button>
+          <button id="modal-submit" class="btn btn-primary" type="button" data-ga-event="cta_test_modal_submit_fast">
             Отправить все равно
           </button>
         </div>
@@ -85,6 +91,7 @@
     </div>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { SLIDER_LABELS } from "/js/psychotypes.js";
       import {
         apiJson,
@@ -92,6 +99,8 @@
         hasConsent,
       } from "/js/session.js";
       import { prefersReducedMotion } from "/js/motion.js";
+
+      initSiteAnalytics();
 
       if (!hasConsent()) {
         window.location.href = "/test/start.html";
@@ -153,6 +162,8 @@
         updateSliderCaption();
         questionStartedAt = Date.now();
         nextBtn.textContent = index === TOTAL - 1 ? "Отправить" : "Далее";
+        nextBtn.dataset.gaEvent =
+          index === TOTAL - 1 ? "cta_test_submit" : "cta_test_next";
       }
 
       function renderQuestion() {

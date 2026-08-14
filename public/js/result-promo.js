@@ -1,6 +1,5 @@
 /** CTA blocks at the bottom of every test result (Insighter services). */
 
-import { trackGaEvent } from "/js/analytics.js";
 import { initScrollReveal } from "/js/motion.js";
 
 const INSIGHTER = "https://insighter.by";
@@ -80,16 +79,6 @@ export function mountResultPromo(parent) {
       </article>
     </div>
   `;
-
-  section.querySelectorAll("[data-ga-event]").forEach((link) => {
-    link.addEventListener("click", () => {
-      trackGaEvent(link.dataset.gaEvent, {
-        event_category: "result_promo",
-        link_url: link.href,
-        link_text: link.textContent?.trim() || "",
-      });
-    });
-  });
 
   parent.appendChild(section);
   initScrollReveal(section.parentElement || document);

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Контент — Админ Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -15,7 +16,7 @@
         <a href="/admin/index.html">Результаты</a>
         <a href="/admin/content.html" class="active">Контент</a>
         <span class="admin-nav-spacer"></span>
-        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+        <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_admin_logout">Выйти</button>
       </div>
     </header>
 
@@ -37,7 +38,7 @@
                 <option value="">Все</option>
               </select>
             </label>
-            <button class="btn btn-primary" type="submit">Применить</button>
+            <button class="btn btn-primary" type="submit" data-ga-event="cta_admin_content_filter">Применить</button>
           </div>
         </form>
 
@@ -55,7 +56,13 @@
           <input id="import-file" type="file" accept=".json,application/json" />
         </label>
         <div class="actions">
-          <button id="import-btn" class="btn btn-primary" type="button" disabled>
+          <button
+            id="import-btn"
+            class="btn btn-primary"
+            type="button"
+            disabled
+            data-ga-event="cta_admin_content_import"
+          >
             Импортировать
           </button>
         </div>
@@ -64,6 +71,7 @@
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { PSYCHOTYPE_META } from "/js/psychotypes.js";
       import {
         MODES,
@@ -72,6 +80,8 @@
         modeLabel,
         requireAdmin,
       } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
 
       const filterPsychotype = document.getElementById("filter-psychotype");
       const filterMode = document.getElementById("filter-mode");
@@ -132,6 +142,7 @@
         const saveBtn = document.createElement("button");
         saveBtn.className = "btn btn-outline";
         saveBtn.type = "button";
+        saveBtn.dataset.gaEvent = "cta_admin_content_save";
         saveBtn.textContent = "Сохранить";
 
         const status = document.createElement("p");

@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Войти — Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -26,7 +27,12 @@
             Пароль
             <input id="password" type="password" required autocomplete="current-password" />
           </label>
-          <button class="btn btn-primary" type="submit">Войти</button>
+          <button
+            id="auth-submit-btn"
+            class="btn btn-primary"
+            type="submit"
+            data-ga-event="cta_login_submit"
+          >Войти</button>
           <p id="error" class="error" hidden></p>
         </form>
         <p class="muted" style="margin-top: 16px">
@@ -34,14 +40,17 @@
           <a href="#" id="register-link">Зарегистрироваться</a>
         </p>
         <p class="muted">
-          <a href="/test/start.html">Пройти тест без входа</a> ·
-          <a href="/">На главную</a>
+          <a href="/test/start.html" data-ga-event="cta_login_start_anonymous">Пройти тест без входа</a> ·
+          <a href="/" data-ga-event="cta_login_home">На главную</a>
         </p>
       </div>
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { getAccessToken, loginUser, registerUser } from "/js/user-auth.js";
+
+      initSiteAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const next = params.get("next") || "/cabinet.html";
@@ -52,17 +61,23 @@
 
       const form = document.getElementById("login-form");
       const errorEl = document.getElementById("error");
+      const submitBtn = document.getElementById("auth-submit-btn");
       let registerMode = false;
+
+      function updateAuthModeUi() {
+        submitBtn.textContent = registerMode ? "Зарегистрироваться" : "Войти";
+        submitBtn.dataset.gaEvent = registerMode
+          ? "cta_register_submit"
+          : "cta_login_submit";
+        document.getElementById("register-link").textContent = registerMode
+          ? "Уже есть аккаунт? Войти"
+          : "Зарегистрироваться";
+      }
 
       document.getElementById("register-link").addEventListener("click", (event) => {
         event.preventDefault();
         registerMode = !registerMode;
-        form.querySelector("button[type=submit]").textContent = registerMode
-          ? "Зарегистрироваться"
-          : "Войти";
-        document.getElementById("register-link").textContent = registerMode
-          ? "Уже есть аккаунт? Войти"
-          : "Зарегистрироваться";
+        updateAuthModeUi();
       });
 
       form.addEventListener("submit", async (event) => {

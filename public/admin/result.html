@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-G5TG1F8M5N" />
     <title>Результат — Админ Teamconstructor</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -15,7 +16,7 @@
         <a href="/admin/index.html">Результаты</a>
         <a href="/admin/content.html">Контент</a>
         <span class="admin-nav-spacer"></span>
-        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+        <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_admin_logout">Выйти</button>
       </div>
     </header>
 
@@ -27,10 +28,22 @@
         <dl class="admin-meta" id="result-meta"></dl>
 
         <div class="actions">
-          <a id="user-view-link" class="btn btn-outline" href="#" target="_blank" rel="noopener">
+          <a
+            id="user-view-link"
+            class="btn btn-outline"
+            href="#"
+            target="_blank"
+            rel="noopener"
+            data-ga-event="cta_admin_user_view"
+          >
             Как видит пользователь
           </a>
-          <button id="copy-result-link" class="btn btn-primary" type="button">
+          <button
+            id="copy-result-link"
+            class="btn btn-primary"
+            type="button"
+            data-ga-event="cta_admin_copy_result"
+          >
             Скопировать результат
           </button>
         </div>
@@ -59,7 +72,7 @@
             <span>Показать пользователю</span>
           </label>
           <div class="actions">
-            <button id="save-comment" class="btn btn-primary" type="button">
+            <button id="save-comment" class="btn btn-primary" type="button" data-ga-event="cta_admin_save_comment">
               Сохранить комментарий
             </button>
           </div>
@@ -74,7 +87,7 @@
         </p>
         <div id="visibility-list" class="visibility-list"></div>
         <div class="actions">
-          <button id="save-visibility" class="btn btn-primary" type="button">
+          <button id="save-visibility" class="btn btn-primary" type="button" data-ga-event="cta_admin_save_visibility">
             Сохранить видимость
           </button>
         </div>
@@ -90,6 +103,7 @@
     </main>
 
     <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { formatPsychotypeTitle } from "/js/psychotypes.js";
       import { formatDate } from "/js/session.js";
@@ -100,6 +114,8 @@
         modeLabel,
         requireAdmin,
       } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const resultId = params.get("id");
