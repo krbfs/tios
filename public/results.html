@@ -197,7 +197,11 @@
         }
 
         observeOnReveal(radarCard, revealRadar);
-        observeOnReveal(systemicCard, revealSystemic);
+        observeOnReveal(systemicCard, revealSystemic, {
+          requireScroll: true,
+          threshold: 0.35,
+          rootMargin: "0px 0px -12% 0px",
+        });
       }
 
       function chartAnimation() {

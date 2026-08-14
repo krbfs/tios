@@ -46,22 +46,62 @@ export function observeOnReveal(element, onReveal, options = {}) {
     return () => {};
   }
 
+  const { requireScroll = false, ...observerOptions } = options;
+  const thresholdOption = observerOptions.threshold ?? 0.18;
+  const minRatio = Array.isArray(thresholdOption)
+    ? Math.min(...thresholdOption)
+    : thresholdOption;
+  let revealed = false;
+  let lastEntry = null;
+
+  const isIntersectingEnough = () => {
+    if (lastEntry) {
+      return lastEntry.isIntersecting && lastEntry.intersectionRatio >= minRatio;
+    }
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const visibleHeight =
+      Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+    return visibleHeight / Math.max(rect.height, 1) >= minRatio;
+  };
+
+  const maybeReveal = () => {
+    if (revealed || !isIntersectingEnough()) {
+      return;
+    }
+    if (requireScroll && window.scrollY < 1) {
+      return;
+    }
+    revealed = true;
+    cleanup();
+    onReveal();
+  };
+
   const observer = new IntersectionObserver(
     (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          onReveal();
-          observer.unobserve(entry.target);
-        }
-      });
+      lastEntry = entries[0] ?? null;
+      maybeReveal();
     },
     {
       threshold: 0.18,
       rootMargin: "0px 0px -6% 0px",
-      ...options,
+      ...observerOptions,
     },
   );
 
+  const onScroll = () => {
+    maybeReveal();
+  };
+
+  const cleanup = () => {
+    observer.disconnect();
+    window.removeEventListener("scroll", onScroll);
+  };
+
   observer.observe(element);
-  return () => observer.disconnect();
+  if (requireScroll) {
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  return cleanup;
 }
