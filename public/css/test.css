@@ -940,6 +940,12 @@ input[type="range"] {
   animation-delay: 280ms;
 }
 
+.result-loaded .scale-table tbody tr {
+  opacity: 0;
+  animation: tc-fade-up 0.45s var(--motion-ease) forwards;
+  animation-delay: var(--scale-row-delay, 320ms);
+}
+
 .content-block--reveal {
   animation: tc-fade-up 0.45s var(--motion-ease) both;
 }
@@ -987,6 +993,10 @@ input[type="range"] {
     opacity: 1;
     transform: none;
     animation: none;
+  }
+
+  .result-loaded .scale-table tbody tr {
+    opacity: 1;
   }
 
   .progress-bar > span::after {

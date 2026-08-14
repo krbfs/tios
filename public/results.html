@@ -132,7 +132,7 @@
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
       import { initSiteAnalytics } from "/js/analytics.js";
-      import { initScrollReveal } from "/js/motion.js";
+      import { initScrollReveal, prefersReducedMotion } from "/js/motion.js";
       import { mountResultPromo } from "/js/result-promo.js";
 
       initSiteAnalytics();
@@ -170,10 +170,34 @@
           : "Личный кабинет";
       }
 
-      const CHART_ANIMATION = {
-        duration: 1200,
-        easing: "easeOutQuart",
+      const CHART_REVEAL_MS = {
+        radar: 240,
+        bar: 340,
       };
+
+      function chartAnimation() {
+        if (prefersReducedMotion()) {
+          return false;
+        }
+        return {
+          duration: 1400,
+          easing: "easeOutQuart",
+        };
+      }
+
+      function scheduleCharts(result) {
+        const scores = result.scaled_scores || {};
+        const systemic = result.scaled_systemic || {};
+
+        if (prefersReducedMotion()) {
+          buildRadarChart(scores);
+          buildBarChart(systemic);
+          return;
+        }
+
+        window.setTimeout(() => buildRadarChart(scores), CHART_REVEAL_MS.radar);
+        window.setTimeout(() => buildBarChart(systemic), CHART_REVEAL_MS.bar);
+      }
 
       function markResultLoaded() {
         resultCard.classList.add("result-loaded");
@@ -226,7 +250,7 @@
       function buildScaleTable(scores) {
         scaleTableBody.replaceChildren();
 
-        for (const key of SCALE_TABLE_ORDER) {
+        for (const [index, key] of SCALE_TABLE_ORDER.entries()) {
           const row = document.createElement("tr");
           const labelCell = document.createElement("th");
           const valueCell = document.createElement("td");
@@ -234,22 +258,27 @@
           labelCell.scope = "row";
           labelCell.textContent = SCALE_LABELS[key].toLowerCase();
           valueCell.textContent = String(toDisplayScaleValue(scores[key]));
+          row.style.setProperty("--scale-row-delay", `${320 + index * 50}ms`);
 
           row.append(labelCell, valueCell);
           scaleTableBody.appendChild(row);
         }
       }
 
-      function buildRadarChart(scores) {
-        buildScaleTable(scores);
-
-        const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
+      function updateRadarAverage(scores) {
         const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
         const averageValue =
           values.reduce((sum, value) => sum + value, 0) / values.length;
         const averageRounded = Math.round(averageValue * 10) / 10;
 
         radarAverageEl.textContent = `Среднее по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — голубая пунктирная линия`;
+        return averageRounded;
+      }
+
+      function buildRadarChart(scores) {
+        const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
+        const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
+        const averageRounded = updateRadarAverage(scores);
 
         const ctx = document.getElementById("radar-chart");
         if (radarChart) radarChart.destroy();
@@ -286,7 +315,15 @@
           },
           options: {
             responsive: true,
-            animation: CHART_ANIMATION,
+            animation: chartAnimation(),
+            animations: prefersReducedMotion()
+              ? undefined
+              : {
+                  radius: {
+                    duration: 1400,
+                    easing: "easeOutQuart",
+                  },
+                },
             scales: {
               r: {
                 min: 0,
@@ -336,7 +373,17 @@
           },
           options: {
             responsive: true,
-            animation: CHART_ANIMATION,
+            animation: chartAnimation(),
+            animations: prefersReducedMotion()
+              ? undefined
+              : {
+                  y: {
+                    duration: 1200,
+                    easing: "easeOutQuart",
+                    from: (ctx) =>
+                      ctx.chart.scales.y ? ctx.chart.scales.y.getPixelForValue(0) : undefined,
+                  },
+                },
             scales: {
               y: {
                 beginAtZero: true,
@@ -387,8 +434,8 @@
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
         psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
 
-        buildRadarChart(result.scaled_scores || {});
-        buildBarChart(result.scaled_systemic || {});
+        buildScaleTable(result.scaled_scores || {});
+        updateRadarAverage(result.scaled_scores || {});
 
         contentBlocksEl.replaceChildren();
         (result.content_blocks || []).forEach((block, blockIndex) => {
@@ -409,6 +456,7 @@
 
         updateResultLink(result);
         markResultLoaded();
+        scheduleCharts(result);
       }
 
       async function loadResult() {
