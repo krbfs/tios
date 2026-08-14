@@ -336,6 +336,18 @@ input[type="range"] {
   padding-left: 20px;
 }
 
+.content-list li {
+  margin: 0 0 8px;
+}
+
+.content-list li:last-child {
+  margin-bottom: 0;
+}
+
+.content-block-body:has(.content-list) {
+  white-space: normal;
+}
+
 .efficiency-cards {
   display: grid;
   gap: 16px;

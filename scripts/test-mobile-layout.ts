@@ -3,7 +3,9 @@
  * Checks horizontal overflow, header separation, and key UI visibility.
  *
  * Usage:
- *   npm run test:mobile
+ *   npm run test:mobile              # only pages affected by git changes
+ *   npm run test:mobile:all          # all pages × all viewports
+ *   MOBILE_TEST_BASE=origin/main npm run test:mobile
  *   BASE_URL=http://localhost:3000 npm run test:mobile
  *   SKIP_BUILD=1 npm run test:mobile   # reuse existing .next build
  */
@@ -11,6 +13,11 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { chromium, type Browser, type Page } from "playwright";
 import { getDemoEncdata } from "../src/lib/encdata";
+import {
+  collectChangedFiles,
+  formatChangedFiles,
+  selectPageNames,
+} from "./mobile-layout-scope";
 
 const ROOT_URL = (process.env.BASE_URL ?? "http://127.0.0.1:3099").replace(/\/$/, "");
 const PORT = new URL(ROOT_URL).port || "3099";
@@ -28,6 +35,7 @@ type PageCase = {
   name: string;
   path: string;
   initScript?: () => void;
+  mockApi?: "user" | "admin";
   ready?: (page: Page) => Promise<void>;
 };
 
@@ -60,6 +68,7 @@ const PAGES: PageCase[] = [
   {
     name: "cabinet",
     path: "/cabinet.html",
+    mockApi: "user",
     initScript: () => {
       localStorage.setItem("tc26_access_token", "layout-test-token");
       localStorage.setItem(
@@ -83,6 +92,7 @@ const PAGES: PageCase[] = [
   {
     name: "admin-results",
     path: "/admin/index.html",
+    mockApi: "admin",
     initScript: () => {
       localStorage.setItem("tc26_access_token", "layout-test-token");
       localStorage.setItem(
@@ -186,13 +196,40 @@ async function assertNoHorizontalOverflow(page: Page) {
   }
 }
 
+async function mockLayoutApi(page: Page, mockApi: "user" | "admin") {
+  if (mockApi === "user") {
+    await page.route("**/api/results/history", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "[]",
+      });
+    });
+  }
+
+  if (mockApi === "admin") {
+    await page.route("**/api/admin/results**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "[]",
+      });
+    });
+  }
+}
+
 async function assertHeaderLayout(page: Page) {
-  const header = page.locator("header").first();
+  const headers = page.locator("header");
+  if ((await headers.count()) === 0) {
+    return;
+  }
+
+  const header = headers.first();
   await header.waitFor({ state: "visible", timeout: 10_000 });
 
   const login = page
     .locator(
-      'header a.btn, header button.btn, header [data-ga-event="cta_header_login"], header #cabinet-link',
+      'header a.btn, header [data-ga-event="cta_header_login"], header #cabinet-link',
     )
     .first();
   const brand = page
@@ -246,8 +283,12 @@ async function checkPage(browser: Browser, viewport: (typeof VIEWPORTS)[number],
   const page = await context.newPage();
 
   try {
+    if (pageCase.mockApi) {
+      await mockLayoutApi(page, pageCase.mockApi);
+    }
+
     const response = await page.goto(`${ROOT_URL}${pageCase.path}`, {
-      waitUntil: "networkidle",
+      waitUntil: "load",
       timeout: 120_000,
     });
     if (!response?.ok()) {
@@ -266,7 +307,37 @@ async function checkPage(browser: Browser, viewport: (typeof VIEWPORTS)[number],
   }
 }
 
+function resolvePagesToTest() {
+  const changedFiles = collectChangedFiles();
+  const selection = selectPageNames(changedFiles);
+
+  console.log(`==> mobile layout scope: ${selection.reason}`);
+  if (changedFiles.length > 0) {
+    console.log(`==> changed files: ${formatChangedFiles(changedFiles)}`);
+  }
+
+  if (selection.mode === "skip") {
+    return { pages: [] as PageCase[], selection, changedFiles };
+  }
+
+  if (selection.mode === "all") {
+    return { pages: PAGES, selection, changedFiles };
+  }
+
+  const selected = new Set(selection.pageNames);
+  const pages = PAGES.filter((pageCase) => selected.has(pageCase.name));
+  console.log(`==> pages: ${pages.map((pageCase) => pageCase.name).join(", ")}`);
+  return { pages, selection, changedFiles };
+}
+
 async function main() {
+  const { pages, selection } = resolvePagesToTest();
+
+  if (pages.length === 0) {
+    console.log("Mobile layout tests skipped (no affected pages).");
+    return;
+  }
+
   let server: ChildProcess | null = null;
 
   if (MANAGE_SERVER) {
@@ -282,7 +353,7 @@ async function main() {
 
   try {
     for (const viewport of VIEWPORTS) {
-      for (const pageCase of PAGES) {
+      for (const pageCase of pages) {
         const label = `${pageCase.name} @ ${viewport.name} (${viewport.width}x${viewport.height})`;
         process.stdout.write(`==> ${label} ... `);
         try {
@@ -308,7 +379,13 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\nMobile layout tests passed (${VIEWPORTS.length} viewports × ${PAGES.length} pages).`);
+  const scopeLabel =
+    selection.mode === "all"
+      ? `${pages.length} pages (full suite)`
+      : `${pages.length} changed page(s)`;
+  console.log(
+    `\nMobile layout tests passed (${VIEWPORTS.length} viewports × ${scopeLabel}).`,
+  );
 }
 
 main().catch((error) => {

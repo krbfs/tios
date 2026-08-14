@@ -4,6 +4,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
+ENV SKIP_PLAYWRIGHT_INSTALL=1
 RUN npm ci
 
 FROM base AS builder

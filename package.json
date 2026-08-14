@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:mobile": "tsx scripts/test-mobile-layout.ts",
+    "playwright:install": "playwright install chromium",
+    "test:mobile": "npm run playwright:install && tsx scripts/test-mobile-layout.ts",
+    "test:mobile:all": "MOBILE_TEST_ALL=1 npm run test:mobile",
     "export:demo-pdf": "tsx scripts/export-demo-result-pdf.ts",
     "docker:build": "./scripts/docker-local.sh build",
     "docker:run": "./scripts/docker-local.sh run",
@@ -26,6 +28,7 @@
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts"
   },
+  "postinstall": "node scripts/ensure-playwright.mjs",
   "dependencies": {
     "@prisma/client": "^6.13.0",
     "bcryptjs": "^3.0.3",

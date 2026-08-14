@@ -31,6 +31,12 @@ function findLeaderResourceDocx(): string {
 const DOCX = findLeaderResourceDocx();
 const OUT = resolve(process.cwd(), "data/content_registry.json");
 
+const LIST_BLOCK_KEYS = new Set([
+  "energy_loss_channels",
+  "business_problems",
+  "strengths",
+]);
+
 const BLOCK_DEFS = [
   {
     block_key: "description_main",
@@ -215,7 +221,11 @@ function parseBlocks(
       mode: "leader_resource",
       block_key: def.block_key,
       block_template:
-        def.block_key === "efficiency_map" ? "card_block" : "text_block",
+        def.block_key === "efficiency_map"
+          ? "card_block"
+          : LIST_BLOCK_KEYS.has(def.block_key)
+            ? "list_block"
+            : "text_block",
       title: def.title,
       content_text: normalizeContent(match[1]),
       sort_order: def.sort_order,

@@ -246,8 +246,8 @@ def run_tests() -> None:
             "-q",
         ]
     )
-    print("==> mobile layout tests (playwright)", flush=True)
-    run(["npm", "run", "test:mobile"])
+    print("==> mobile layout tests (playwright, full suite)", flush=True)
+    run(["npm", "run", "test:mobile:all"])
     print("==> all tests passed", flush=True)
 
 
