@@ -183,21 +183,22 @@ export default function HomePage() {
 
         <RevealOnScroll delay={100}>
           <div className="mx-auto text-left md:max-w-[58rem] md:text-center">
-          <p className="leading-normal text-muted sm:text-lg sm:leading-7">
-            Тест можно проходить без регистрации. В таком случае Вы всегда
-            сможете получить доступ к Вашему результату по специальной ссылке,
-            сгенерированной после прохождения теста.{" "}
-            <b>Зарегистрированные</b> же пользователи могут сохранять все
-            результаты и наблюдать за динамикой изменения своего состояния.
-          </p>
-          <div className="mt-6 space-x-4 text-center">
-            <Link
-              href="/test"
-              className="btn btn-primary btn-lg font-bold"
-              data-ga-event="cta_home_start_test_footer"
-            >
-              Пройти тест
-            </Link>
+            <p className="leading-normal text-muted sm:text-lg sm:leading-7">
+              Тест можно проходить без регистрации. В таком случае Вы всегда
+              сможете получить доступ к Вашему результату по специальной ссылке,
+              сгенерированной после прохождения теста.{" "}
+              <b>Зарегистрированные</b> же пользователи могут сохранять все
+              результаты и наблюдать за динамикой изменения своего состояния.
+            </p>
+            <div className="mt-6 space-x-4 text-center">
+              <Link
+                href="/test"
+                className="btn btn-primary btn-lg font-bold"
+                data-ga-event="cta_home_start_test_footer"
+              >
+                Пройти тест
+              </Link>
+            </div>
           </div>
         </RevealOnScroll>
       </section>

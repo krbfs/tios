@@ -1,10 +1,6 @@
 import { gaConfig } from "./ga-config";
 
 export { gaConfig, getPublicGaConfig, isGaDataApiConfigured } from "./ga-config";
-export {
-  getGaServiceAccountCredentials,
-  hasGaServiceAccountCredentials,
-} from "./ga-credentials";
 
 export const GA_MEASUREMENT_ID = gaConfig.measurementId;
 export const GA_ENABLED = gaConfig.enabled;
