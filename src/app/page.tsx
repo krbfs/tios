@@ -69,9 +69,9 @@ export default function HomePage() {
     <>
       <section
         id="main"
-        className="space-y-6 pb-20 pt-3 md:pb-12 md:pt-8 lg:py-32"
+        className="space-y-6 bg-surface pb-20 pt-3 md:pb-12 md:pt-8 lg:py-32"
       >
-        <div className="container mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 text-center">
+        <div className="container-page flex max-w-[1024px] flex-col items-center gap-4 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt="main image"

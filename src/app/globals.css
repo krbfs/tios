@@ -3,11 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #111827;
-  --primary: #3e50b4;
-  --primary-hover: #32429a;
+  --primary: #1a54d8;
+  --primary-hover: #17255a;
+  --primary-light: #5b8df7;
+  --link: #3b63a8;
   --muted: #64748b;
   --border: #e5e7eb;
-  --surface: #f8fafc;
+  --surface: #f8f9fa;
   --surface-alt: #f3f4f6;
 }
 
@@ -20,6 +22,7 @@
   --color-border: var(--border);
   --color-surface: var(--surface);
   --color-surface-alt: var(--surface-alt);
+  --color-link: var(--link);
   --font-sans: var(--font-open-sans);
 }
 
@@ -61,9 +64,9 @@ input {
 
 .container-page {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1024px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 24px;
 }
 
 .btn {
@@ -71,9 +74,10 @@ input {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 6px;
+  min-height: 48px;
+  border-radius: 12px;
   border: 1px solid transparent;
-  padding: 8px 18px;
+  padding: 0 24px;
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;
@@ -105,8 +109,17 @@ input {
   color: var(--primary);
 }
 
+.text-link {
+  color: var(--link);
+  font-weight: 600;
+}
+
+.text-link:hover {
+  color: var(--primary-hover);
+}
+
 .btn-lg {
-  padding: 12px 28px;
+  padding: 0 28px;
   font-size: 1.05rem;
 }
 

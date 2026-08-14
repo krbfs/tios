@@ -9,8 +9,8 @@ export function Header() {
     pathname === "/login" ? "/" : `/login?next=${encodeURIComponent(pathname)}`;
 
   return (
-    <header className="z-40 border-0 border-b border-solid border-border bg-white py-4">
-      <div className="flex items-center justify-between px-3">
+    <header className="z-40 border-0 border-b border-solid border-border bg-white">
+      <div className="container-page flex min-h-16 items-center justify-between py-0">
         <Link href="/" className="block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

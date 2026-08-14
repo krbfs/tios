@@ -68,8 +68,8 @@ export function RadarChart({ scales, max = 10 }: Props) {
 
       <polygon
         points={polygon}
-        fill="rgba(62, 80, 180, 0.25)"
-        stroke="#3e50b4"
+        fill="rgba(26, 84, 216, 0.22)"
+        stroke="#1a54d8"
         strokeWidth="2"
       />
 

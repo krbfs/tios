@@ -1,5 +1,5 @@
 .admin-layout .container {
-  max-width: 1100px;
+  max-width: var(--container, 1024px);
 }
 
 .admin-nav {

@@ -182,7 +182,7 @@
             const radius = scale.getDistanceFromCenterForValue(averageValue);
 
             ctx.save();
-            ctx.strokeStyle = "#7c3aed";
+            ctx.strokeStyle = "#5b8df7";
             ctx.lineWidth = 3;
             ctx.setLineDash([8, 5]);
             ctx.beginPath();
@@ -207,7 +207,7 @@
           values.reduce((sum, value) => sum + value, 0) / values.length;
         const averageRounded = Math.round(averageValue * 10) / 10;
 
-        radarAverageEl.textContent = `Среднее по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — фиолетовая пунктирная линия`;
+        radarAverageEl.textContent = `Среднее по 8 шкалам: ${averageRounded} (${interpretScaleValue(averageRounded)}) — голубая пунктирная линия`;
 
         const ctx = document.getElementById("radar-chart");
         if (radarChart) radarChart.destroy();
@@ -220,8 +220,8 @@
               {
                 label: "Ваш профиль",
                 data: values,
-                borderColor: "#3e50b4",
-                backgroundColor: "rgba(62, 80, 180, 0.25)",
+                borderColor: "#1a54d8",
+                backgroundColor: "rgba(26, 84, 216, 0.22)",
                 borderWidth: 2,
                 pointRadius: 3,
                 order: 1,
@@ -229,14 +229,14 @@
               {
                 label: `Среднее (${averageRounded})`,
                 data: labels.map(() => averageRounded),
-                borderColor: "#7c3aed",
+                borderColor: "#5b8df7",
                 borderDash: [8, 5],
                 borderWidth: 0,
                 backgroundColor: "transparent",
                 pointRadius: 0,
                 pointHoverRadius: 4,
                 pointHitRadius: 16,
-                pointBackgroundColor: "#7c3aed",
+                pointBackgroundColor: "#5b8df7",
                 fill: false,
                 order: 2,
               },
@@ -285,8 +285,8 @@
               {
                 label: "Системные свойства",
                 data: values,
-                backgroundColor: "rgba(62, 80, 180, 0.7)",
-                borderColor: "#3e50b4",
+                backgroundColor: "rgba(26, 84, 216, 0.7)",
+                borderColor: "#1a54d8",
                 borderWidth: 1,
               },
             ],
