@@ -323,6 +323,132 @@ input[type="range"] {
   margin-top: 8px;
 }
 
+.card--test-take {
+  max-width: 100%;
+}
+
+.questions-batch {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin: 24px 0 8px;
+}
+
+.question-row-mobile {
+  display: block;
+}
+
+.question-row-desktop {
+  display: none;
+}
+
+.question-row-mobile .statements {
+  margin: 0 0 16px;
+}
+
+.question-row-mobile-label {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.question-row-mobile .slider-wrap {
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .card--test-take {
+    max-width: 980px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .questions-batch {
+    gap: 0;
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .question-row-mobile {
+    display: none;
+  }
+
+  .question-row-desktop {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 20px;
+    align-items: center;
+    padding: 18px 20px;
+  }
+
+  .question-row:nth-child(even) .question-row-desktop {
+    background: #f8fafc;
+  }
+
+  .question-row-text {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--foreground);
+  }
+
+  .question-row-text--left {
+    text-align: left;
+  }
+
+  .question-row-text--right {
+    text-align: left;
+  }
+
+  .likert-radios {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .likert-radio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .likert-radio input {
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .likert-radio input:hover {
+    transform: scale(1.05);
+  }
+
+  .likert-radio input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .likert-radio input:checked {
+    background: radial-gradient(circle at center, #fff 0 5px, var(--primary) 6px);
+  }
+}
+
 .consent-box {
   display: flex;
   gap: 12px;

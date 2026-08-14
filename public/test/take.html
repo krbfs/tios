@@ -26,7 +26,7 @@
 <!-- /chrome:header-public -->
 
     <main class="container">
-      <div class="card">
+      <div class="card card--test-take">
         <div class="progress-wrap">
           <strong id="progress-label">Загрузка…</strong>
           <div class="progress-bar"><span id="progress-fill"></span></div>
@@ -34,28 +34,7 @@
 
         <div id="question-area" hidden>
           <div id="question-content">
-            <div class="statements">
-              <div id="left-statement" class="statement">
-                <div class="statement-label">А</div>
-                <p id="left-text"></p>
-              </div>
-              <div id="right-statement" class="statement">
-                <div class="statement-label">В</div>
-                <p id="right-text"></p>
-              </div>
-            </div>
-
-            <div class="slider-wrap">
-              <input id="answer-slider" type="range" min="-2" max="2" step="1" value="0" />
-              <div class="slider-labels">
-                <span>−2<br />А</span>
-                <span>−1</span>
-                <span>0</span>
-                <span>+1</span>
-                <span>+2<br />В</span>
-              </div>
-              <div id="slider-caption" class="slider-value">нейтрален</div>
-            </div>
+            <div id="questions-batch" class="questions-batch"></div>
 
             <div class="actions">
               <button
@@ -132,6 +111,9 @@
       }
 
       const TOTAL = 75;
+      const QUESTIONS_PER_PAGE = 5;
+      const TOTAL_PAGES = TOTAL / QUESTIONS_PER_PAGE;
+      const SCALE_VALUES = [-2, -1, 0, 1, 2];
       const FAST_THRESHOLD_SEC = 2;
       const FAST_RATIO_LIMIT = 0.1;
       const reducedMotion = prefersReducedMotion();
@@ -140,65 +122,235 @@
       const progressFill = document.getElementById("progress-fill");
       const questionArea = document.getElementById("question-area");
       const questionContent = document.getElementById("question-content");
-      const leftStatement = document.getElementById("left-statement");
-      const rightStatement = document.getElementById("right-statement");
-      const leftText = document.getElementById("left-text");
-      const rightText = document.getElementById("right-text");
-      const slider = document.getElementById("answer-slider");
-      const sliderCaption = document.getElementById("slider-caption");
+      const questionsBatch = document.getElementById("questions-batch");
       const nextBtn = document.getElementById("next-btn");
       const errorEl = document.getElementById("error");
       const fastModal = document.getElementById("fast-modal");
       const submitOverlay = document.getElementById("submit-overlay");
 
       let questions = [];
-      let index = 0;
+      let pageIndex = 0;
       let answers = Array(TOTAL).fill(null);
       let times = Array(TOTAL).fill(0);
-      let questionStartedAt = Date.now();
+      let questionStartedAt = Array(TOTAL).fill(0);
+      let pageShownAt = Date.now();
       let isAnimating = false;
 
-      function updateStatementHighlight() {
-        const value = Number(slider.value);
-        leftStatement.classList.toggle("statement--active", value < 0);
-        rightStatement.classList.toggle("statement--active", value > 0);
+      function pageQuestionIndices() {
+        const start = pageIndex * QUESTIONS_PER_PAGE;
+        return Array.from({ length: QUESTIONS_PER_PAGE }, (_, offset) => start + offset);
       }
 
-      function updateSliderCaption() {
-        sliderCaption.classList.add("is-changing");
-        sliderCaption.textContent = SLIDER_LABELS[String(Number(slider.value))];
+      function markQuestionStarted(questionIndex) {
+        if (!questionStartedAt[questionIndex]) {
+          questionStartedAt[questionIndex] = Date.now();
+        }
+      }
+
+      function updateMobileStatementHighlight(row, value) {
+        const left = row.querySelector(".statement--left");
+        const right = row.querySelector(".statement--right");
+        left?.classList.toggle("statement--active", value < 0);
+        right?.classList.toggle("statement--active", value > 0);
+      }
+
+      function updateMobileSliderCaption(slider, caption) {
+        caption.classList.add("is-changing");
+        caption.textContent = SLIDER_LABELS[String(Number(slider.value))];
         window.setTimeout(() => {
-          sliderCaption.classList.remove("is-changing");
+          caption.classList.remove("is-changing");
         }, 150);
-        updateStatementHighlight();
       }
 
-      slider.addEventListener("input", updateSliderCaption);
+      function setAnswer(questionIndex, value) {
+        answers[questionIndex] = value;
+        markQuestionStarted(questionIndex);
+      }
 
-      function applyQuestionContent() {
-        const question = questions[index];
-        progressLabel.textContent = `Вопрос ${index + 1} из ${TOTAL}`;
-        progressFill.style.width = `${((index + 1) / TOTAL) * 100}%`;
-        leftText.textContent = question.left_text;
-        rightText.textContent = question.right_text;
+      function createDesktopRow(questionIndex, question) {
+        const desktop = document.createElement("div");
+        desktop.className = "question-row-desktop";
 
-        const saved = answers[index];
-        slider.value = saved === null ? 0 : saved;
-        updateSliderCaption();
-        questionStartedAt = Date.now();
-        nextBtn.textContent = index === TOTAL - 1 ? "Отправить" : "Далее";
+        const left = document.createElement("p");
+        left.className = "question-row-text question-row-text--left";
+        left.textContent = question.left_text;
+
+        const radios = document.createElement("div");
+        radios.className = "likert-radios";
+        radios.setAttribute("role", "radiogroup");
+        radios.setAttribute("aria-label", `Ответ на вопрос ${questionIndex + 1}`);
+
+        for (const value of SCALE_VALUES) {
+          const label = document.createElement("label");
+          label.className = "likert-radio";
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `answer-${questionIndex}`;
+          input.value = String(value);
+          input.checked = answers[questionIndex] === value;
+          input.setAttribute("aria-label", SLIDER_LABELS[String(value)]);
+
+          input.addEventListener("change", () => {
+            if (input.checked) {
+              setAnswer(questionIndex, value);
+              errorEl.hidden = true;
+            }
+          });
+
+          label.appendChild(input);
+          radios.appendChild(label);
+        }
+
+        const right = document.createElement("p");
+        right.className = "question-row-text question-row-text--right";
+        right.textContent = question.right_text;
+
+        desktop.append(left, radios, right);
+        return desktop;
+      }
+
+      function createMobileRow(questionIndex, question) {
+        const mobile = document.createElement("div");
+        mobile.className = "question-row-mobile";
+
+        const heading = document.createElement("p");
+        heading.className = "question-row-mobile-label";
+        heading.textContent = `Вопрос ${questionIndex + 1}`;
+
+        const statements = document.createElement("div");
+        statements.className = "statements";
+
+        const leftStatement = document.createElement("div");
+        leftStatement.className = "statement statement--left";
+        leftStatement.innerHTML =
+          '<div class="statement-label">А</div><p></p>';
+        leftStatement.querySelector("p").textContent = question.left_text;
+
+        const rightStatement = document.createElement("div");
+        rightStatement.className = "statement statement--right";
+        rightStatement.innerHTML =
+          '<div class="statement-label">В</div><p></p>';
+        rightStatement.querySelector("p").textContent = question.right_text;
+
+        statements.append(leftStatement, rightStatement);
+
+        const sliderWrap = document.createElement("div");
+        sliderWrap.className = "slider-wrap";
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "-2";
+        slider.max = "2";
+        slider.step = "1";
+        slider.value = answers[questionIndex] === null ? "0" : String(answers[questionIndex]);
+        slider.className = "answer-slider";
+        slider.setAttribute("aria-label", `Шкала для вопроса ${questionIndex + 1}`);
+
+        const labels = document.createElement("div");
+        labels.className = "slider-labels";
+        labels.innerHTML =
+          "<span>−2<br />А</span><span>−1</span><span>0</span><span>+1</span><span>+2<br />В</span>";
+
+        const caption = document.createElement("div");
+        caption.className = "slider-value";
+
+        const syncMobileRow = () => {
+          const value = Number(slider.value);
+          setAnswer(questionIndex, value);
+          updateMobileSliderCaption(slider, caption);
+          updateMobileStatementHighlight(mobile, value);
+          errorEl.hidden = true;
+        };
+
+        slider.addEventListener("input", syncMobileRow);
+        syncMobileRow();
+
+        sliderWrap.append(slider, labels, caption);
+        mobile.append(heading, statements, sliderWrap);
+        return mobile;
+      }
+
+      function createQuestionRow(questionIndex) {
+        const question = questions[questionIndex];
+        const row = document.createElement("article");
+        row.className = "question-row";
+        row.dataset.questionIndex = String(questionIndex);
+        row.append(
+          createMobileRow(questionIndex, question),
+          createDesktopRow(questionIndex, question),
+        );
+        return row;
+      }
+
+      function updateProgress() {
+        const indices = pageQuestionIndices();
+        const first = indices[0] + 1;
+        const last = indices[indices.length - 1] + 1;
+        progressLabel.textContent = `Вопросы ${first}–${last} из ${TOTAL}`;
+        progressFill.style.width = `${(last / TOTAL) * 100}%`;
+        nextBtn.textContent = pageIndex === TOTAL_PAGES - 1 ? "Отправить" : "Далее";
         nextBtn.dataset.gaEvent =
-          index === TOTAL - 1 ? "cta_test_submit" : "cta_test_next";
+          pageIndex === TOTAL_PAGES - 1 ? "cta_test_submit" : "cta_test_next";
       }
 
-      function renderQuestion() {
-        applyQuestionContent();
+      function renderPage() {
+        questionsBatch.replaceChildren();
+        for (const questionIndex of pageQuestionIndices()) {
+          questionsBatch.appendChild(createQuestionRow(questionIndex));
+        }
+        updateProgress();
+        pageShownAt = Date.now();
+        for (const questionIndex of pageQuestionIndices()) {
+          if (!questionStartedAt[questionIndex]) {
+            questionStartedAt[questionIndex] = pageShownAt;
+          }
+        }
       }
 
-      function runQuestionTransition(onUpdated) {
+      function isDesktopLayout() {
+        return window.matchMedia("(min-width: 1024px)").matches;
+      }
+
+      function collectPageAnswers() {
+        const indices = pageQuestionIndices();
+        if (isDesktopLayout()) {
+          for (const questionIndex of indices) {
+            const checked = document.querySelector(
+              `input[name="answer-${questionIndex}"]:checked`,
+            );
+            if (!checked) {
+              return false;
+            }
+            answers[questionIndex] = Number(checked.value);
+          }
+          return true;
+        }
+
+        for (const questionIndex of indices) {
+          const slider = questionsBatch.querySelector(
+            `.question-row[data-question-index="${questionIndex}"] .answer-slider`,
+          );
+          if (!slider) {
+            return false;
+          }
+          answers[questionIndex] = Number(slider.value);
+        }
+        return true;
+      }
+
+      function recordPageTimes() {
+        const now = Date.now();
+        for (const questionIndex of pageQuestionIndices()) {
+          const startedAt = questionStartedAt[questionIndex] || pageShownAt;
+          times[questionIndex] = (now - startedAt) / 1000;
+        }
+      }
+
+      function runPageTransition(onUpdated) {
         if (reducedMotion) {
           onUpdated();
-          renderQuestion();
+          renderPage();
           return;
         }
 
@@ -208,7 +360,7 @@
 
         window.setTimeout(() => {
           onUpdated();
-          renderQuestion();
+          renderPage();
           questionContent.classList.remove("question-exit");
           questionContent.classList.add("question-enter");
           window.setTimeout(() => {
@@ -273,14 +425,17 @@
       nextBtn.addEventListener("click", () => {
         if (isAnimating) return;
         errorEl.hidden = true;
-        const value = Number(slider.value);
-        const elapsedSec = (Date.now() - questionStartedAt) / 1000;
-        answers[index] = value;
-        times[index] = elapsedSec;
 
-        if (index < TOTAL - 1) {
-          index += 1;
-          runQuestionTransition(() => {});
+        if (!collectPageAnswers()) {
+          showError("Ответьте на все вопросы на этой странице");
+          return;
+        }
+
+        recordPageTimes();
+
+        if (pageIndex < TOTAL_PAGES - 1) {
+          pageIndex += 1;
+          runPageTransition(() => {});
           return;
         }
 
@@ -303,7 +458,7 @@
             throw new Error(`Ожидалось ${TOTAL} вопросов`);
           }
           questionArea.hidden = false;
-          renderQuestion();
+          renderPage();
         } catch (err) {
           showError(err instanceof Error ? err.message : "Не удалось загрузить вопросы");
         }
