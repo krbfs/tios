@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
-import { decodeAnswers, encodeAnswers, buildResultUrl, buildEncdataUrl } from "@/lib/encdata";
+import { decodeAnswers, encodeAnswers, buildResultUrl, buildEncdataUrl, getDemoEncdata, isDemoEncdata, DEMO_THRESHOLD_WARNINGS } from "@/lib/encdata";
 
 describe("encdata", () => {
   it("builds production-style quiz result URLs", () => {
@@ -42,5 +42,15 @@ describe("encdata", () => {
     ).toString("base64");
 
     expect(() => decodeAnswers(legacy)).toThrow(/Invalid encdata|75 answers/);
+  });
+
+  it("uses fixed threshold warnings for demo encdata", () => {
+    const demo = getDemoEncdata();
+    expect(isDemoEncdata(demo)).toBe(true);
+    expect(DEMO_THRESHOLD_WARNINGS).toEqual([
+      "Вероятность достоверного прогноза — высокая",
+      "Вероятны эмоциональные проявления",
+      "Высокая вероятность непредсказуемого поведения",
+    ]);
   });
 });

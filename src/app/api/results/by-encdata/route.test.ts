@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
-import { encodeAnswers } from "@/lib/encdata";
+import { encodeAnswers, getDemoEncdata } from "@/lib/encdata";
 import { apiRequest, readJson } from "@/test/helpers/request";
 
 const mocks = vi.hoisted(() => ({
@@ -74,5 +74,20 @@ describe("GET /api/results/by-encdata", () => {
       "leader_resource",
       {},
     );
+  });
+
+  it("returns curated demo threshold warnings for demo encdata", async () => {
+    const encdata = getDemoEncdata();
+    const response = await GET(
+      apiRequest(`/api/results/by-encdata?encdata=${encodeURIComponent(encdata)}`),
+    );
+
+    expect(response.status).toBe(200);
+    const payload = await readJson<{ warnings: string[] }>(response);
+    expect(payload.warnings).toEqual([
+      "Вероятность достоверного прогноза — высокая",
+      "Вероятны эмоциональные проявления",
+      "Высокая вероятность непредсказуемого поведения",
+    ]);
   });
 });

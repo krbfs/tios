@@ -117,6 +117,21 @@ export function canonicalizeEncdata(encdata: string): string {
   return encodeAnswers(decodeAnswers(encdata));
 }
 
+/** Fixed threshold warnings shown on the public demo / sample result page. */
+export const DEMO_THRESHOLD_WARNINGS = [
+  "Вероятность достоверного прогноза — высокая",
+  "Вероятны эмоциональные проявления",
+  "Высокая вероятность непредсказуемого поведения",
+] as const;
+
+export function isDemoEncdata(encdata: string): boolean {
+  try {
+    return canonicalizeEncdata(encdata) === getDemoEncdata();
+  } catch {
+    return false;
+  }
+}
+
 /** Demo link for landing / «Пример результата» (Лидер мнений–like profile). */
 export function getDemoAnswers(): number[] {
   const answers = fillAnswers(0);
@@ -149,8 +164,14 @@ export function getDemoEncdata(): string {
 
 export function computeFromEncdata(encdata: string) {
   const answers = decodeAnswers(encdata);
-  return {
+  const computed = {
     answers,
     ...calculate_result(answers, fillTimings(5)),
   };
+
+  if (isDemoEncdata(encdata)) {
+    return { ...computed, warnings: [...DEMO_THRESHOLD_WARNINGS] };
+  }
+
+  return computed;
 }
