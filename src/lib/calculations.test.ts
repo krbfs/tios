@@ -52,10 +52,10 @@ describe("calculate_scaled_scores", () => {
     }
   });
 
-  it("odd block sum → scale value with .5 step", () => {
+  it("odd block sum → rounded integer on 0–30 scale", () => {
     const answers = fillAnswers(0);
-    answers[0] = -1; // блок EI: сумма −1, signedRaw для extraversion = 1 → 15.5
-    expect(calculate_scaled_scores(answers).extraversion).toBe(15.5);
+    answers[0] = -1; // блок EI: signedRaw 1 → 15.5 до округления → 16
+    expect(calculate_scaled_scores(answers).extraversion).toBe(16);
   });
 
   it("mixed answers → correct calculation", () => {
@@ -103,15 +103,51 @@ describe("calculate_avg_intensity", () => {
     ).toBe(15);
 
     const demo = calculate_scaled_scores(getDemoAnswers());
-    expect(calculate_avg_intensity(demo)).toBe(15);
+    expect(calculate_avg_intensity(demo)).toBe(15.25);
   });
 });
 
 describe("determine_psychotype", () => {
+  const flatScores = (value: number) => ({
+    extraversion: value,
+    introversion: value,
+    anxiety: value,
+    aggression: value,
+    sensitivity: value,
+    spontaneity: value,
+    lability: value,
+    rigidity: value,
+  });
+
   it("stores avg_intensity as mean of 8 scales", () => {
     const scores = calculate_scaled_scores(fillAnswers(0));
     const result = determine_psychotype(scores);
     expect(result.avg_intensity).toBe(15);
+  });
+
+  it("flags nervous breakdown when any scale exceeds mean by 30%", () => {
+    const scores = flatScores(15);
+    scores.anxiety = 22;
+    const result = determine_psychotype(scores);
+    expect(result.warnings).toContain("Высокая вероятность нервного срыва");
+  });
+
+  it("flags strong burnout when two non-adjacent scales exceed mean by 30%", () => {
+    const scores = flatScores(15);
+    scores.anxiety = 25;
+    scores.extraversion = 25;
+    const result = determine_psychotype(scores);
+    expect(result.warnings).toContain("Высокая вероятность сильного выгорания");
+  });
+
+  it("flags contradictory opposite pair when both are high and close", () => {
+    const scores = flatScores(15);
+    scores.extraversion = 20;
+    scores.introversion = 19;
+    const result = determine_psychotype(scores);
+    expect(result.warnings).toContain(
+      "Вы описали сотрудника с противоположными психологическими качествами. Высокая вероятность непредсказуемого поведения",
+    );
   });
 
   it("detects clear leader as individualist", () => {

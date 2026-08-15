@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       psychotype_secondary: computed.psychotype_secondary,
       avg_intensity: computed.avg_intensity,
       validation_warnings: computed.validation_warnings,
+      warnings: computed.warnings,
       mode: "leader_resource",
       admin_comment: null,
       content_blocks: blocks,

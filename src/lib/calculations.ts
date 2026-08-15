@@ -82,6 +82,18 @@ const OPPOSITE_PAIRS: [ScaleKey, ScaleKey][] = [
   ["lability", "rigidity"],
 ];
 
+/** Порядок шкал по кругу (NAVIGATOR §3.2). */
+const CIRCLE_SCALE_ORDER: ScaleKey[] = [
+  "anxiety",
+  "lability",
+  "extraversion",
+  "spontaneity",
+  "aggression",
+  "rigidity",
+  "introversion",
+  "sensitivity",
+];
+
 const BLOCK_BY_PAIR: Record<string, number[]> = {
   "extraversion,introversion": BLOCK_EI,
   "anxiety,aggression": BLOCK_TA,
@@ -116,14 +128,13 @@ function scaleFromBlock(
 ): number {
   const raw = sumAnswers(answers, questionIds); // 15 ответов → сумма всегда целая
   const signedRaw = pole === "left" ? -raw : raw;
-  // (signedRaw + 30) / 2 → при нечётном signedRaw возможен шаг 0.5 (см. work.md §3)
-  return (signedRaw + 30) / 2;
+  return Math.round((signedRaw + 30) / 2);
 }
 
 /** 3 ответа на системное свойство; формула отдельная от 8 шкал. */
 function systemicFromBlock(answers: readonly number[], questionIds: readonly number[]): number {
   const raw = sumAnswers(answers, questionIds);
-  return (raw + 6) * 2.5;
+  return Math.round((raw + 6) * 2.5);
 }
 
 export function calculate_scaled_scores(answers: readonly number[]): ScaledScores {
@@ -178,6 +189,49 @@ export function calculate_avg_intensity(scaled_scores: ScaledScores): number {
   );
 }
 
+function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
+  const indexA = CIRCLE_SCALE_ORDER.indexOf(a);
+  const indexB = CIRCLE_SCALE_ORDER.indexOf(b);
+  if (indexA < 0 || indexB < 0) {
+    return false;
+  }
+  const diff = Math.abs(indexA - indexB);
+  return diff === 1 || diff === CIRCLE_SCALE_ORDER.length - 1;
+}
+
+function hasNonAdjacentHighPair(scores: ScaledScores, mean: number): boolean {
+  const threshold = mean * 1.3;
+  const high = SCALE_KEYS.filter((key) => scores[key] > threshold);
+  if (high.length < 2) {
+    return false;
+  }
+
+  for (let i = 0; i < high.length; i += 1) {
+    for (let j = i + 1; j < high.length; j += 1) {
+      if (!areScalesAdjacent(high[i], high[j])) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function hasContradictoryOppositePair(scores: ScaledScores): boolean {
+  for (const [left, right] of OPPOSITE_PAIRS) {
+    const a = scores[left];
+    const b = scores[right];
+    if (a > 8 && b > 8) {
+      const max = Math.max(a, b);
+      if (Math.abs(a - b) / max < 0.15) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): string[] {
   const warnings: string[] = [];
   const meanOf8 = avgIntensity;
@@ -209,9 +263,12 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
     warnings.push("Высокий риск конфликтов");
   }
 
-  const aboveMean = values.filter((value) => value > meanOf8 * 1.3);
-  if (aboveMean.length >= 1) {
+  const highAboveMean = SCALE_KEYS.filter((key) => scores[key] > meanOf8 * 1.3);
+  if (highAboveMean.length >= 1) {
     warnings.push("Высокая вероятность нервного срыва");
+  }
+  if (hasNonAdjacentHighPair(scores, meanOf8)) {
+    warnings.push("Высокая вероятность сильного выгорания");
   }
 
   const top4 = [...values].sort((a, b) => b - a).slice(0, 4);
@@ -225,6 +282,12 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
 
   if (values.every((value) => value < 5)) {
     warnings.push("Высокая вероятность ошибки прогноза");
+  }
+
+  if (hasContradictoryOppositePair(scores)) {
+    warnings.push(
+      "Вы описали сотрудника с противоположными психологическими качествами. Высокая вероятность непредсказуемого поведения",
+    );
   }
 
   return [...new Set(warnings)];

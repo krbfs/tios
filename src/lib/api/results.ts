@@ -1,7 +1,19 @@
 import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 
+import {
+  determine_psychotype,
+  type ScaledScores,
+} from "@/lib/calculations";
 import { db } from "@/lib/db";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
+
+function thresholdWarningsFromResult(result: TestResult): string[] {
+  if (!result.scaledScores || typeof result.scaledScores !== "object") {
+    return [];
+  }
+
+  return determine_psychotype(result.scaledScores as ScaledScores).warnings;
+}
 
 export const ALLOWED_MODES = [
   "leader_resource",
@@ -137,6 +149,7 @@ export async function serializeResult(result: ResultWithSession) {
     psychotype_secondary: result.psychotypeSecondary,
     avg_intensity: result.avgIntensity,
     validation_warnings: result.validationWarnings,
+    warnings: thresholdWarningsFromResult(result),
     mode: result.mode,
     admin_comment:
       result.showAdminComment && result.adminComment ? result.adminComment : null,

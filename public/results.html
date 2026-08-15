@@ -46,7 +46,18 @@
 
         <div class="chart-card chart-card--systemic">
           <h2>5 системных свойств</h2>
-          <div id="systemic-bars" class="systemic-bars" aria-label="5 системных свойств"></div>
+          <div class="systemic-layout">
+            <div id="systemic-bars" class="systemic-bars" aria-label="5 системных свойств"></div>
+            <aside
+              id="threshold-warnings"
+              class="threshold-warnings"
+              hidden
+              aria-label="Пороговые предупреждения"
+            >
+              <h3 class="threshold-warnings__title">Пороговые предупреждения</h3>
+              <ul id="threshold-warnings-list" class="threshold-warnings__list"></ul>
+            </aside>
+          </div>
         </div>
 
         <section id="content-blocks"></section>
@@ -96,10 +107,13 @@
 
         <p id="error" class="error" hidden></p>
 
-        <p class="disclaimer">
-          Результаты не являются медицинским диагнозом. При наличии признаков
-          сильного стресса рекомендуется обратиться к квалифицированному
-          психологу.
+        <p id="result-disclaimer" class="disclaimer">
+          Результаты данного тестирования носят информационно-рекомендательный
+          характер и не являются медицинским диагнозом, клинической оценкой или
+          основанием для принятия кадровых решений без дополнительной экспертизы.
+          При наличии признаков сильного стресса, депрессивного состояния или
+          выгорания рекомендуется обратиться к квалифицированному психологу или
+          психотерапевту.
         </p>
       </div>
     </main>
@@ -157,6 +171,9 @@
       const copyResultBtn = document.getElementById("copy-result-btn");
       const copyStatus = document.getElementById("copy-status");
       const errorEl = document.getElementById("error");
+      const thresholdWarningsEl = document.getElementById("threshold-warnings");
+      const thresholdWarningsList = document.getElementById("threshold-warnings-list");
+      const resultDisclaimer = document.getElementById("result-disclaimer");
 
       let resultData = null;
       let radarChart = null;
@@ -319,7 +336,9 @@
 
       function buildRadarChart(scores) {
         const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
-        const values = RADAR_SCALE_ORDER.map((key) => Number(scores[key] ?? 0));
+        const values = RADAR_SCALE_ORDER.map((key) =>
+          Math.round(Number(scores[key] ?? 0)),
+        );
         const averageRounded = updateRadarAverage(scores);
 
         const ctx = document.getElementById("radar-chart");
@@ -379,7 +398,7 @@
               tooltip: {
                 callbacks: {
                   label(context) {
-                    const value = context.raw;
+                    const value = Math.round(Number(context.raw));
                     return `${context.dataset.label}: ${value} (${interpretScaleValue(value)})`;
                   },
                 },
@@ -388,6 +407,44 @@
           },
           plugins: [zonePlugin, radialTicksPlugin],
         });
+      }
+
+      const SCALE_KEYS = [
+        "extraversion",
+        "introversion",
+        "anxiety",
+        "aggression",
+        "sensitivity",
+        "spontaneity",
+        "lability",
+        "rigidity",
+      ];
+
+      function hasHighTendency(scores) {
+        return SCALE_KEYS.some((key) => Number(scores[key] ?? 0) > 22);
+      }
+
+      function renderThresholdWarnings(warnings, scores) {
+        thresholdWarningsList.replaceChildren();
+        const items = Array.isArray(warnings)
+          ? warnings.filter((item) => typeof item === "string" && item.trim())
+          : [];
+
+        if (items.length === 0) {
+          thresholdWarningsEl.hidden = true;
+        } else {
+          for (const text of items) {
+            const item = document.createElement("li");
+            item.textContent = text;
+            thresholdWarningsList.appendChild(item);
+          }
+          thresholdWarningsEl.hidden = false;
+        }
+
+        resultDisclaimer.classList.toggle(
+          "disclaimer--highlight",
+          hasHighTendency(scores),
+        );
       }
 
       function buildSystemicBars(systemic) {
@@ -464,8 +521,11 @@
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
         psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
 
-        buildScaleTable(result.scaled_scores || {});
-        updateRadarAverage(result.scaled_scores || {});
+        const scores = result.scaled_scores || {};
+
+        buildScaleTable(scores);
+        updateRadarAverage(scores);
+        renderThresholdWarnings(result.warnings, scores);
 
         contentBlocksEl.replaceChildren();
         (result.content_blocks || []).forEach((block) => {

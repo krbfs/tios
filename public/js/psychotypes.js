@@ -50,10 +50,9 @@ export const SCALE_TABLE_ORDER = [
   "sensitivity",
 ];
 
-/** Raw scale 0–30; show .5 when the block formula yields it (see work.md §3). */
+/** Шкала 0–30 — целое число (см. work.md §3). */
 export function formatScaleValue(rawValue) {
-  const value = Number(rawValue ?? 0);
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+  return String(Math.round(Number(rawValue ?? 0)));
 }
 
 const SCALE_KEYS = [
