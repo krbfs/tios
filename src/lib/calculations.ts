@@ -239,7 +239,7 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
 
   if (avgIntensity <= 7) {
     warnings.push(
-      "Ведущие тенденции слабо выражены. Обратите внимание на человека, понаблюдайте за ним, данных не хватает",
+      "Ведущие тенденции слабо выражены. Есть вероятность ошибки в прогнозе",
     );
   } else if (avgIntensity <= 12) {
     warnings.push("Вероятность достоверного прогноза — выше средней");
