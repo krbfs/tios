@@ -27,7 +27,7 @@
       <div class="card">
         <h1>Личный кабинет</h1>
         <p class="muted">
-          История прохождений, если вы были залогинены во время прохождения ТИОС (или вошли позже
+          История прохождений, если вы были залогинены во время прохождения теста ТИОС (или вошли позже
           в том же браузере). Без входа результат остается только в скопированной
           ссылке <code>encdata</code> — регистрация не нужна.
         </p>
@@ -51,7 +51,7 @@
         </div>
         <p id="status" class="status-msg muted"></p>
         <div class="actions">
-          <a class="btn btn-primary" href="/test/start.html" data-ga-event="cta_cabinet_start_test">Пройти ТИОС</a>
+          <a class="btn btn-primary" href="/test/start.html" data-ga-event="cta_cabinet_start_test">Пройти тест ТИОС</a>
         </div>
       </div>
     </main>
@@ -87,7 +87,7 @@
 
         if (!items.length) {
           historyBody.innerHTML =
-            '<tr><td colspan="4" class="muted">Пока пусто. Пройдите ТИОС, будучи залогинены — или войдите после анонимного прохождения в этом же браузере. Без входа сохраните ссылку encdata со страницы результата.</td></tr>';
+            '<tr><td colspan="4" class="muted">Пока пусто. Пройдите тест ТИОС, будучи залогинены — или войдите после анонимного прохождения в этом же браузере. Без входа сохраните ссылку encdata со страницы результата.</td></tr>';
           statusEl.textContent = "0 результатов";
           return;
         }
