@@ -285,9 +285,7 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
   }
 
   if (hasContradictoryOppositePair(scores)) {
-    warnings.push(
-      "Вы описали сотрудника с противоположными психологическими качествами. Высокая вероятность непредсказуемого поведения",
-    );
+    warnings.push("Высокая вероятность непредсказуемого поведения");
   }
 
   return [...new Set(warnings)];

@@ -24,15 +24,31 @@ class DeployHelperTests(unittest.TestCase):
     def setUpClass(cls):
         cls.d = _load()
 
-    def test_load_env(self):
+    def test_load_env_prefers_file_over_shell(self):
+        import os
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write("PROJECT_ID=tc-test\nREGION=europe-west1\n")
+            f.write(
+                "PROJECT_ID=tc-test\n"
+                "REGION=europe-west1\n"
+                "NEXT_PUBLIC_SITE_URL=https://tios-test.com\n"
+            )
             path = Path(f.name)
+        prev = os.environ.get("NEXT_PUBLIC_SITE_URL")
+        os.environ["NEXT_PUBLIC_SITE_URL"] = "https://stale.run.app"
         try:
             cfg = self.d.load_env(path)
-            self.assertEqual(cfg["PROJECT_ID"], "tc-test")
+            self.assertEqual(cfg["NEXT_PUBLIC_SITE_URL"], "https://tios-test.com")
         finally:
+            if prev is None:
+                os.environ.pop("NEXT_PUBLIC_SITE_URL", None)
+            else:
+                os.environ["NEXT_PUBLIC_SITE_URL"] = prev
             path.unlink(missing_ok=True)
+
+    def test_warn_if_run_app_url(self):
+        with self.assertRaises(SystemExit):
+            self.d.warn_if_run_app_url("https://tc26-wppkmlz42a-ew.a.run.app")
 
     def test_escape_yaml(self):
         self.assertEqual(self.d.escape_yaml('a"b'), 'a\\"b')

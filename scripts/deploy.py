@@ -52,6 +52,7 @@ RUNTIME_ENV_KEYS = (
 
 def load_env(path: Path) -> dict[str, str]:
     data = dict(DEFAULTS)
+    from_file: set[str] = set()
     if not path.is_file():
         raise SystemExit(f"Missing {path}. Create it from .env.example")
     for raw in path.read_text(encoding="utf-8").splitlines():
@@ -59,13 +60,28 @@ def load_env(path: Path) -> dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        data[key.strip()] = value.strip().strip('"').strip("'")
+        key = key.strip()
+        data[key] = value.strip().strip('"').strip("'")
+        from_file.add(key)
+    # Shell env fills only keys missing from .env (avoid stale export overriding local .env).
     for key in list(data):
-        if os.environ.get(key):
+        if key not in from_file and os.environ.get(key):
             data[key] = os.environ[key]
     if not data.get("PROJECT_ID"):
         raise SystemExit("PROJECT_ID is empty in .env")
     return data
+
+
+def site_url(cfg: dict[str, str]) -> str:
+    return (cfg.get("NEXT_PUBLIC_SITE_URL") or DEFAULTS["NEXT_PUBLIC_SITE_URL"]).rstrip("/")
+
+
+def warn_if_run_app_url(url: str) -> None:
+    if "run.app" in url:
+        raise SystemExit(
+            f"NEXT_PUBLIC_SITE_URL points to Cloud Run ({url}). "
+            "Set https://tios-test.com in .env before --deploy."
+        )
 
 
 def run(cmd: list[str], *, capture: bool = False) -> subprocess.CompletedProcess[str]:
@@ -322,7 +338,8 @@ def deploy(cfg: dict[str, str]) -> None:
     run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
 
     tag = image_tag()
-    site_url = cfg.get("NEXT_PUBLIC_SITE_URL") or DEFAULTS["NEXT_PUBLIC_SITE_URL"]
+    canonical = site_url(cfg)
+    warn_if_run_app_url(canonical)
     ga_id = cfg.get("NEXT_PUBLIC_GA_MEASUREMENT_ID") or DEFAULTS["NEXT_PUBLIC_GA_MEASUREMENT_ID"]
     ga_enabled = cfg.get("NEXT_PUBLIC_GA_ENABLED") or DEFAULTS["NEXT_PUBLIC_GA_ENABLED"]
     subs = (
@@ -331,11 +348,11 @@ def deploy(cfg: dict[str, str]) -> None:
         f"_REPO={cfg['REPO']},"
         f"_IMAGE={cfg['IMAGE']},"
         f"_TAG={tag},"
-        f"_SITE_URL={site_url},"
+        f"_SITE_URL={canonical},"
         f"_GA_MEASUREMENT_ID={ga_id},"
         f"_GA_ENABLED={ga_enabled}"
     )
-    print(f"Deploy tag={tag} url={site_url}", flush=True)
+    print(f"Deploy tag={tag} canonical={canonical}", flush=True)
     run(
         [
             "gcloud",
@@ -349,7 +366,8 @@ def deploy(cfg: dict[str, str]) -> None:
     live_url = service_url(cfg)
     wait_for_live_url(live_url)
     run_mobile_layout_tests(cfg, base_url=live_url)
-    print(f"Live: {live_url}", flush=True)
+    print(f"Cloud Run: {live_url}", flush=True)
+    print(f"Canonical: {canonical}", flush=True)
 
 
 def sync_env_only(cfg: dict[str, str]) -> None:

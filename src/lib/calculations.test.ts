@@ -145,9 +145,7 @@ describe("determine_psychotype", () => {
     scores.extraversion = 20;
     scores.introversion = 19;
     const result = determine_psychotype(scores);
-    expect(result.warnings).toContain(
-      "Вы описали сотрудника с противоположными психологическими качествами. Высокая вероятность непредсказуемого поведения",
-    );
+    expect(result.warnings).toContain("Высокая вероятность непредсказуемого поведения");
   });
 
   it("detects clear leader as individualist", () => {
