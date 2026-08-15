@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="6.5 6.5 19 19" role="img" aria-label="TIOS">
-  <rect x="6.5" y="6.5" width="19" height="19" fill="#ffffff"/>
   <g transform="translate(16 16)" fill="none" stroke-linecap="round">
-    <polygon points="0,-8.5 6.01,-6.01 8.5,0 6.01,6.01 0,8.5 -6.01,6.01 -8.5,0 -6.01,-6.01" stroke="#1a54d8" stroke-width="0.75" opacity="0.7"/>
-    <polygon points="0,-5.667 4.007,-4.007 5.667,0 4.007,4.007 0,5.667 -4.007,4.007 -5.667,0 -4.007,-4.007" stroke="#1a54d8" stroke-width="0.7" opacity="0.55"/>
-    <polygon points="0,-2.833 2.003,-2.003 2.833,0 2.003,2.003 0,2.833 -2.003,2.003 -2.833,0 -2.003,-2.003" stroke="#5b8df7" stroke-width="0.65" opacity="0.6"/>
-    <line y1="-8.5" y2="8.5" stroke="#1a54d8" stroke-width="0.65" opacity="0.6"/>
-    <line x1="-8.5" x2="8.5" stroke="#1a54d8" stroke-width="0.65" opacity="0.6"/>
-    <line x1="-6.01" y1="-6.01" x2="6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.6"/>
-    <line x1="6.01" y1="-6.01" x2="-6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.6"/>
+    <polygon points="0,-8.5 6.01,-6.01 8.5,0 6.01,6.01 0,8.5 -6.01,6.01 -8.5,0 -6.01,-6.01" stroke="#1a54d8" stroke-width="0.75" opacity="0.85"/>
+    <polygon points="0,-5.667 4.007,-4.007 5.667,0 4.007,4.007 0,5.667 -4.007,4.007 -5.667,0 -4.007,-4.007" stroke="#1a54d8" stroke-width="0.7" opacity="0.7"/>
+    <polygon points="0,-2.833 2.003,-2.003 2.833,0 2.003,2.003 0,2.833 -2.003,2.003 -2.833,0 -2.003,-2.003" stroke="#5b8df7" stroke-width="0.65" opacity="0.75"/>
+    <line y1="-8.5" y2="8.5" stroke="#1a54d8" stroke-width="0.65" opacity="0.75"/>
+    <line x1="-8.5" x2="8.5" stroke="#1a54d8" stroke-width="0.65" opacity="0.75"/>
+    <line x1="-6.01" y1="-6.01" x2="6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.75"/>
+    <line x1="6.01" y1="-6.01" x2="-6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.75"/>
   </g>
 </svg>
