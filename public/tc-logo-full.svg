@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="34" viewBox="0 0 108 34" role="img" aria-label="TIOS">
-  <g transform="translate(0 1)">
-    <path d="M1.1,0H9.918a1.1,1.1,0,0,1,1.1,1.1V9.918a1.1,1.1,0,0,1-1.1,1.1H1.1A1.1,1.1,0,0,1,0,9.918V1.1A1.1,1.1,0,0,1,1.1,0Z" transform="translate(23.542 0)" fill="#ff5e34"/>
-    <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(0 23.05)" fill="#36a9e0"/>
-    <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(11.831 11.525)" fill="#2fe77f"/>
-    <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(23.542 11.525)" fill="#ffc734"/>
-    <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(23.542 23.05)" fill="#556587"/>
-    <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(11.831 23.05)" fill="#525dac"/>
+  <g transform="translate(17 17)" fill="none" stroke-linecap="round">
+    <polygon points="0,-8.5 6.01,-6.01 8.5,0 6.01,6.01 0,8.5 -6.01,6.01 -8.5,0 -6.01,-6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.55"/>
+    <polygon points="0,-5.667 4.007,-4.007 5.667,0 4.007,4.007 0,5.667 -4.007,4.007 -5.667,0 -4.007,-4.007" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
+    <polygon points="0,-2.833 2.003,-2.003 2.833,0 2.003,2.003 0,2.833 -2.003,2.003 -2.833,0 -2.003,-2.003" stroke="#5b8df7" stroke-width="0.5" opacity="0.5"/>
+    <line y1="-8.5" y2="8.5" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
+    <line x1="-8.5" x2="8.5" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
+    <line x1="-6.01" y1="-6.01" x2="6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
+    <line x1="6.01" y1="-6.01" x2="-6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
   </g>
-  <text x="42" y="24" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#556687">TIOS</text>
+  <text x="40" y="24" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#17255a">TIOS</text>
 </svg>

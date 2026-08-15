@@ -44,6 +44,30 @@ body {
   color: var(--footer-text);
 }
 
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.site-footer-links a {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.site-footer-links a:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+  .site-footer-links {
+    justify-content: flex-start;
+  }
+}
+
 .site-footer-center {
   text-align: center;
 }

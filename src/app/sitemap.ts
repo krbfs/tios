@@ -11,6 +11,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${siteConfig.url}${pages.about.path}`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.85,
+    },
+    {
+      url: `${siteConfig.url}${pages.author.path}`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.6,
+    },
+    {
       url: `${siteConfig.url}${pages.testIntro.path}`,
       lastModified: now,
       changeFrequency: "weekly",

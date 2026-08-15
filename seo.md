@@ -34,6 +34,8 @@
 | Path | Index |
 |---|---|
 | `/` | yes |
+| `/about` | yes |
+| `/author` | yes |
 | `/test` | yes |
 | `/test/take` | yes (тест — целевая страница) |
 | `/results` | yes (демо-пример результата) |

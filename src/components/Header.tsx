@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/", label: "Главная" },
   { href: "/test", label: "Пройти тест ТИОС", gaEvent: "cta_header_start_test" },
-  { href: "/cabinet", label: "Личный кабинет", gaEvent: "cta_header_cabinet" },
+  { href: "/about", label: "О тесте", gaEvent: "cta_header_about" },
 ];
 
 export function Header() {
