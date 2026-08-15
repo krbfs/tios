@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="TIOS">
+  <rect width="32" height="32" fill="#ffffff"/>
+  <g transform="translate(16 16)" fill="none" stroke-linecap="round">
+    <polygon points="0,-8.5 6.01,-6.01 8.5,0 6.01,6.01 0,8.5 -6.01,6.01 -8.5,0 -6.01,-6.01" stroke="#1a54d8" stroke-width="0.6" opacity="0.55"/>
+    <polygon points="0,-5.667 4.007,-4.007 5.667,0 4.007,4.007 0,5.667 -4.007,4.007 -5.667,0 -4.007,-4.007" stroke="#1a54d8" stroke-width="0.55" opacity="0.4"/>
+    <polygon points="0,-2.833 2.003,-2.003 2.833,0 2.003,2.003 0,2.833 -2.003,2.003 -2.833,0 -2.003,-2.003" stroke="#5b8df7" stroke-width="0.5" opacity="0.45"/>
+    <line y1="-8.5" y2="8.5" stroke="#1a54d8" stroke-width="0.5" opacity="0.45"/>
+    <line x1="-8.5" x2="8.5" stroke="#1a54d8" stroke-width="0.5" opacity="0.45"/>
+    <line x1="-6.01" y1="-6.01" x2="6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.5" opacity="0.45"/>
+    <line x1="6.01" y1="-6.01" x2="-6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.5" opacity="0.45"/>
+  </g>
+</svg>

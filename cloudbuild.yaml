@@ -67,7 +67,7 @@ steps:
       - --max-instances=10
       - --concurrency=80
       - --timeout=300
-      - --set-env-vars=NODE_ENV=production,NEXT_PUBLIC_SITE_URL=${_SITE_URL},NEXT_PUBLIC_GA_MEASUREMENT_ID=${_GA_MEASUREMENT_ID},NEXT_PUBLIC_GA_ENABLED=${_GA_ENABLED}
+      - --update-env-vars=NODE_ENV=production,NEXT_PUBLIC_SITE_URL=${_SITE_URL},NEXT_PUBLIC_GA_MEASUREMENT_ID=${_GA_MEASUREMENT_ID},NEXT_PUBLIC_GA_ENABLED=${_GA_ENABLED}
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}

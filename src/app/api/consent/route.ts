@@ -52,9 +52,12 @@ export async function POST(request: Request) {
     );
   } catch (err) {
     console.error("consent create failed:", err);
-    return error(
-      err instanceof Error ? err.message : "Failed to save consent",
-      500,
-    );
+    const message =
+      err instanceof Error && err.message.includes("DATABASE_URL")
+        ? "База данных недоступна. Обратитесь к администратору."
+        : err instanceof Error
+          ? err.message
+          : "Failed to save consent";
+    return error(message, 500);
   }
 }

@@ -35,6 +35,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: pages.home.path,
   },
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
     type: "website",
     locale: siteConfig.locale,
