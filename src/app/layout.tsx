@@ -47,7 +47,7 @@ export const metadata: Metadata = {
         url: absoluteUrl("/tc-logo-full.svg"),
         width: 108,
         height: 34,
-        alt: "TC26",
+        alt: "TIOS",
       },
     ],
   },

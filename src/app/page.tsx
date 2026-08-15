@@ -28,7 +28,7 @@ const reasons = [
   },
   {
     title: "75 вопросов ≈ 10 минут",
-    text: "Завершите тест за кофе‑брейк и получите результат мгновенно.",
+    text: "Завершите ТИОС за кофе‑брейк и получите результат мгновенно.",
   },
   {
     title: "Бесплатно и без регистрации",
@@ -49,7 +49,7 @@ const features = [
     icon: "/rocket.svg",
     alt: "Динамика наблюдений",
     title: "Динамика наблюдений",
-    text: "Вы можете проходить наши тесты периодически, отслеживая, таким образом, свое психологическое состояние",
+    text: "Вы можете проходить ТИОС периодически, отслеживая, таким образом, свое психологическое состояние",
   },
   {
     icon: "/calculator.svg",
@@ -114,7 +114,7 @@ export default function HomePage() {
       >
         <RevealOnScroll>
           <h2 className="mb-6 text-center text-3xl leading-[1.1] sm:text-3xl md:text-4xl">
-            Почему стоит пройти тест TC26
+            Почему стоит пройти ТИОС
           </h2>
         </RevealOnScroll>
         <ul className="mx-auto max-w-2xl list-none p-0">
@@ -132,7 +132,7 @@ export default function HomePage() {
         </ul>
         <RevealOnScroll delay={120}>
           <p className="mx-auto max-w-3xl text-muted sm:text-lg">
-          Тест состоит из 75 пар утверждений. Для каждого выберите, какое
+          ТИОС состоит из 75 пар утверждений. Для каждого выберите, какое
           утверждение ближе и насколько вы с ним согласны. Отвечайте честно —
           так вы получите наиболее точный психопрофиль.
           </p>
@@ -149,7 +149,7 @@ export default function HomePage() {
               Что вы получите после ответа на 75 вопросов
             </h2>
             <p className="max-w-[85%] leading-normal text-muted sm:text-lg sm:leading-7">
-              С помощью нашего теста Вы сможете узнать особенности своего
+              С помощью ТИОС Вы сможете узнать особенности своего
               характера, получить инструмент подтверждения управленческой
               компетентности.
             </p>
@@ -184,9 +184,9 @@ export default function HomePage() {
         <RevealOnScroll delay={100}>
           <div className="mx-auto text-left md:max-w-[58rem] md:text-center">
             <p className="leading-normal text-muted sm:text-lg sm:leading-7">
-              Тест можно проходить без регистрации. В таком случае Вы всегда
+              ТИОС можно проходить без регистрации. В таком случае Вы всегда
               сможете получить доступ к Вашему результату по специальной ссылке,
-              сгенерированной после прохождения теста.{" "}
+              сгенерированной после прохождения.{" "}
               <b>Зарегистрированные</b> же пользователи могут сохранять все
               результаты и наблюдать за динамикой изменения своего состояния.
             </p>
@@ -196,7 +196,7 @@ export default function HomePage() {
                 className="btn btn-primary btn-lg font-bold"
                 data-ga-event="cta_home_start_test_footer"
               >
-                Пройти тест
+                Пройти ТИОС
               </Link>
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function HomePage() {
             id="faq-heading"
             className="mb-6 text-center text-3xl leading-[1.1] md:text-4xl"
           >
-            Частые вопросы о тесте
+            Частые вопросы о ТИОС
           </h2>
         </RevealOnScroll>
         <div className="mx-auto max-w-2xl space-y-3">

@@ -25,7 +25,7 @@ export default function TestTakeLayout({
         data={buildBreadcrumbJsonLd([
           { name: "Главная", path: "/" },
           { name: "Как проходить", path: "/test" },
-          { name: "Пройти тест", path: "/test/take" },
+          { name: "Пройти ТИОС", path: "/test/take" },
         ])}
       />
     </>

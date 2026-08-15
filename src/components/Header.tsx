@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 /** Keep in sync with chrome/header-public.html */
 const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/", label: "Главная" },
-  { href: "/test", label: "Пройти тест", gaEvent: "cta_header_start_test" },
+  { href: "/test", label: "Пройти ТИОС", gaEvent: "cta_header_start_test" },
   { href: "/cabinet", label: "Личный кабинет", gaEvent: "cta_header_cabinet" },
 ];
 
@@ -21,7 +21,7 @@ export function Header() {
         <Link href="/" className="inline-flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            alt="TC26"
+            alt="TIOS"
             width={108}
             height={34}
             className="block h-[34px] w-auto"

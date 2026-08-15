@@ -1,4 +1,4 @@
-# ai.txt — TC26
+# ai.txt — TIOS
 
 User-Agent: *
 Allow: /
