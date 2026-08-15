@@ -103,7 +103,7 @@ function siteBase(baseUrl?: string): string {
   );
 }
 
-/** Public result URL (tc26-wppkmlz42a-ew.a.run.app style). */
+/** Public result URL (canonical site domain from NEXT_PUBLIC_SITE_URL). */
 export function buildResultUrl(encdata: string, baseUrl?: string): string {
   return `${siteBase(baseUrl)}${RESULT_PATH}?encdata=${encodeURIComponent(encdata)}`;
 }

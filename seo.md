@@ -52,7 +52,7 @@
 - регистрация: **не обязательна**
 - старт теста: `/test` → `/test/take`
 - пример результата: `/results`
-- контакт: `support@tc26.pro`
+- контакт: `support@tios-test.com`
 - партнер: Insighter — https://insighter.by/
 
 ## Structured data (JSON-LD)

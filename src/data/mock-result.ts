@@ -14,7 +14,7 @@ export const mockResult = {
   summary:
     "Вы — экстраверт. У Вас, скорее всего, все хорошо с коммуникациями. Это создает прочный фундамент для карьеры и множество опций для ее развития.",
   mainType: "лидер мнений",
-  shareUrl: "https://tc26-wppkmlz42a-ew.a.run.app/r/demo-result",
+  shareUrl: "https://tios-test.com/r/demo-result",
   scales: [
     { key: "anxiety", label: "тревожность", value: 2 },
     { key: "lability", label: "лабильность", value: 8 },

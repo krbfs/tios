@@ -13,7 +13,7 @@ substitutions:
   _REPO: tc26
   _IMAGE: tc26
   _TAG: latest
-  _SITE_URL: https://tc26-wppkmlz42a-ew.a.run.app
+  _SITE_URL: https://tios-test.com
   _GA_MEASUREMENT_ID: G-TYYGE7DS6E
   _GA_ENABLED: "true"
 

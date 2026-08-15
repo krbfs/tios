@@ -1,3 +1,5 @@
+import { siteConfig } from "@/lib/seo";
+
 /** Keep in sync with chrome/footer.html */
 export function Footer() {
   return (
@@ -18,9 +20,9 @@ export function Footer() {
           <div className="text-center md:text-right">
             <a
               className="font-semibold text-white hover:text-[#5b8df7] hover:underline"
-              href="mailto:support@tc26.pro"
+              href={`mailto:${siteConfig.email}`}
             >
-              support@tc26.pro
+              {siteConfig.email}
             </a>
           </div>
         </div>

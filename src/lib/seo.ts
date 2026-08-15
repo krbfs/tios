@@ -1,4 +1,4 @@
-const fallbackSiteUrl = "https://tc26-wppkmlz42a-ew.a.run.app";
+const fallbackSiteUrl = "https://tios-test.com";
 
 export const siteConfig = {
   name: "TIOS",
@@ -7,7 +7,7 @@ export const siteConfig = {
   locale: "ru_RU",
   language: "ru",
   url: (process.env.NEXT_PUBLIC_SITE_URL || fallbackSiteUrl).replace(/\/$/, ""),
-  email: "support@tc26.pro",
+  email: "support@tios-test.com",
   partner: {
     name: "Insighter",
     url: "https://insighter.by/",

@@ -33,7 +33,7 @@ DEFAULTS = {
     "SERVICE": "tc26",
     "REPO": "tc26",
     "IMAGE": "tc26",
-    "NEXT_PUBLIC_SITE_URL": "https://tc26-wppkmlz42a-ew.a.run.app",
+    "NEXT_PUBLIC_SITE_URL": "https://tios-test.com",
     "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-TYYGE7DS6E",
     "NEXT_PUBLIC_GA_ENABLED": "true",
 }
