@@ -8,6 +8,7 @@ const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/", label: "Главная" },
   { href: "/test", label: "Пройти тест ТИОС", gaEvent: "cta_header_start_test" },
   { href: "/about", label: "О тесте", gaEvent: "cta_header_about" },
+  { href: "/author", label: "Об авторе", gaEvent: "cta_header_author" },
 ];
 
 export function Header() {
