@@ -50,9 +50,10 @@ export const SCALE_TABLE_ORDER = [
   "sensitivity",
 ];
 
-/** Raw scale is 0–30; display ceiled to whole numbers. */
+/** Raw scale 0–30; show .5 when the block formula yields it (see work.md §3). */
 export function formatScaleValue(rawValue) {
-  return String(Math.ceil(Number(rawValue ?? 0)));
+  const value = Number(rawValue ?? 0);
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
 }
 
 const SCALE_KEYS = [

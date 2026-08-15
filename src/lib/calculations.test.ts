@@ -52,6 +52,12 @@ describe("calculate_scaled_scores", () => {
     }
   });
 
+  it("odd block sum → scale value with .5 step", () => {
+    const answers = fillAnswers(0);
+    answers[0] = -1; // блок EI: сумма −1, signedRaw для extraversion = 1 → 15.5
+    expect(calculate_scaled_scores(answers).extraversion).toBe(15.5);
+  });
+
   it("mixed answers → correct calculation", () => {
     const answers = fillAnswers(0);
     // Блок 2: усиливаем агрессивность (+2 на все вопросы блока)

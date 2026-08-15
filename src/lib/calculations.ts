@@ -114,11 +114,13 @@ function scaleFromBlock(
   questionIds: readonly number[],
   pole: "left" | "right",
 ): number {
-  const raw = sumAnswers(answers, questionIds);
+  const raw = sumAnswers(answers, questionIds); // 15 ответов → сумма всегда целая
   const signedRaw = pole === "left" ? -raw : raw;
+  // (signedRaw + 30) / 2 → при нечётном signedRaw возможен шаг 0.5 (см. work.md §3)
   return (signedRaw + 30) / 2;
 }
 
+/** 3 ответа на системное свойство; формула отдельная от 8 шкал. */
 function systemicFromBlock(answers: readonly number[], questionIds: readonly number[]): number {
   const raw = sumAnswers(answers, questionIds);
   return (raw + 6) * 2.5;
