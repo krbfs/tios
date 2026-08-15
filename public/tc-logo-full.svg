@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="108" height="34" viewBox="0 0 108 34" role="img" aria-label="TC26">
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="34" viewBox="0 0 108 34" role="img" aria-label="TIOS">
   <g transform="translate(0 1)">
     <path d="M1.1,0H9.918a1.1,1.1,0,0,1,1.1,1.1V9.918a1.1,1.1,0,0,1-1.1,1.1H1.1A1.1,1.1,0,0,1,0,9.918V1.1A1.1,1.1,0,0,1,1.1,0Z" transform="translate(23.542 0)" fill="#ff5e34"/>
     <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(0 23.05)" fill="#36a9e0"/>
@@ -7,5 +7,5 @@
     <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(23.542 23.05)" fill="#556587"/>
     <path d="M1.095,0h8.76A1.1,1.1,0,0,1,10.95,1.095v8.76A1.1,1.1,0,0,1,9.855,10.95H1.095A1.1,1.1,0,0,1,0,9.855V1.095A1.1,1.1,0,0,1,1.095,0Z" transform="translate(11.831 23.05)" fill="#525dac"/>
   </g>
-  <text x="42" y="24" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#556687">TC26</text>
+  <text x="42" y="24" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#556687">TIOS</text>
 </svg>
