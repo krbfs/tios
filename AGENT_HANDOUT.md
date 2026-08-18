@@ -38,17 +38,17 @@
 
 При конфликте:
 
-1. **NAVIGATOR** (`source_main/1_NAVIGATOR.docx` / правила в `.cursor/rules/navigator-domain.mdc`)
-2. **ТЗ.docx** — математика, валидация, архитектура БД
-3. **Файл вопросника** — содержание вопросов, шкала, ключи
-4. **Файлы контента** — тексты режимов
+1. **NAVIGATOR** (`source_current/NAVIGATOR финал.docx` v9.0 / правила в `.cursor/rules/navigator-domain.mdc`)
+2. **ТЗ** (`source_current/ФИНАЛЬНОЕ_РАЗВЁРНУТОЕ_ТЕХНИЧЕСКОЕ_ЗАДАНИЕ (2).docx` v4.0) — архитектура, БД, API
+3. **Вопросник и математика** (`source_current/Текст_опросника_и_математика_финал.docx` v3.0)
+4. **Файлы контента** в `source_current/` — тексты режимов
 
 **NAVIGATOR побеждает ТЗ.**  
 **При любом сомнении — спросить пользователя**, не выбирать формулу/текст самостоятельно.
 
 Дополнительно в репозитории:
 
-- `work.md` — рабочие правила проекта (маппинг, режимы, запреты)
+- `work.md` — рабочие правила проекта (маппинг, режимы, запреты) — в корне репозитория `tc/`
 - `seo.md` — SEO / LLM-discoverability
 - `deploy/DOMAIN.md` — домен и DNS
 
@@ -89,7 +89,7 @@
 ```
 tc_26/
 ├── AGENT_HANDOUT.md          ← этот файл
-├── work.md                   ← доменные правила
+├── work.md                   ← доменные правила (корень tc/, не tc_26/)
 ├── seo.md                    ← SEO
 ├── prisma/schema.prisma      ← модели БД
 ├── src/
@@ -346,10 +346,11 @@ avg_intensity = sum(8 scales) / 8
 
 | code | Название | Источник контента |
 |------|----------|-------------------|
-| `leader_resource` | Ресурс руководителя | **default** |
-| `insighter` | Инсайтер | Excel «Результат (новый)» |
-| `stressless` | Стресслесс | StressLess worksheet |
-| `hr_table` | Таблица для HR | HR doc |
+| `leader_resource` | Ресурс руководителя | `source_current/Предложение_пo_изменению_ТК_вопросы (2).docx` — **default** |
+| `insighter` | Инсайтер | `source_current/insighter_outer для разработки.xlsx` → «Результат (новый)» |
+| `insighter_you` | Инсайтер (ты) | `source_current/ответы инсайтер 1.xlsx` — V1, пока не в коде |
+| `stressless` | Стресслесс | `source_current/StressLess worksheet 2 (2).xlsx` |
+| `hr_table` | Таблица для HR | `source_current/Таблицы для HR (3).docx` |
 
 **Правило:** режим — **параметр результата**, переключает **админ**, не отдельная страница.
 

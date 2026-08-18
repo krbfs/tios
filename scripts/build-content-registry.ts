@@ -2,7 +2,7 @@
 /**
  * Build content_registry.json for leader_resource from source docx.
  *
- * Source: source_main/1_Предложение_пo_изменению_ТК_вопросы.docx
+ * Source: source_current/Предложение_пo_изменению_ТК_вопросы (2).docx
  * Usage: npm run content:build-registry
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { join, resolve } from "node:path";
 import AdmZip from "adm-zip";
 
 function findLeaderResourceDocx(): string {
-  const sourceDir = resolve(process.cwd(), "../source_main");
+  const sourceDir = resolve(process.cwd(), "../source_current");
   const file = readdirSync(sourceDir).find(
     (name) =>
       name.includes("Предложение") &&
@@ -253,7 +253,7 @@ function main() {
 
   const payload = {
     mode: "leader_resource",
-    source: "source_main/1_Предложение_пo_изменению_ТК_вопросы.docx",
+    source: "source_current/Предложение_пo_изменению_ТК_вопросы (2).docx",
     generated_at: new Date().toISOString(),
     blocks,
   };

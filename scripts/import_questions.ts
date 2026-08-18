@@ -5,7 +5,7 @@
  *
  * Usage:
  *   npm run db:import-questions
- *   npm run db:import-questions -- --file ../source_main/....docx
+ *   npm run db:import-questions -- --file ../source_current/....docx
  */
 
 import { readdirSync } from "node:fs";
@@ -16,10 +16,10 @@ import { PrismaClient } from "@prisma/client";
 import { parseQuestionnaireDocx } from "./lib/parse-questionnaire-docx";
 
 function findDefaultQuestionnairePath(): string {
-  const sourceDir = resolve(process.cwd(), "../source_main");
+  const sourceDir = resolve(process.cwd(), "../source_current");
   const file = readdirSync(sourceDir).find(
     (name) =>
-      name.includes("текст_опросника") &&
+      name.toLowerCase().includes("текст_опросника") &&
       name.endsWith(".docx") &&
       !name.startsWith("~") &&
       !name.startsWith("."),
