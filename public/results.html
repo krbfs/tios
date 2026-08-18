@@ -351,10 +351,14 @@
         },
       };
 
-      function buildScaleTable(scores) {
+      function buildScaleTable(scores, sorted) {
         scaleTableBody.replaceChildren();
 
-        for (const [index, key] of SCALE_TABLE_ORDER.entries()) {
+        const order = Array.isArray(sorted) && sorted.length === 8
+          ? sorted.map((item) => item.key)
+          : SCALE_TABLE_ORDER;
+
+        for (const [index, key] of order.entries()) {
           const row = document.createElement("tr");
           const labelCell = document.createElement("th");
           const valueCell = document.createElement("td");
