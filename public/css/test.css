@@ -866,6 +866,16 @@ input[type="range"] {
   gap: 10px;
 }
 
+.mode-request-status--approved {
+  color: #15803d;
+  font-weight: 500;
+}
+
+.mode-request-status--rejected {
+  color: #b45309;
+  font-weight: 500;
+}
+
 .systemic-row {
   display: grid;
   grid-template-columns: minmax(0, 7.5rem) 1fr 2.25rem;

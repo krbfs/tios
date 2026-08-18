@@ -672,6 +672,36 @@
         correspondenceSection.classList.add("motion-reveal");
       }
 
+      function renderModeRequestNotice(notice) {
+        if (!notice || !resultData?.id) {
+          return;
+        }
+
+        const storageKey = `mode-request-notice-${resultData.id}-${notice.id}`;
+        if (sessionStorage.getItem(storageKey)) {
+          return;
+        }
+
+        const modeLabel = notice.requested_mode_label || notice.requested_mode;
+        let text =
+          notice.status === "approved"
+            ? `Заявка на режим «${modeLabel}» одобрена. Контент обновлён.`
+            : `Заявка на режим «${modeLabel}» отклонена.`;
+
+        if (notice.admin_note) {
+          text += ` Комментарий администратора: ${notice.admin_note}`;
+        }
+
+        modeRequestStatus.textContent = text;
+        modeRequestStatus.hidden = false;
+        modeRequestStatus.className =
+          notice.status === "approved"
+            ? "mode-request-status mode-request-status--approved"
+            : "mode-request-status mode-request-status--rejected";
+        modeRequestSection.hidden = false;
+        sessionStorage.setItem(storageKey, "1");
+      }
+
       async function requestMode(mode) {
         if (!resultData?.id) {
           modeRequestStatus.textContent =
@@ -729,6 +759,7 @@
 
         updateResultLink(result);
         modeRequestSection.hidden = !result.id;
+        renderModeRequestNotice(result.mode_request_notice);
         markResultLoaded();
         initChartReveal(result);
       }

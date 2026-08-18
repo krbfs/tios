@@ -9,7 +9,7 @@ import {
 } from "@/lib/calculations";
 import { db } from "@/lib/db";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
-import { resolveContentModeForSession } from "@/lib/modes";
+import { resolveContentModeForSession, MODE_LABELS, type ResultMode } from "@/lib/modes";
 
 export { ALLOWED_MODES, type ResultMode } from "@/lib/modes";
 
@@ -139,6 +139,44 @@ function thresholdWarningsFromResult(result: TestResult): string[] {
   ).warnings;
 }
 
+export function viewerOwnsResult(
+  result: ResultWithSession,
+  viewer: SerializeViewer,
+): boolean {
+  if (viewer.user && result.session.userId === viewer.user.id) {
+    return true;
+  }
+  if (viewer.sessionUuid && result.session.sessionUuid === viewer.sessionUuid) {
+    return true;
+  }
+  return false;
+}
+
+async function loadModeRequestNotice(resultId: string) {
+  const notice = await db.modeRequest.findFirst({
+    where: {
+      resultId,
+      status: { in: ["approved", "rejected"] },
+    },
+    orderBy: { resolvedAt: "desc" },
+  });
+
+  if (!notice) {
+    return null;
+  }
+
+  const mode = notice.requestedMode as ResultMode;
+
+  return {
+    id: notice.id,
+    status: notice.status,
+    requested_mode: notice.requestedMode,
+    requested_mode_label: MODE_LABELS[mode] ?? notice.requestedMode,
+    admin_note: notice.adminNote,
+    resolved_at: notice.resolvedAt?.toISOString() ?? null,
+  };
+}
+
 export async function serializeResult(
   result: ResultWithSession,
   viewer: SerializeViewer = { user: null, sessionUuid: null },
@@ -158,6 +196,9 @@ export async function serializeResult(
 
   const encdata = getEncdataFromAnswers(result.answers);
   const scaledScores = result.scaledScores as ScaledScores;
+  const modeRequestNotice = viewerOwnsResult(result, viewer)
+    ? await loadModeRequestNotice(result.id)
+    : null;
 
   return {
     id: result.id,
@@ -183,6 +224,7 @@ export async function serializeResult(
     is_public: result.isPublic,
     share_link: encdata ? buildShareUrl(encdata) : null,
     content_blocks: blocks,
+    mode_request_notice: modeRequestNotice,
   };
 }
 
