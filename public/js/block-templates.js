@@ -283,6 +283,20 @@ export function renderBlockBody(block) {
     return createTableBlock(contentText);
   }
 
+  if (block.block_template === "list_block") {
+    const dashItems = parseDashListItems(contentText);
+    if (dashItems) {
+      return createListBlock(dashItems);
+    }
+    const splitItems = contentText
+      .split(/(?=[–—-])/)
+      .map((item) => item.replace(/^[–—-]\s*/, "").trim())
+      .filter(Boolean);
+    if (splitItems.length >= 2) {
+      return createListBlock(splitItems);
+    }
+  }
+
   if (shouldRenderAsCardBlock(block)) {
     return createEfficiencyCardBlock(contentText);
   }

@@ -46,6 +46,7 @@ model User {
 
   sessions TestSession[]
   consents UserConsent[]
+  modeRequests ModeRequest[]
 
   @@map("users")
 }
@@ -143,6 +144,7 @@ model PsychotypeDefinition {
 model ModeRequest {
   id             String            @id @default(cuid())
   resultId       String            @map("result_id")
+  userId         String?           @map("user_id")
   requestedMode  ContentMode       @map("requested_mode")
   status         ModeRequestStatus @default(pending)
   createdAt      DateTime          @default(now()) @map("created_at")
@@ -151,10 +153,29 @@ model ModeRequest {
   adminNote      String?           @map("admin_note")
 
   result TestResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  user   User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([resultId])
+  @@index([userId])
   @@index([status])
   @@map("mode_requests")
+}
+
+/// 9. CompatibilityRule — pairwise psychotype compatibility (8×8 matrix)
+model CompatibilityRule {
+  id                 Int     @id @default(autoincrement())
+  typeACode          String  @map("type_a_code")
+  typeBCode          String  @map("type_b_code")
+  compatibilityLevel String  @map("compatibility_level")
+  complementZone     String? @map("complement_zone")
+  commonZone         String? @map("common_zone")
+  intensityNote      String? @map("intensity_note")
+  recommendation     String?
+
+  @@unique([typeACode, typeBCode])
+  @@index([typeACode])
+  @@index([typeBCode])
+  @@map("compatibility_rules")
 }
 
 /// 8. UserConsent

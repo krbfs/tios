@@ -59,6 +59,7 @@ export async function POST(request: Request, context: RouteContext) {
     data: {
       resultId: id,
       requestedMode: body.mode,
+      userId: user?.id ?? null,
     },
   });
 
