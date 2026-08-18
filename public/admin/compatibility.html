@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-TYYGE7DS6E" />
+    <title>Совместимость 8×8 — Админ TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <!-- chrome:header-admin activePage=compatibility -->
+<header class="site-header">
+  <div class="container admin-nav">
+    <strong>TIOS Admin</strong>
+    <a href="/admin/index.html" class="">Результаты</a>
+    <a href="/admin/content.html" class="">Контент</a>
+    <a href="/admin/mode-requests.html" class="">Заявки</a>
+    <a href="/admin/teams.html" class="">Команды</a>
+    <a href="/admin/compatibility.html" class="active">Совместимость</a>
+    <span class="admin-nav-spacer"></span>
+    <span id="admin-email" class="muted"></span>
+    <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_admin_logout">Выйти</button>
+  </div>
+</header>
+<!-- /chrome:header-admin -->
+
+    <main class="container">
+      <div class="card">
+        <h1>Матрица совместимости 8×8</h1>
+        <p class="muted">
+          Парные правила из HR-таблицы (не евклидово расстояние). Наведите на ячейку — рекомендация.
+        </p>
+
+        <div class="team-heatmap-wrap">
+          <table id="matrix-table" class="team-heatmap" aria-label="Матрица совместимости психотипов">
+            <tbody>
+              <tr>
+                <td class="muted">Загрузка…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <aside id="pair-detail" class="compatibility-detail" hidden>
+          <h2 id="pair-title"></h2>
+          <p id="pair-level" class="muted"></p>
+          <p id="pair-recommendation"></p>
+        </aside>
+
+        <p id="status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
+      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import {
+        adminApiJson,
+        getStoredUser,
+        logout,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
+
+      const matrixTable = document.getElementById("matrix-table");
+      const pairDetail = document.getElementById("pair-detail");
+      const pairTitle = document.getElementById("pair-title");
+      const pairLevel = document.getElementById("pair-level");
+      const pairRecommendation = document.getElementById("pair-recommendation");
+      const statusEl = document.getElementById("status");
+
+      const LEVEL_LABELS = {
+        effective: "Эффективно",
+        conflict: "Конфликт",
+        unknown: "Нет данных",
+        self: "—",
+      };
+
+      document.getElementById("admin-email").textContent = getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", logout);
+
+      function psychotypeName(code) {
+        return PSYCHOTYPE_META[code]?.name || code;
+      }
+
+      function showPair(typeA, typeB, cell) {
+        if (!cell || cell.compatibility_level === "self") {
+          pairDetail.hidden = true;
+          return;
+        }
+
+        pairTitle.textContent = `${psychotypeName(typeA)} + ${psychotypeName(typeB)}`;
+        pairLevel.textContent =
+          LEVEL_LABELS[cell.compatibility_level] || cell.compatibility_level;
+        pairRecommendation.textContent =
+          cell.recommendation?.trim() || "Рекомендация не задана в правилах.";
+        pairDetail.hidden = false;
+      }
+
+      function renderMatrix(psychotypes, matrix) {
+        matrixTable.replaceChildren();
+
+        const headerRow = document.createElement("tr");
+        headerRow.appendChild(document.createElement("th"));
+        for (const code of psychotypes) {
+          const th = document.createElement("th");
+          th.textContent = psychotypeName(code);
+          th.title = code;
+          headerRow.appendChild(th);
+        }
+        matrixTable.appendChild(headerRow);
+
+        for (const [rowIndex, rowType] of psychotypes.entries()) {
+          const row = document.createElement("tr");
+          const rowHeader = document.createElement("th");
+          rowHeader.textContent = psychotypeName(rowType);
+          rowHeader.title = rowType;
+          row.appendChild(rowHeader);
+
+          for (const [colIndex, cell] of (matrix[rowIndex] || []).entries()) {
+            const td = document.createElement("td");
+            const level = cell?.compatibility_level || "unknown";
+            td.className = `team-heatmap-cell team-heatmap-cell--${level}`;
+            td.textContent =
+              level === "self" ? "—" : LEVEL_LABELS[level]?.slice(0, 3) || level;
+            td.title = `${psychotypeName(rowType)} × ${psychotypeName(psychotypes[colIndex])}`;
+
+            if (level !== "self") {
+              td.tabIndex = 0;
+              td.addEventListener("click", () =>
+                showPair(rowType, psychotypes[colIndex], cell),
+              );
+              td.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  showPair(rowType, psychotypes[colIndex], cell);
+                }
+              });
+            }
+
+            row.appendChild(td);
+          }
+
+          matrixTable.appendChild(row);
+        }
+      }
+
+      async function loadMatrix() {
+        statusEl.textContent = "Загрузка матрицы…";
+        const data = await adminApiJson("/api/compatibility?matrix=1");
+        renderMatrix(data.psychotypes || [], data.matrix || []);
+        statusEl.textContent = `${(data.psychotypes || []).length} психотипов`;
+      }
+
+      if (await requireAdmin()) {
+        loadMatrix().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

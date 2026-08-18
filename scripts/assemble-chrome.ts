@@ -52,6 +52,9 @@ function adminClasses(activePage: string | undefined) {
   return {
     resultsClass: activePage === "results" ? "active" : "",
     contentClass: activePage === "content" ? "active" : "",
+    modeRequestsClass: activePage === "mode-requests" ? "active" : "",
+    teamsClass: activePage === "teams" ? "active" : "",
+    compatibilityClass: activePage === "compatibility" ? "active" : "",
   };
 }
 
@@ -70,6 +73,9 @@ function renderPartial(
     loginAttrs: 'data-ga-event="cta_header_login"',
     resultsClass: "",
     contentClass: "",
+    modeRequestsClass: "",
+    teamsClass: "",
+    compatibilityClass: "",
     ...adminClasses(attrs.activePage),
     ...attrs,
   };

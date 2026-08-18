@@ -135,6 +135,36 @@
   color: #94a3b8;
 }
 
+.compatibility-detail {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #f8fafc;
+}
+
+.compatibility-detail h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.compatibility-detail p {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.compatibility-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.cabinet-chart-card {
+  margin: 0 0 20px;
+}
+
+.cabinet-chart-card canvas {
+  max-height: 220px;
+}
+
 .team-radar-panel {
   max-width: 36rem;
   margin: 0 auto;
