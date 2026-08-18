@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-TYYGE7DS6E" />
+    <title>Команды — TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <!-- chrome:header-cabinet -->
+<header class="site-header">
+  <div class="container admin-nav">
+    <a href="/" class="site-header-logo">
+      <img src="/tc-logo-full.svg" alt="TIOS" width="108" height="34" />
+    </a>
+    <nav class="cabinet-nav" aria-label="Кабинет">
+      <a href="/cabinet.html">История</a>
+      <a href="/teams.html" class="active">Команды</a>
+    </nav>
+    <span class="admin-nav-spacer"></span>
+    <span id="user-email" class="muted"></span>
+    <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+  </div>
+</header>
+<!-- /chrome:header-cabinet -->
+
+    <main class="container">
+      <div class="card">
+        <h1>Команды</h1>
+        <p class="muted">
+          Групповой анализ до 9 участников: совместимость, сводный профиль и лидеры (ТЗ §2.5).
+        </p>
+
+        <form id="create-team-form" class="admin-toolbar team-create-form">
+          <div class="admin-toolbar-row">
+            <label class="admin-field">
+              <span class="admin-field-label">Название</span>
+              <input id="team-name" type="text" required maxlength="120" placeholder="Например, Отдел продаж" />
+            </label>
+            <label class="admin-field admin-field--wide">
+              <span class="admin-field-label">Описание (необязательно)</span>
+              <input id="team-description" type="text" maxlength="500" placeholder="Кратко о составе или задаче" />
+            </label>
+            <button class="btn btn-primary" type="submit">Создать команду</button>
+          </div>
+        </form>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Участников</th>
+                <th>Результатов</th>
+                <th>Создана</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="teams-body">
+              <tr>
+                <td colspan="5" class="muted">Загрузка…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        authApiJson,
+        getStoredUser,
+        logoutUser,
+        requireUser,
+      } from "/js/user-auth.js";
+
+      initSiteAnalytics();
+
+      const teamsBody = document.getElementById("teams-body");
+      const statusEl = document.getElementById("status");
+      const createForm = document.getElementById("create-team-form");
+
+      document.getElementById("user-email").textContent = getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+      async function loadTeams() {
+        const teams = await authApiJson("/api/teams");
+
+        if (!teams.length) {
+          teamsBody.innerHTML =
+            '<tr><td colspan="5" class="muted">Пока нет команд. Создайте первую — затем добавьте результаты участников на странице команды.</td></tr>';
+          statusEl.textContent = "0 команд";
+          return;
+        }
+
+        teamsBody.replaceChildren();
+        for (const team of teams) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${escapeHtml(team.name)}</td>
+            <td>${team.member_count}</td>
+            <td>${team.result_count} / 9</td>
+            <td>${formatDate(team.created_at)}</td>
+            <td><a href="/team.html?id=${encodeURIComponent(team.id)}">Открыть</a></td>
+          `;
+          teamsBody.appendChild(row);
+        }
+
+        statusEl.textContent = `${teams.length} команд(ы)`;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      createForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const name = document.getElementById("team-name").value.trim();
+        const description = document.getElementById("team-description").value.trim();
+
+        if (!name) {
+          return;
+        }
+
+        statusEl.textContent = "Создание…";
+        statusEl.className = "status-msg muted";
+
+        try {
+          const team = await authApiJson("/api/teams", {
+            method: "POST",
+            body: JSON.stringify({ name, description: description || undefined }),
+          });
+          window.location.href = `/team.html?id=${encodeURIComponent(team.id)}`;
+        } catch (error) {
+          statusEl.textContent = error instanceof Error ? error.message : "Ошибка";
+          statusEl.className = "status-msg error";
+        }
+      });
+
+      if (await requireUser()) {
+        loadTeams().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>
