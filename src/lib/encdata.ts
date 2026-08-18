@@ -117,13 +117,6 @@ export function canonicalizeEncdata(encdata: string): string {
   return encodeAnswers(decodeAnswers(encdata));
 }
 
-/** Fixed threshold warnings shown on the public demo / sample result page. */
-export const DEMO_THRESHOLD_WARNINGS = [
-  "Вероятность достоверного прогноза — высокая",
-  "Вероятны эмоциональные проявления",
-  "Высокая вероятность непредсказуемого поведения",
-] as const;
-
 export function isDemoEncdata(encdata: string): boolean {
   try {
     return canonicalizeEncdata(encdata) === getDemoEncdata();
@@ -132,7 +125,10 @@ export function isDemoEncdata(encdata: string): boolean {
   }
 }
 
-/** Demo link for landing / «Пример результата» (Лидер мнений–like profile). */
+/**
+ * Demo profile for landing / «Пример результата» — Лидер мнений (EXT + LAB).
+ * Separate-count math: E/I and L/R blocks at −2, moderate block 4, rest neutral.
+ */
 export function getDemoAnswers(): number[] {
   const answers = fillAnswers(0);
   const set = (ids: number[], value: number) => {
@@ -141,19 +137,18 @@ export function getDemoAnswers(): number[] {
     }
   };
 
+  // Block 1 E/I → extraversion 30
   set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71], -2);
-  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75], -1);
+  // Block 5 L/R → lability 30
+  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75], -2);
+  // Block 2 T/A — mild anxiety for richer warnings
   set([2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72], 1);
-
-  // Блок 4 (системные свойства) — отдельно от 8 шкал Собчик
-  set([4, 9, 14], 0);
-  answers[13] = 1; // Q14 → raw 1, energy ≈ 17.5
+  // Block 4 — mixed work profile (LAB/RIG per subscale 0–6)
+  set([4, 9, 14], -1);
   set([19, 24, 29], 1);
-  answers[18] = 2; // Q19 → raw 4, result = 25
-  set([34, 39, 44], 0); // quality = 15
-  set([49, 54], -1);
-  answers[58] = 0; // Q59 → raw -2, rules = 10
-  set([64, 69, 74], 1); // delegation = 22.5
+  set([34, 39, 44], -1);
+  set([49, 54, 59], 1);
+  set([64, 69, 74], -1);
 
   return answers;
 }
@@ -164,14 +159,8 @@ export function getDemoEncdata(): string {
 
 export function computeFromEncdata(encdata: string) {
   const answers = decodeAnswers(encdata);
-  const computed = {
+  return {
     answers,
     ...calculate_result(answers, fillTimings(5)),
   };
-
-  if (isDemoEncdata(encdata)) {
-    return { ...computed, warnings: [...DEMO_THRESHOLD_WARNINGS] };
-  }
-
-  return computed;
 }

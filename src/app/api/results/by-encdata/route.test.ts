@@ -76,18 +76,18 @@ describe("GET /api/results/by-encdata", () => {
     );
   });
 
-  it("returns curated demo threshold warnings for demo encdata", async () => {
+  it("returns computed demo profile with influencer psychotype", async () => {
     const encdata = getDemoEncdata();
     const response = await GET(
       apiRequest(`/api/results/by-encdata?encdata=${encodeURIComponent(encdata)}`),
     );
 
     expect(response.status).toBe(200);
-    const payload = await readJson<{ warnings: string[] }>(response);
-    expect(payload.warnings).toEqual([
-      "Вероятность достоверного прогноза — высокая",
-      "Вероятны эмоциональные проявления",
-      "Высокая вероятность непредсказуемого поведения",
-    ]);
+    const payload = await readJson<{ warnings: string[]; psychotype_code: string }>(
+      response,
+    );
+    expect(payload.psychotype_code).toBe("influencer");
+    expect(payload.warnings.length).toBeGreaterThan(0);
+    expect(payload.warnings).toContain("Вероятность достоверного прогноза — высокая");
   });
 });

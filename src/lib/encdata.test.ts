@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
-import { decodeAnswers, encodeAnswers, buildResultUrl, buildEncdataUrl, getDemoEncdata, isDemoEncdata, DEMO_THRESHOLD_WARNINGS } from "@/lib/encdata";
+import {
+  computeFromEncdata,
+  decodeAnswers,
+  encodeAnswers,
+  buildResultUrl,
+  buildEncdataUrl,
+  getDemoEncdata,
+  isDemoEncdata,
+} from "@/lib/encdata";
 
 describe("encdata", () => {
   it("builds production-style quiz result URLs", () => {
@@ -44,13 +52,12 @@ describe("encdata", () => {
     expect(() => decodeAnswers(legacy)).toThrow(/Invalid encdata|75 answers/);
   });
 
-  it("uses fixed threshold warnings for demo encdata", () => {
+  it("demo encdata resolves to influencer with computed warnings", () => {
     const demo = getDemoEncdata();
     expect(isDemoEncdata(demo)).toBe(true);
-    expect(DEMO_THRESHOLD_WARNINGS).toEqual([
-      "Вероятность достоверного прогноза — высокая",
-      "Вероятны эмоциональные проявления",
-      "Высокая вероятность непредсказуемого поведения",
-    ]);
+    const result = computeFromEncdata(demo);
+    expect(result.psychotype_code).toBe("influencer");
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings).not.toContain(undefined);
   });
 });

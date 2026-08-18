@@ -302,7 +302,7 @@ avg_intensity = sum(8 scales) / 8
 - противоречивые противоположные пары → непредсказуемое поведение
 - и др.
 
-**Демо encdata:** warnings **переопределены** константой `DEMO_THRESHOLD_WARNINGS` (ровно 3 фиксированных) — см. `encdata.ts`.
+**Демо encdata:** профиль «Лидер мнений» (`getDemoAnswers`) — warnings **вычисляются** через `buildThresholdWarnings()`, без переопределения.
 
 ### 6.7 Валидация ответов
 
@@ -518,7 +518,7 @@ python3 scripts/deploy.py --test
 | Старт/тест UI | `public/test/*.html`, `test.css` |
 | Результат UI | `public/results.html`, `block-templates.js` |
 | Новый контент-режим | import scripts + `ALLOWED_MODES` + admin UI |
-| Демо-результат | `encdata.ts` (`getDemoAnswers`, `DEMO_THRESHOLD_WARNINGS`) |
+| Демо-результат | `encdata.ts` (`getDemoAnswers`, `computeFromEncdata`) |
 | Деплой/домен | `.env`, `deploy.py`, `DOMAIN.md`, `cloudbuild.yaml` |
 
 ---
