@@ -69,7 +69,7 @@ function mapContentBlockDto(
 
 export async function loadContentBlocks(
   psychotypeCode: string,
-  mode: string,
+  mode: ResultMode,
   visibilityOverrides: Record<string, boolean>,
   options?: { includeHidden?: boolean },
 ): Promise<ContentBlockDto[]> {
@@ -95,7 +95,7 @@ export async function loadContentBlocks(
 
 export async function loadVisibleContentBlocks(
   psychotypeCode: string,
-  mode: string,
+  mode: ResultMode,
   visibilityOverrides: Record<string, boolean>,
 ): Promise<ContentBlockDto[]> {
   return loadContentBlocks(psychotypeCode, mode, visibilityOverrides);

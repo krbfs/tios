@@ -1276,17 +1276,33 @@ input[type="range"] {
   animation: tc-fade-up var(--motion-duration) var(--motion-ease) both;
 }
 
-.motion-reveal {
+.motion-reveal:not(.is-visible) {
   opacity: 0;
   transform: translateY(20px);
+  visibility: hidden;
+  max-height: 0;
+  overflow: hidden;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-width: 0 !important;
+  pointer-events: none;
+}
+
+.motion-reveal {
   transition:
     opacity var(--motion-duration) var(--motion-ease),
     transform var(--motion-duration) var(--motion-ease);
 }
 
 .motion-reveal.is-visible {
+  visibility: visible;
+  max-height: none;
+  overflow: visible;
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .page-enter .card {
@@ -1398,11 +1414,6 @@ input[type="range"] {
 
 .result-loaded #psychotype-title {
   animation-delay: 80ms;
-}
-
-.result-loaded .chart-card {
-  opacity: 0;
-  transform: translateY(16px);
 }
 
 .chart-card--radar .scale-table tbody tr {

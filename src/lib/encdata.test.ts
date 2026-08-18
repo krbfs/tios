@@ -7,6 +7,7 @@ import {
   encodeAnswers,
   buildResultUrl,
   buildEncdataUrl,
+  DEMO_THRESHOLD_WARNINGS,
   getDemoEncdata,
   isDemoEncdata,
 } from "@/lib/encdata";
@@ -52,12 +53,17 @@ describe("encdata", () => {
     expect(() => decodeAnswers(legacy)).toThrow(/Invalid encdata|75 answers/);
   });
 
-  it("demo encdata resolves to influencer with computed warnings", () => {
+  it("demo encdata resolves to influencer with curated sample warnings", () => {
     const demo = getDemoEncdata();
     expect(isDemoEncdata(demo)).toBe(true);
     const result = computeFromEncdata(demo);
     expect(result.psychotype_code).toBe("influencer");
-    expect(result.warnings.length).toBeGreaterThan(0);
-    expect(result.warnings).not.toContain(undefined);
+    expect(result.warnings).toEqual([...DEMO_THRESHOLD_WARNINGS]);
+    expect(result.scaled_scores?.extraversion).toBeGreaterThan(15);
+    expect(result.scaled_scores?.lability).toBeGreaterThan(15);
+    const nonZeroScales = Object.values(result.scaled_scores ?? {}).filter(
+      (v) => v > 0,
+    ).length;
+    expect(nonZeroScales).toBeGreaterThanOrEqual(6);
   });
 });

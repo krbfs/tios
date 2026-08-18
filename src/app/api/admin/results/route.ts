@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/api/auth";
 import { json } from "@/lib/api/http";
 import { db } from "@/lib/db";
+import { isAllowedMode } from "@/lib/modes";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   if (psychotype) {
     where.psychotypeCode = psychotype;
   }
-  if (mode) {
+  if (mode && isAllowedMode(mode)) {
     where.mode = mode;
   }
   if (from || to) {

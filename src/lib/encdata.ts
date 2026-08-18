@@ -117,6 +117,13 @@ export function canonicalizeEncdata(encdata: string): string {
   return encodeAnswers(decodeAnswers(encdata));
 }
 
+/** Fixed threshold warnings on the public demo / «Пример результата». */
+export const DEMO_THRESHOLD_WARNINGS = [
+  "Вероятность достоверного прогноза — высокая",
+  "Вероятны эмоциональные проявления",
+  "Высокая вероятность непредсказуемого поведения",
+] as const;
+
 export function isDemoEncdata(encdata: string): boolean {
   try {
     return canonicalizeEncdata(encdata) === getDemoEncdata();
@@ -126,8 +133,8 @@ export function isDemoEncdata(encdata: string): boolean {
 }
 
 /**
- * Demo profile for landing / «Пример результата» — Лидер мнений (EXT + LAB).
- * Separate-count math: E/I and L/R blocks at −2, moderate block 4, rest neutral.
+ * Demo profile for landing / «Пример результата» — Лидер мнений.
+ * Answers tuned for separate-count math: filled radar (not flat zeros) + legacy block-4 systemic pattern.
  */
 export function getDemoAnswers(): number[] {
   const answers = fillAnswers(0);
@@ -137,18 +144,25 @@ export function getDemoAnswers(): number[] {
     }
   };
 
-  // Block 1 E/I → extraversion 30
-  set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71], -2);
-  // Block 5 L/R → lability 30
-  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75], -2);
-  // Block 2 T/A — mild anxiety for richer warnings
-  set([2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72], 1);
-  // Block 4 — mixed work profile (LAB/RIG per subscale 0–6)
-  set([4, 9, 14], -1);
+  // 8 шкал — насыщенный профиль (близко к старому образцу mock-result / prod demo)
+  set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56], -2);
+  set([61, 66, 71], 1);
+  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], -1);
+  set([65, 70, 75], -2);
+  set([2, 7, 12, 17, 22, 27, 32, 37], -1);
+  set([42, 47, 52, 57, 62, 67, 72], 1);
+  set([3, 8, 13, 18, 23, 28, 33, 38], -1);
+  set([43, 48, 53, 58, 63, 68, 73], 1);
+
+  // Блок 4 (системные свойства) — как в demo encdata до rework
+  set([4, 9, 14], 0);
+  answers[13] = 1;
   set([19, 24, 29], 1);
-  set([34, 39, 44], -1);
-  set([49, 54, 59], 1);
-  set([64, 69, 74], -1);
+  answers[18] = 2;
+  set([34, 39, 44], 0);
+  set([49, 54], -1);
+  answers[58] = 0;
+  set([64, 69, 74], 1);
 
   return answers;
 }
@@ -159,8 +173,14 @@ export function getDemoEncdata(): string {
 
 export function computeFromEncdata(encdata: string) {
   const answers = decodeAnswers(encdata);
-  return {
+  const computed = {
     answers,
     ...calculate_result(answers, fillTimings(5)),
   };
+
+  if (isDemoEncdata(encdata)) {
+    return { ...computed, warnings: [...DEMO_THRESHOLD_WARNINGS] };
+  }
+
+  return computed;
 }

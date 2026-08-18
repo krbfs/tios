@@ -1,6 +1,7 @@
 import type { ContentBlock, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import type { ResultMode } from "@/lib/modes";
 
 export type AdminContentBlockDto = {
   id: number;
@@ -53,7 +54,7 @@ export function serializeContentBlock(block: ContentBlock): AdminContentBlockDto
 
 export async function listAdminContentBlocks(filters?: {
   psychotypeCode?: string;
-  mode?: string;
+  mode?: ResultMode;
 }): Promise<AdminContentBlockDto[]> {
   const where: Prisma.ContentBlockWhereInput = { isActive: true };
   if (filters?.psychotypeCode) {

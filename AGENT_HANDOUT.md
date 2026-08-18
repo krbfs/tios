@@ -97,6 +97,9 @@ tc_26/
 │   ├── components/           ← Header, Footer, JsonLd, …
 │   └── lib/
 │       ├── calculations.ts   ← ★ ВСЯ МАТЕМАТИКА
+│       ├── compatibility.ts  ← матрица 8×8, GET /api/compatibility
+│       ├── teams.ts          ← команды до 9 результатов
+│       ├── modes.ts          ← content_mode, ALLOWED_MODES
 │       ├── encdata.ts        ← кодирование ответов в URL
 │       ├── psychotypes.ts    ← названия шкал/психотипов UI
 │       ├── seo.ts            ← ★ ВСЕ SEO-СТРОКИ
@@ -106,8 +109,9 @@ tc_26/
 │   ├── test/start.html       ← согласие + старт
 │   ├── test/take.html        ← прохождение 75 вопросов
 │   ├── results.html          ← ★ страница результата
+│   ├── teams.html, team.html, teams/accept.html
 │   ├── login.html, cabinet.html
-│   ├── admin/*.html          ← админ-панель
+│   ├── admin/*.html          ← админ-панель (+ teams, compatibility)
 │   ├── css/test.css, admin.css
 │   └── js/                   ← block-templates, psychotypes, auth
 ├── chrome/                   ← шаблоны header/footer
@@ -117,7 +121,10 @@ tc_26/
 │   ├── deploy.py             ← ★ деплой GCP
 │   ├── assemble-chrome.ts    ← сборка chrome в HTML
 │   ├── import_questions.ts, import_content.ts
+│   ├── import_all.ts         ← db:import-all (цепочка всех импортов)
+│   ├── verify_content_modes.ts, verify_demo_encdata.ts
 │   └── …
+├── data/*_registry.json      ← JSON-реестры контента (5 режимов)
 ├── cloudbuild.yaml
 ├── Dockerfile
 └── deploy/DOMAIN.md
@@ -199,17 +206,23 @@ npm run chrome:assemble
 
 Отображает:
 
-- радар **8 шкал** (Chart.js)
-- **среднее по 8 шкал** (целое число в UI)
-- **5 системных** полос
-- **предупреждения** (threshold warnings)
-- **content_blocks** из БД (режим `leader_resource` по умолчанию)
+- радар **8 шкал** (Chart.js), среднее по 8 шкал (целое)
+- **5 системных** полос (raw `sys_*` 0–12 → **отображение 0–30** через `systemicBarDisplayValue`)
+- **рабочий профиль** (5 подшкал LAB/RIG из `scaled_systemic`)
+- **анализ соответствия** (ΔLAB, ΔRIG, зона напряжения, `correspondence_type`)
+- **sorted_personal_scales** — шкалы по убыванию
+- **leader_scores** — баллы лидерского потенциала (формулы NAVIGATOR §11)
+- **coaching_recommendations** — рекомендации по рабочему профилю
+- **warnings** — threshold warnings (`buildThresholdWarnings`)
+- **validation_warnings** — коды валидации ответов (отдельный блок UI)
+- **mode_request_notice** — статус заявки на смену режима (для владельца)
+- **content_blocks** из БД (`content_mode` с автопереключением)
 - ссылку для копирования
 
 ### 5.4 Вход и кабинет
 
 - `/login.html` — JWT в `localStorage`, optional
-- `/cabinet.html` — `GET /api/results/history` (Bearer)
+- `/cabinet.html` — `GET /api/results/history` (Bearer); график **динамики avg_intensity** по прохождениям (Chart.js)
 - Login **noindex**
 
 ### 5.5 Админ (`/admin/`)
@@ -217,6 +230,16 @@ npm run chrome:assemble
 - Только `role: admin`
 - Список результатов, детали, комментарий, visibility, **переключение mode**
 - CRUD контента (`content_blocks`)
+- Заявки на режим: `/admin/mode-requests.html`
+- Команды: `/admin/teams.html` (export/import JSON)
+- Матрица совместимости: `/admin/compatibility.html` (read-only UI, данные из `compatibility_rules`)
+
+### 5.6 Команды (до 9 результатов)
+
+- UI: `/teams.html`, `/team.html?id=…`, приглашение `/teams/accept.html?token=…`
+- API (Bearer): `GET/POST /api/teams`, `GET/POST /api/teams/[id]`, `POST /api/teams/[id]/invite`, `POST /api/teams/invitations/accept`
+- Ответ команды: участники, `compatibility_matrix`, `average_profile`
+- Парная совместимость: `GET /api/compatibility?type_a=…&type_b=…` или `?matrix=1`
 
 ---
 
@@ -250,7 +273,7 @@ npm run chrome:assemble
 
 15 вопросов (4,9,14,…,74). Пять подшкал: стороны LAB/RIG по 0–6. Инверсия Q19,24,29 и Q34,39,44 (A=RIG, B=LAB).
 
-Интегралы: `LAB_work`, `RIG_work` (0–30). Legacy UI-ключи `sys_*` = LAB+RIG по подшкале (0–12).
+Интегралы: `LAB_work`, `RIG_work` (0–30). Legacy-ключи `sys_*` в `scaled_systemic` = LAB+RIG по подшкале (0–12); в UI полосы масштабируются в **0–30** (`public/js/psychotypes.js` → `systemicBarDisplayValue`).
 
 ### 6.4 Анализ соответствия
 
@@ -304,7 +327,7 @@ avg_intensity = sum(8 scales) / 8
 
 **Демо encdata:** профиль «Лидер мнений» (`getDemoAnswers`) — warnings **вычисляются** через `buildThresholdWarnings()`, без переопределения.
 
-### 6.7 Валидация ответов
+### 6.8 Валидация ответов
 
 Коды `validation_warnings` (не путать с threshold `warnings`):
 
@@ -344,6 +367,12 @@ avg_intensity = sum(8 scales) / 8
 | `Question` | 75 пар утверждений |
 | `PsychotypeDefinition` | справочник психотипов |
 | `UserConsent` | GDPR-согласие |
+| `ModeRequest` | заявки пользователя на смену режима (`stressless` / `insighter_you`) |
+| `CompatibilityRule` | матрица совместимости 8×8 (импорт `db:import-hr-table`) |
+| `Team` | групповой анализ (до 9 результатов) |
+| `TeamMember` | участник / приглашение по email + token |
+| `TeamResultEntry` | привязка `TestResult` к команде |
+| `TeamReport` | сохранённый отчёт команды (V1+, опционально) |
 
 ### Режим контента (`TestResult.mode`)
 
@@ -354,8 +383,6 @@ avg_intensity = sum(8 scales) / 8
 | `insighter_you` | Инсайтер (ты) | `source_current/ответы инсайтер 1.xlsx` → `npm run db:import-insighter-you` |
 | `stressless` | Стресслесс | `source_current/StressLess worksheet 2 (2).xlsx` |
 | `hr_table` | Таблица для HR | `source_current/Таблицы для HR (3).docx` |
-
-| `ModeRequest` | заявки пользователя на смену режима (stressless / insighter_you) |
 
 ### Автопереключение контента (`content_mode` в API)
 
@@ -401,6 +428,16 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 | PATCH | `/api/admin/results/{id}/comment` | admin | Комментарий |
 | PATCH | `/api/admin/results/{id}/visibility` | admin | Видимость блоков |
 | CRUD | `/api/admin/content` | admin | Контент |
+| GET | `/api/compatibility` | — | Пара (`type_a`, `type_b`) или `?matrix=1` |
+| GET/POST | `/api/teams` | Bearer | Список / создание команды |
+| GET/POST | `/api/teams/{id}` | Bearer | Детали / добавить result_id |
+| POST | `/api/teams/{id}/invite` | Bearer | Приглашение по email |
+| POST | `/api/teams/invitations/accept` | Bearer | Принять invite по token |
+| GET | `/api/admin/teams` | admin | Все команды |
+| GET | `/api/admin/teams/{id}/export` | admin | Export JSON |
+| POST | `/api/admin/teams/import` | admin | Import JSON |
+
+Поля ответа результата (дополнительно к scores): `sorted_personal_scales`, `leader_scores`, `coaching_recommendations`, `warnings`, `validation_warnings`, `content_mode`, `mode_request_notice`.
 
 Ответы API: snake_case JSON. Ошибки через helpers `src/lib/api/http.ts`.
 
@@ -466,16 +503,28 @@ npm run db:migrate     # или db:deploy на прод-миграции
 npm run dev            # localhost:3000
 ```
 
-### Прод
+### Прод (ручной — пользователь, не AI)
 
 ```bash
-python3 scripts/deploy.py --deploy
+cd tc_26 && npm run db:deploy && npm run db:import-all && npm run db:verify-content && npm run db:verify-content -- --db && npm test && npm run verify:demo && python3 scripts/deploy.py --deploy
 ```
 
-- **Всегда** гоняет тесты перед деплоем
+- **Всегда** гоняет тесты перед деплоем (`deploy.py`)
 - `NEXT_PUBLIC_SITE_URL` из `.env` **побеждает** shell env
 - **Abort**, если URL содержит `run.app` (нужен `https://tios-test.com`)
 - После деплоя: `python3 scripts/deploy.py --sync-env` если слетели secrets
+- DNS: `deploy/DOMAIN.md`
+
+### npm-скрипты (контент и проверки)
+
+| Script | Назначение |
+|--------|------------|
+| `db:import-all` | цепочка всех импортов (`scripts/import_all.ts`) |
+| `db:import-insighter`, `db:import-insighter-you`, `db:import-stressless`, `db:import-hr-table` | отдельные режимы |
+| `db:verify-content` | JSON-реестры; `-- --db` — проверка Neon |
+| `verify:demo` | демо encdata + threshold warnings |
+| `chrome:assemble` | header/footer в static HTML |
+| `test:mobile` | Playwright layout (subset); `test:mobile:all` — все страницы |
 
 ### Критичные env
 
@@ -500,8 +549,9 @@ python3 scripts/deploy.py --deploy
 ## 14. Тестирование
 
 ```bash
-npm test              # vitest (calculations, encdata, API unit)
-npm run test:mobile   # Playwright layout vs prod URL
+npm test              # vitest — 113 тестов (calculations, encdata, API, modes, teams)
+npm run verify:demo   # демо-профиль + warnings
+npm run test:mobile   # Playwright layout vs prod URL (subset страниц)
 python3 scripts/deploy.py --test
 ```
 
@@ -548,8 +598,13 @@ python3 scripts/deploy.py --test
 /quiz/result?encdata= результат (→ results.html)
 /results              демо-пример
 /login.html           вход (noindex)
-/cabinet.html         история (noindex)
+/cabinet.html         история + график avg_intensity (noindex)
+/teams.html           команды пользователя (noindex)
+/team.html?id=        детали команды + heatmap совместимости
+/teams/accept.html    принять приглашение
 /admin/               админка (noindex)
+/admin/compatibility.html  матрица 8×8
+/admin/teams.html     команды (admin)
 /robots.txt, /sitemap.xml, /llms.txt
 ```
 
@@ -566,4 +621,4 @@ python3 scripts/deploy.py --test
 
 ---
 
-*Последнее обновление handout: по состоянию репозитория после коммитов about/author, radar branding, transparent favicon, header «Об авторе».*
+*Последнее обновление handout: 18.08.2026 — teams, compatibility, results UI (0–30 systemic, work_profile, leader_scores), prod checklist.*

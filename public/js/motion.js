@@ -5,13 +5,23 @@ export function prefersReducedMotion() {
 }
 
 export function initScrollReveal(root = document) {
-  const items = root.querySelectorAll(".motion-reveal");
+  const items = root.querySelectorAll(".motion-reveal:not(.is-visible)");
   if (!items.length) return;
 
   if (prefersReducedMotion()) {
     items.forEach((el) => el.classList.add("is-visible"));
     return;
   }
+
+  const revealIfVisible = (el) => {
+    const rect = el.getBoundingClientRect();
+    const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+    if (rect.bottom > 0 && rect.top < viewHeight) {
+      el.classList.add("is-visible");
+      return true;
+    }
+    return false;
+  };
 
   const observer = new IntersectionObserver(
     (entries) => {
@@ -22,10 +32,14 @@ export function initScrollReveal(root = document) {
         }
       });
     },
-    { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+    { threshold: 0.05, rootMargin: "0px 0px 0px 0px" },
   );
 
-  items.forEach((el) => observer.observe(el));
+  items.forEach((el) => {
+    if (!revealIfVisible(el)) {
+      observer.observe(el);
+    }
+  });
 }
 
 export function revealStaggered(items, baseDelayMs = 100) {
@@ -102,6 +116,10 @@ export function observeOnReveal(element, onReveal, options = {}) {
   if (requireScroll) {
     window.addEventListener("scroll", onScroll, { passive: true });
   }
+
+  requestAnimationFrame(() => {
+    maybeReveal();
+  });
 
   return cleanup;
 }

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { db } from "@/lib/db";
+import { isAllowedMode, type ResultMode } from "@/lib/modes";
 
 type ImportBlock = {
   psychotype_code: string;
@@ -47,11 +48,16 @@ export async function POST(request: Request) {
       return error("Each block requires psychotype_code, mode, block_key, block_template, content_text", 400);
     }
 
+    if (!isAllowedMode(block.mode)) {
+      return error(`Invalid mode: ${block.mode}`, 400);
+    }
+
+    const mode: ResultMode = block.mode;
     const version = block.version ?? 1;
     const existing = await db.contentBlock.findFirst({
       where: {
         psychotypeCode: block.psychotype_code,
-        mode: block.mode,
+        mode,
         blockKey: block.block_key,
         version,
       },
@@ -61,14 +67,14 @@ export async function POST(request: Request) {
       where: {
         psychotypeCode_mode_blockKey_version: {
           psychotypeCode: block.psychotype_code,
-          mode: block.mode,
+          mode,
           blockKey: block.block_key,
           version,
         },
       },
       create: {
         psychotypeCode: block.psychotype_code,
-        mode: block.mode,
+        mode,
         blockKey: block.block_key,
         blockTemplate: block.block_template,
         title: block.title ?? null,

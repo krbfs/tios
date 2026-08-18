@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
   <body>
-    <!-- chrome:header-public logoHref=/ loginAttrs=id= data-ga-event=cta_result_header_login -->
+    <!-- chrome:header-public logoHref=/ loginAttrs='id="cabinet-link" data-ga-event="cta_result_header_login"' -->
 <header class="site-header">
   <div class="container site-header-nav">
     <a href="/" class="site-header-logo">
@@ -23,7 +23,7 @@
       <a href="/author" data-ga-event="cta_header_author">Об авторе</a>
     </nav>
     <span class="site-header-spacer"></span>
-    <a href="/login.html" class="btn btn-outline" id=>Войти</a>
+    <a href="/login.html" class="btn btn-outline" id="cabinet-link" data-ga-event="cta_result_header_login">Войти</a>
   </div>
 </header>
 <!-- /chrome:header-public -->
@@ -245,7 +245,7 @@
       let radarChart = null;
 
       const cabinetLink = document.getElementById("cabinet-link");
-      if (getAccessToken()) {
+      if (cabinetLink && getAccessToken()) {
         cabinetLink.href = "/cabinet.html";
         cabinetLink.dataset.gaEvent = "cta_result_header_cabinet";
         cabinetLink.textContent = getStoredUser()?.email
@@ -273,18 +273,10 @@
           });
         }
 
-        if (prefersReducedMotion()) {
-          revealRadar();
-          revealSystemic();
-          return;
-        }
-
-        observeOnReveal(radarCard, revealRadar);
-        observeOnReveal(systemicCard, revealSystemic, {
-          requireScroll: true,
-          threshold: 0.35,
-          rootMargin: "0px 0px -12% 0px",
-        });
+        // Radar + systemic render immediately (no invisible layout gaps).
+        revealRadar();
+        buildSystemicBars(systemic);
+        systemicCard?.classList.add("chart-card--in-view");
       }
 
       function chartAnimation() {
@@ -647,7 +639,7 @@
 
         section.hidden = !hasData;
         if (hasData) {
-          section.classList.add("motion-reveal");
+          section.classList.add("motion-reveal", "is-visible");
         }
       }
 
@@ -716,7 +708,7 @@
         }
 
         correspondenceSection.hidden = false;
-        correspondenceSection.classList.add("motion-reveal");
+        correspondenceSection.classList.add("motion-reveal", "is-visible");
 
         coachingRecommendations.replaceChildren();
         const coaching = Array.isArray(result.coaching_recommendations)
@@ -757,7 +749,7 @@
         }
 
         leaderSection.hidden = false;
-        leaderSection.classList.add("motion-reveal");
+        leaderSection.classList.add("motion-reveal", "is-visible");
       }
 
       function renderModeRequestNotice(notice) {
@@ -833,9 +825,10 @@
         renderLeaderScores(result.leader_scores);
 
         contentBlocksEl.replaceChildren();
-        (result.content_blocks || []).forEach((block) => {
+        (result.content_blocks || []).forEach((block, index) => {
           const element = renderBlock(block);
-          element.classList.add("motion-reveal");
+          element.classList.add("content-block--reveal");
+          element.style.animationDelay = `${index * 60}ms`;
           contentBlocksEl.appendChild(element);
         });
 
