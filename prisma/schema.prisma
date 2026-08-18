@@ -36,6 +36,11 @@ enum ModeRequestStatus {
   rejected
 }
 
+enum TeamMemberRole {
+  captain
+  member
+}
+
 /// 1. User
 model User {
   id           String   @id @default(cuid())
@@ -47,6 +52,8 @@ model User {
   sessions TestSession[]
   consents UserConsent[]
   modeRequests ModeRequest[]
+  teamsCreated Team[]
+  teamMemberships TeamMember[]
 
   @@map("users")
 }
@@ -87,6 +94,7 @@ model TestResult {
 
   session      TestSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   modeRequests ModeRequest[]
+  teamEntries  TeamResultEntry[]
 
   @@index([sessionId])
   @@index([psychotypeCode])
@@ -176,6 +184,72 @@ model CompatibilityRule {
   @@index([typeACode])
   @@index([typeBCode])
   @@map("compatibility_rules")
+}
+
+/// 10. Team — group analysis up to 9 results (TZ §2.5, §6.8)
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members   TeamMember[]
+  results   TeamResultEntry[]
+  reports   TeamReport[]
+
+  @@index([createdById])
+  @@map("teams")
+}
+
+model TeamMember {
+  id              String         @id @default(cuid())
+  teamId          String         @map("team_id")
+  userId          String?        @map("user_id")
+  invitationEmail String?        @map("invitation_email")
+  invitationToken String?        @unique @map("invitation_token") @db.Uuid
+  joinedAt        DateTime?      @map("joined_at")
+  role            TeamMemberRole @default(member)
+
+  team Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model TeamResultEntry {
+  id       String   @id @default(cuid())
+  teamId   String   @map("team_id")
+  resultId String   @map("result_id")
+  label    String?
+  addedAt  DateTime @default(now()) @map("added_at")
+
+  team   Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  result TestResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, resultId])
+  @@index([teamId])
+  @@index([resultId])
+  @@map("team_result_entries")
+}
+
+model TeamReport {
+  id                  String   @id @default(cuid())
+  teamId              String   @map("team_id")
+  compatibilityReport Json?    @map("compatibility_report") @db.JsonB
+  leaderCandidates    Json?    @map("leader_candidates") @db.JsonB
+  adminComment        String?  @map("admin_comment")
+  showAdminComment    Boolean  @default(false) @map("show_admin_comment")
+  visibilitySettings  Json?    @map("visibility_settings") @db.JsonB
+  generatedAt         DateTime @default(now()) @map("generated_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("team_results")
 }
 
 /// 8. UserConsent
