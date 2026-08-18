@@ -857,6 +857,17 @@ input[type="range"] {
   color: #9a3412;
 }
 
+.coaching-recommendations {
+  margin: 12px 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
 .mode-request-card {
   margin-top: 20px;
 }

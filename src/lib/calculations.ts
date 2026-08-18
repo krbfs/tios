@@ -274,6 +274,41 @@ function classifyCorrespondence(deltaLab: number, deltaRig: number): string | nu
   return null;
 }
 
+const CORRESPONDENCE_COACHING: Record<string, string> = {
+  Соответствие:
+    "Роль соответствует личности. Поддерживайте текущий баланс между рабочими требованиями и естественным стилем.",
+  "Гибкий по натуре – жёсткий в работе":
+    "Риск выгорания от подавления природы. Обсудите с коучем или руководителем, где можно проявлять естественную гибкость без потери результата.",
+  "Жёсткий по натуре – гибкий в работе":
+    "Большие энергозатраты на перестройку. Структурируйте задачи и заранее планируйте «рамки», чтобы снизить постоянную адаптацию.",
+  "Обе шкалы выше в личности":
+    "Работа может быть слишком или недостаточно структурирована относительно вашего стиля. Уточните ожидания к лабильности и ригидности в роли.",
+  "Обе шкалы выше в работе":
+    "Риск перегрузки: рабочий профиль требует больше, чем свойственно личности. Планируйте восстановление и делегирование.",
+};
+
+/** Интерпретационные рекомендации для коучинга (NAVIGATOR §4.7 / опросник §7). */
+export function buildCoachingRecommendations(
+  systemic: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
+): string[] {
+  const items: string[] = [];
+  const type = systemic.correspondence_type?.trim();
+
+  if (type && CORRESPONDENCE_COACHING[type]) {
+    items.push(CORRESPONDENCE_COACHING[type]);
+  } else if (type) {
+    items.push(type);
+  }
+
+  if (systemic.tension_zone && !type) {
+    items.push(
+      "Выявлена зона напряжения между личным и рабочим профилем. Рекомендуется разбор расхождения LAB/RIG с коучем или наставником.",
+    );
+  }
+
+  return items;
+}
+
 export function calculate_systemic_scores(answers: readonly number[]): SystemicScores {
   assertAnswers(answers);
 
@@ -685,6 +720,7 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     validation_warnings: [...new Set(validation_warnings)],
     sorted_personal_scales: buildSortedPersonalScales(scaled_scores),
     leader_scores: computeLeaderScores(scaled_scores),
+    coaching_recommendations: buildCoachingRecommendations(scaled_systemic),
   };
 }
 

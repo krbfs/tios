@@ -6,6 +6,7 @@ import {
   calculate_result,
   calculate_scaled_scores,
   calculate_systemic_scores,
+  buildCoachingRecommendations,
   computeLeaderScores,
   determine_psychotype,
   fillAnswers,
@@ -351,10 +352,29 @@ describe("computeLeaderScores", () => {
   });
 });
 
+describe("buildCoachingRecommendations", () => {
+  it("maps correspondence types to coaching text", () => {
+    const items = buildCoachingRecommendations({
+      tension_zone: true,
+      correspondence_type: "Гибкий по натуре – жёсткий в работе",
+    });
+    expect(items[0]).toContain("выгорания");
+  });
+
+  it("suggests coach review when tension zone has no typed label", () => {
+    const items = buildCoachingRecommendations({
+      tension_zone: true,
+      correspondence_type: null,
+    });
+    expect(items[0]).toContain("коучем");
+  });
+});
+
 describe("calculate_result extras", () => {
   it("includes sorted_personal_scales and leader_scores", () => {
     const result = calculate_result(fillAnswers(-2), fillTimings(5));
     expect(result.sorted_personal_scales).toHaveLength(8);
     expect(result.leader_scores).toHaveLength(4);
+    expect(Array.isArray(result.coaching_recommendations)).toBe(true);
   });
 });

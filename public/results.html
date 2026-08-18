@@ -73,6 +73,7 @@
           <h2>Анализ соответствия личности и работы</h2>
           <dl class="correspondence-meta" id="correspondence-meta"></dl>
           <p id="correspondence-type" class="correspondence-type"></p>
+          <ul id="coaching-recommendations" class="coaching-recommendations" hidden></ul>
         </section>
 
         <section id="mode-request-section" class="card mode-request-card" hidden>
@@ -214,6 +215,7 @@
       const correspondenceSection = document.getElementById("correspondence-section");
       const correspondenceMeta = document.getElementById("correspondence-meta");
       const correspondenceType = document.getElementById("correspondence-type");
+      const coachingRecommendations = document.getElementById("coaching-recommendations");
       const modeRequestSection = document.getElementById("mode-request-section");
       const modeRequestStatus = document.getElementById("mode-request-status");
       const resultDisclaimer = document.getElementById("result-disclaimer");
@@ -670,6 +672,24 @@
 
         correspondenceSection.hidden = false;
         correspondenceSection.classList.add("motion-reveal");
+
+        coachingRecommendations.replaceChildren();
+        const coaching = Array.isArray(result.coaching_recommendations)
+          ? result.coaching_recommendations.filter(
+              (item) => typeof item === "string" && item.trim(),
+            )
+          : [];
+
+        if (coaching.length === 0) {
+          coachingRecommendations.hidden = true;
+        } else {
+          for (const text of coaching) {
+            const item = document.createElement("li");
+            item.textContent = text;
+            coachingRecommendations.appendChild(item);
+          }
+          coachingRecommendations.hidden = false;
+        }
       }
 
       function renderModeRequestNotice(notice) {

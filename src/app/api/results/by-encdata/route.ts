@@ -27,6 +27,7 @@ export async function GET(request: Request) {
       scaled_systemic: computed.scaled_systemic,
       sorted_personal_scales: computed.sorted_personal_scales,
       leader_scores: computed.leader_scores,
+      coaching_recommendations: computed.coaching_recommendations,
       psychotype_code: computed.psychotype_code,
       psychotype_secondary: computed.psychotype_secondary,
       avg_intensity: computed.avg_intensity,

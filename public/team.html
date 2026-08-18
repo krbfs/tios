@@ -100,7 +100,7 @@
 
     <script type="module">
       import { initSiteAnalytics } from "/js/analytics.js";
-      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import { PSYCHOTYPE_META, RADAR_SCALE_ORDER, SCALE_LABELS } from "/js/psychotypes.js";
       import { formatDate } from "/js/session.js";
       import {
         authApiJson,
@@ -121,6 +121,20 @@
       const statusEl = document.getElementById("status");
       const heatmapSection = document.getElementById("heatmap-section");
       const heatmapTable = document.getElementById("heatmap-table");
+      const radarSection = document.getElementById("radar-section");
+      let teamRadarChart = null;
+
+      const PARTICIPANT_COLORS = [
+        "rgba(26, 84, 216, 0.35)",
+        "rgba(234, 88, 12, 0.35)",
+        "rgba(22, 163, 74, 0.35)",
+        "rgba(147, 51, 234, 0.35)",
+        "rgba(8, 145, 178, 0.35)",
+        "rgba(220, 38, 38, 0.35)",
+        "rgba(202, 138, 4, 0.35)",
+        "rgba(100, 116, 139, 0.35)",
+        "rgba(190, 24, 93, 0.35)",
+      ];
 
       const COMPAT_LABELS = {
         effective: "Эффективно",
@@ -207,6 +221,73 @@
         }
       }
 
+      function scaledValues(scores) {
+        return RADAR_SCALE_ORDER.map((key) => Math.round(Number(scores?.[key] ?? 0)));
+      }
+
+      function renderTeamRadar(participants, averageProfile) {
+        const withScores = participants.filter((item) => item.scaled_scores);
+        if (!withScores.length) {
+          radarSection.hidden = true;
+          if (teamRadarChart) {
+            teamRadarChart.destroy();
+            teamRadarChart = null;
+          }
+          return;
+        }
+
+        radarSection.hidden = false;
+        const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
+        const datasets = withScores.map((item, index) => ({
+          label: participantLabel(item, index),
+          data: scaledValues(item.scaled_scores),
+          borderColor: PARTICIPANT_COLORS[index % PARTICIPANT_COLORS.length].replace(
+            "0.35",
+            "0.85",
+          ),
+          backgroundColor: PARTICIPANT_COLORS[index % PARTICIPANT_COLORS.length],
+          borderWidth: 1.5,
+          pointRadius: 2,
+          fill: true,
+        }));
+
+        if (averageProfile) {
+          datasets.push({
+            label: "Средний профиль",
+            data: scaledValues(averageProfile),
+            borderColor: "#111827",
+            backgroundColor: "transparent",
+            borderWidth: 3,
+            pointRadius: 3,
+            fill: false,
+          });
+        }
+
+        const ctx = document.getElementById("team-radar-chart");
+        if (teamRadarChart) {
+          teamRadarChart.destroy();
+        }
+
+        teamRadarChart = new Chart(ctx, {
+          type: "radar",
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            scales: {
+              r: {
+                min: 0,
+                max: 30,
+                ticks: { stepSize: 6, display: false },
+                pointLabels: { font: { size: 11 } },
+              },
+            },
+            plugins: {
+              legend: { position: "bottom" },
+            },
+          },
+        });
+      }
+
       function renderParticipants(participants) {
         if (!participants.length) {
           participantsBody.innerHTML =
@@ -278,6 +359,7 @@
         document.getElementById("max-results").textContent = String(team.max_results || 9);
         renderParticipants(team.participants || []);
         renderHeatmap(team.participants || [], team.compatibility_matrix || []);
+        renderTeamRadar(team.participants || [], team.average_profile || null);
         await populateResultSelect(team.participants || [], history);
 
         const atLimit = (team.participants || []).length >= (team.max_results || 9);
