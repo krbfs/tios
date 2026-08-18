@@ -312,7 +312,8 @@ avg_intensity = sum(8 scales) / 8
 - `quickly_answers` — весь тест <60 сек
 - `too_many_fast_answers` — >10% ответов <2 сек
 - `incompletely_answered_block` — блок с ≥3 пропусками без сильных ответов
-- `impossible_tendencies` — обе шкалы противоположной пары >15
+- `irregular_psycho_type` — психотип `mixed` («нет описаний для такого сочетания»)
+- ~~`impossible_tendencies`~~ — **не применяется** при раздельном подсчёте NAVIGATOR v9 (EXT и INT независимы)
 
 ---
 
