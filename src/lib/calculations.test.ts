@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSortedPersonalScales,
   calculate_avg_intensity,
+  calculate_dominant_intensity,
   calculate_result,
   calculate_scaled_scores,
   calculate_systemic_scores,
@@ -13,6 +14,8 @@ import {
   fillTimings,
   LEADER_SCORE_THRESHOLD,
   normalizeExtraversionBand,
+  THRESHOLD_AVG_MEDIUM,
+  THRESHOLD_AVG_WEAK,
   validate_answers,
 } from "./calculations";
 
@@ -190,6 +193,23 @@ describe("calculate_avg_intensity", () => {
   });
 });
 
+describe("calculate_dominant_intensity", () => {
+  it("uses max of each opposite pair", () => {
+    expect(
+      calculate_dominant_intensity({
+        extraversion: 30,
+        introversion: 10,
+        anxiety: 0,
+        aggression: 15,
+        sensitivity: 0,
+        spontaneity: 0,
+        lability: 30,
+        rigidity: 0,
+      }),
+    ).toBe(18.75);
+  });
+});
+
 describe("determine_psychotype", () => {
   const flatScores = (value: number) => ({
     extraversion: value,
@@ -224,6 +244,19 @@ describe("determine_psychotype", () => {
     scores.introversion = 19;
     const result = determine_psychotype(scores);
     expect(result.warnings).toContain("Высокая вероятность непредсказуемого поведения");
+  });
+
+  it("maps avg_intensity to NAVIGATOR reliability bands", () => {
+    const weak = determine_psychotype(flatScores(THRESHOLD_AVG_WEAK));
+    expect(weak.warnings).toContain(
+      "Ведущие тенденции слабо выражены. Есть вероятность ошибки в прогнозе",
+    );
+
+    const medium = determine_psychotype(flatScores(THRESHOLD_AVG_MEDIUM));
+    expect(medium.warnings).toContain("Вероятность достоверного прогноза — выше средней");
+
+    const strong = determine_psychotype(flatScores(THRESHOLD_AVG_MEDIUM + 1));
+    expect(strong.warnings).toContain("Вероятность достоверного прогноза — высокая");
   });
 
   it("detects individualist when AGG and SPO dominate", () => {

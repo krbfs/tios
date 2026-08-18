@@ -373,6 +373,16 @@ export function calculate_avg_intensity(scaled_scores: ScaledScores): number {
   );
 }
 
+/** Средняя выраженность по 4 парам: max(LAB-side, RIG-side) на блок — для относительных порогов. */
+export function calculate_dominant_intensity(scaled_scores: ScaledScores): number {
+  return (
+    OPPOSITE_PAIRS.reduce(
+      (sum, [left, right]) => sum + Math.max(scaled_scores[left], scaled_scores[right]),
+      0,
+    ) / OPPOSITE_PAIRS.length
+  );
+}
+
 function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
   const indexA = TENDENCY_CIRCLE.indexOf(a);
   const indexB = TENDENCY_CIRCLE.indexOf(b);
@@ -414,7 +424,7 @@ function hasContradictoryOppositePair(scores: ScaledScores): boolean {
   for (const [left, right] of OPPOSITE_PAIRS) {
     const a = scores[left];
     const b = scores[right];
-    if (a > 8 && b > 8) {
+    if (a > THRESHOLD_OPPOSITE_BOTH_HIGH && b > THRESHOLD_OPPOSITE_BOTH_HIGH) {
       const max = Math.max(a, b);
       if (Math.abs(a - b) / max < 0.15) {
         return true;
@@ -431,53 +441,55 @@ function buildThresholdWarnings(
   systemic?: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
 ): string[] {
   const warnings: string[] = [];
-  const meanOf8 = avgIntensity;
+  const dominantMean = calculate_dominant_intensity(scores);
   const values = SCALE_KEYS.map((key) => scores[key]);
 
-  if (avgIntensity <= 7) {
+  if (avgIntensity <= THRESHOLD_AVG_WEAK) {
     warnings.push(
       "Ведущие тенденции слабо выражены. Есть вероятность ошибки в прогнозе",
     );
-  } else if (avgIntensity <= 12) {
+  } else if (avgIntensity <= THRESHOLD_AVG_MEDIUM) {
     warnings.push("Вероятность достоверного прогноза — выше средней");
   } else {
     warnings.push("Вероятность достоверного прогноза — высокая");
   }
 
-  if (values.some((value) => value > 22)) {
+  if (values.some((value) => value > THRESHOLD_SCALE_HIGH)) {
     warnings.push("Возможно, человек находится в состоянии сильного стресса");
   }
-  if (scores.sensitivity > 22 || scores.anxiety > 22) {
+  if (scores.sensitivity > THRESHOLD_SCALE_HIGH || scores.anxiety > THRESHOLD_SCALE_HIGH) {
     warnings.push("Вероятно депрессивное состояние");
   }
-  if (scores.extraversion > 22 || scores.lability > 22) {
+  if (scores.extraversion > THRESHOLD_SCALE_HIGH || scores.lability > THRESHOLD_SCALE_HIGH) {
     warnings.push("Вероятны эмоциональные проявления");
   }
-  if (scores.introversion > 22 && scores.rigidity > 22) {
+  if (scores.introversion > THRESHOLD_SCALE_HIGH && scores.rigidity > THRESHOLD_SCALE_HIGH) {
     warnings.push("Высокий риск выгорания");
   }
-  if (scores.aggression > 22 && scores.spontaneity > 22) {
+  if (scores.aggression > THRESHOLD_SCALE_HIGH && scores.spontaneity > THRESHOLD_SCALE_HIGH) {
     warnings.push("Высокий риск конфликтов");
   }
 
-  const highAboveMean = SCALE_KEYS.filter((key) => scores[key] > meanOf8 * 1.3);
-  if (highAboveMean.length >= 1) {
+  const highAboveDominant = SCALE_KEYS.filter(
+    (key) => scores[key] > dominantMean * THRESHOLD_ABOVE_MEAN_RATIO,
+  );
+  if (highAboveDominant.length >= 1) {
     warnings.push("Высокая вероятность нервного срыва");
   }
-  if (hasNonAdjacentHighPair(scores, meanOf8)) {
+  if (hasNonAdjacentHighPair(scores, dominantMean)) {
     warnings.push("Высокая вероятность сильного выгорания");
   }
 
   const top4 = [...values].sort((a, b) => b - a).slice(0, 4);
   if (
     top4.length === 4 &&
-    avgIntensity > 0 &&
-    top4.every((value) => Math.abs(value - avgIntensity) / avgIntensity < 0.1)
+    dominantMean > 0 &&
+    top4.every((value) => Math.abs(value - dominantMean) / dominantMean < 0.1)
   ) {
     warnings.push("Высокая вероятность ошибки прогноза");
   }
 
-  if (values.every((value) => value < 5)) {
+  if (values.every((value) => value <= THRESHOLD_FLAT_SCALE)) {
     warnings.push("Высокая вероятность ошибки прогноза");
   }
 
@@ -636,6 +648,14 @@ export type LeaderScore = {
 
 /** 70% от теоретического максимума 30 (NAVIGATOR §4.8 / ТЗ §3.5). */
 export const LEADER_SCORE_THRESHOLD = 21;
+
+/** NAVIGATOR §7.5 — пороги на шкале 0–30 (раздельный подсчёт). */
+export const THRESHOLD_AVG_WEAK = 7;
+export const THRESHOLD_AVG_MEDIUM = 12;
+export const THRESHOLD_SCALE_HIGH = 22;
+export const THRESHOLD_OPPOSITE_BOTH_HIGH = 12;
+export const THRESHOLD_FLAT_SCALE = 6;
+export const THRESHOLD_ABOVE_MEAN_RATIO = 1.3;
 
 /** E в «комfortной» зоне 12–20 → 30; иначе линейный спад к краям 0–30. */
 export function normalizeExtraversionBand(extraversion: number): number {
