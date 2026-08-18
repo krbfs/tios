@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-TYYGE7DS6E" />
+    <title>Команда — TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <a href="/" class="site-header-logo">
+          <img src="/tc-logo-full.svg" alt="TIOS" width="108" height="34" />
+        </a>
+        <nav class="cabinet-nav" aria-label="Кабинет">
+          <a href="/cabinet.html">История</a>
+          <a href="/teams.html" class="active">Команды</a>
+        </nav>
+        <span class="admin-nav-spacer"></span>
+        <span id="user-email" class="muted"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <p class="muted" style="margin: 0 0 8px">
+          <a href="/teams.html">← Все команды</a>
+        </p>
+        <h1 id="team-title">Загрузка…</h1>
+        <p id="team-description" class="muted" hidden></p>
+
+        <section class="team-section">
+          <h2>Участники</h2>
+          <p class="muted team-section-note">
+            Добавьте до <span id="max-results">9</span> результатов из вашей истории.
+          </p>
+
+          <form id="add-result-form" class="admin-toolbar team-add-form" hidden>
+            <div class="admin-toolbar-row">
+              <label class="admin-field admin-field--wide">
+                <span class="admin-field-label">Результат из истории</span>
+                <select id="result-select" required></select>
+              </label>
+              <label class="admin-field">
+                <span class="admin-field-label">Подпись (необяз.)</span>
+                <input id="result-label" type="text" maxlength="80" placeholder="Имя или роль" />
+              </label>
+              <button class="btn btn-primary" type="submit">Добавить</button>
+            </div>
+          </form>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Подпись</th>
+                  <th>Психотип</th>
+                  <th>Среднее</th>
+                  <th>Лидерство</th>
+                </tr>
+              </thead>
+              <tbody id="participants-body">
+                <tr>
+                  <td colspan="4" class="muted">Загрузка…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p id="status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
+      import { PSYCHOTYPE_META } from "/js/psychotypes.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        authApiJson,
+        getStoredUser,
+        logoutUser,
+        requireUser,
+      } from "/js/user-auth.js";
+
+      initSiteAnalytics();
+
+      const params = new URLSearchParams(window.location.search);
+      const teamId = params.get("id");
+      const teamTitle = document.getElementById("team-title");
+      const teamDescription = document.getElementById("team-description");
+      const participantsBody = document.getElementById("participants-body");
+      const addResultForm = document.getElementById("add-result-form");
+      const resultSelect = document.getElementById("result-select");
+      const statusEl = document.getElementById("status");
+
+      document.getElementById("user-email").textContent = getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", logoutUser);
+
+      if (!teamId) {
+        teamTitle.textContent = "Команда не указана";
+        participantsBody.innerHTML =
+          '<tr><td colspan="4" class="muted">Добавьте параметр <code>?id=…</code> в адрес или вернитесь к <a href="/teams.html">списку команд</a>.</td></tr>';
+      }
+
+      function formatPsychotype(code) {
+        return PSYCHOTYPE_META[code]?.name || code;
+      }
+
+      function formatLeaders(leaderScores) {
+        if (!Array.isArray(leaderScores)) {
+          return "—";
+        }
+        const active = leaderScores.filter((item) => item.is_leader);
+        if (!active.length) {
+          return "—";
+        }
+        return active.map((item) => item.label).join(", ");
+      }
+
+      function renderParticipants(participants) {
+        if (!participants.length) {
+          participantsBody.innerHTML =
+            '<tr><td colspan="4" class="muted">Пока нет результатов. Добавьте первого участника из истории прохождений.</td></tr>';
+          return;
+        }
+
+        participantsBody.replaceChildren();
+        for (const item of participants) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${escapeHtml(item.label || "—")}</td>
+            <td>${escapeHtml(formatPsychotype(item.psychotype_code))}</td>
+            <td>${item.avg_intensity != null ? Math.round(item.avg_intensity) : "—"}</td>
+            <td>${escapeHtml(formatLeaders(item.leader_scores))}</td>
+          `;
+          participantsBody.appendChild(row);
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      async function populateResultSelect(participants, history) {
+        const used = new Set(participants.map((item) => item.result_id));
+        const available = history.filter((item) => !used.has(item.id));
+
+        resultSelect.replaceChildren();
+        if (!available.length) {
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent =
+            participants.length >= 9
+              ? "Достигнут лимит 9 результатов"
+              : "Нет доступных результатов в истории";
+          resultSelect.appendChild(option);
+          addResultForm.querySelector('button[type="submit"]').disabled = true;
+          return;
+        }
+
+        for (const item of available) {
+          const option = document.createElement("option");
+          option.value = item.id;
+          const psychotype = formatPsychotype(item.psychotype_code);
+          option.textContent = `${formatDate(item.date_time)} — ${psychotype}`;
+          resultSelect.appendChild(option);
+        }
+
+        addResultForm.querySelector('button[type="submit"]').disabled = false;
+      }
+
+      async function loadTeam() {
+        const [team, history] = await Promise.all([
+          authApiJson(`/api/teams/${encodeURIComponent(teamId)}`),
+          authApiJson("/api/results/history"),
+        ]);
+
+        teamTitle.textContent = team.name;
+        if (team.description) {
+          teamDescription.textContent = team.description;
+          teamDescription.hidden = false;
+        }
+
+        document.getElementById("max-results").textContent = String(team.max_results || 9);
+        renderParticipants(team.participants || []);
+        await populateResultSelect(team.participants || [], history);
+
+        const atLimit = (team.participants || []).length >= (team.max_results || 9);
+        addResultForm.hidden = atLimit;
+        statusEl.textContent = `${(team.participants || []).length} / ${team.max_results || 9} результатов`;
+      }
+
+      addResultForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const resultId = resultSelect.value;
+        const label = document.getElementById("result-label").value.trim();
+
+        if (!resultId) {
+          return;
+        }
+
+        statusEl.textContent = "Добавление…";
+        statusEl.className = "status-msg muted";
+
+        try {
+          await authApiJson(`/api/teams/${encodeURIComponent(teamId)}`, {
+            method: "POST",
+            body: JSON.stringify({
+              result_id: resultId,
+              label: label || undefined,
+            }),
+          });
+          document.getElementById("result-label").value = "";
+          await loadTeam();
+          statusEl.className = "status-msg success";
+          statusEl.textContent = "Участник добавлен";
+        } catch (error) {
+          statusEl.textContent = error instanceof Error ? error.message : "Ошибка";
+          statusEl.className = "status-msg error";
+        }
+      });
+
+      if (teamId && (await requireUser())) {
+        loadTeam().catch((error) => {
+          teamTitle.textContent = "Не удалось загрузить команду";
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

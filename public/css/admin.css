@@ -53,6 +53,24 @@
   min-width: 12rem;
 }
 
+.team-section {
+  margin-top: 24px;
+}
+
+.team-section h2 {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+}
+
+.team-section-note {
+  margin: 0 0 14px;
+  font-size: 0.875rem;
+}
+
+.team-add-form {
+  margin-bottom: 16px;
+}
+
 .admin-toolbar {
   display: grid;
   gap: 12px;
