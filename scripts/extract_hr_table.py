@@ -121,13 +121,55 @@ def sell_table(lines: list[str]) -> str:
     )
 
 
+def split_compatibility_entries(segment: str) -> list[str]:
+    """Split on comma / «и» only outside parentheses."""
+    entries: list[str] = []
+    current: list[str] = []
+    depth = 0
+    i = 0
+    n = len(segment)
+    while i < n:
+        ch = segment[i]
+        if ch == "(":
+            depth += 1
+            current.append(ch)
+            i += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+            current.append(ch)
+            i += 1
+        elif depth == 0 and segment.startswith(", ", i):
+            entry = "".join(current).strip()
+            if entry:
+                entries.append(entry)
+            current = []
+            i += 2
+        elif depth == 0 and segment.startswith(" и ", i):
+            entry = "".join(current).strip()
+            if entry:
+                entries.append(entry)
+            current = []
+            i += 3
+        else:
+            current.append(ch)
+            i += 1
+    tail = "".join(current).strip()
+    if tail:
+        entries.append(tail)
+    return entries
+
+
 def parse_compatibility_rules(text: str, source_code: str) -> list[dict]:
     rules: list[dict] = []
-    effective = re.search(r"Эффективно с:[^К]*", text, re.I)
-    conflict = re.search(r"Конфликтует с:.*", text, re.I)
-    if effective:
-        segment = effective.group(0).replace("Эффективно с:", "").strip(" .")
-        for part in re.split(r",| и ", segment):
+    eff_match = re.search(
+        r"Эффективно\s+с:\s*(.*?)(?:\.?\s*Конфликтует\s+с:|$)",
+        text,
+        re.S,
+    )
+    conflict_match = re.search(r"Конфликтует\s+с:\s*(.*)", text, re.S)
+    if eff_match:
+        segment = eff_match.group(1).strip(" .")
+        for part in split_compatibility_entries(segment):
             target = code_from_name(part)
             if target and target != source_code:
                 rules.append(
@@ -138,9 +180,9 @@ def parse_compatibility_rules(text: str, source_code: str) -> list[dict]:
                         "recommendation": part.strip(),
                     }
                 )
-    if conflict:
-        segment = conflict.group(0).replace("Конфликтует с:", "").strip(" .")
-        for part in re.split(r",| и ", segment):
+    if conflict_match:
+        segment = conflict_match.group(1).strip(" .")
+        for part in split_compatibility_entries(segment):
             target = code_from_name(part)
             if target and target != source_code:
                 rules.append(

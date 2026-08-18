@@ -676,6 +676,18 @@
   "compatibility_rules": [
     {
       "type_a_code": "individualist",
+      "type_b_code": "conservative",
+      "compatibility_level": "effective",
+      "recommendation": "Консерватором (стабильность + порядок дополняют хаос)"
+    },
+    {
+      "type_a_code": "individualist",
+      "type_b_code": "analyst",
+      "compatibility_level": "effective",
+      "recommendation": "Аналитиком (структура)"
+    },
+    {
+      "type_a_code": "individualist",
       "type_b_code": "pragmatist",
       "compatibility_level": "conflict",
       "recommendation": "Прагматиком (столкновение агрессивных стилей)"
@@ -684,7 +696,19 @@
       "type_a_code": "individualist",
       "type_b_code": "innovator",
       "compatibility_level": "conflict",
-      "recommendation": "Инноватором (оба хаотичны"
+      "recommendation": "Инноватором (оба хаотичны, не доводят дела)"
+    },
+    {
+      "type_a_code": "innovator",
+      "type_b_code": "pragmatist",
+      "compatibility_level": "effective",
+      "recommendation": "Прагматиком (доводит дела до конца)"
+    },
+    {
+      "type_a_code": "innovator",
+      "type_b_code": "conservative",
+      "compatibility_level": "effective",
+      "recommendation": "Консерватором (обеспечивает порядок и стабильность)"
     },
     {
       "type_a_code": "innovator",
@@ -706,6 +730,18 @@
     },
     {
       "type_a_code": "influencer",
+      "type_b_code": "analyst",
+      "compatibility_level": "effective",
+      "recommendation": "Аналитиком (даёт факты, не конкурирует за внимание)"
+    },
+    {
+      "type_a_code": "influencer",
+      "type_b_code": "conservative",
+      "compatibility_level": "effective",
+      "recommendation": "Консерватором (обеспечивает тыл)"
+    },
+    {
+      "type_a_code": "influencer",
       "type_b_code": "individualist",
       "compatibility_level": "conflict",
       "recommendation": "Индивидуалистом (не подчиняется)"
@@ -715,6 +751,18 @@
       "type_b_code": "pragmatist",
       "compatibility_level": "conflict",
       "recommendation": "Прагматиком (жёсткость давит на эмоции)"
+    },
+    {
+      "type_a_code": "aesthete",
+      "type_b_code": "conservative",
+      "compatibility_level": "effective",
+      "recommendation": "Консерватором (даёт стабильность и предсказуемость)"
+    },
+    {
+      "type_a_code": "aesthete",
+      "type_b_code": "pragmatist",
+      "compatibility_level": "effective",
+      "recommendation": "Прагматиком (жёстко направляет)"
     },
     {
       "type_a_code": "aesthete",
@@ -732,7 +780,7 @@
       "type_a_code": "conservative",
       "type_b_code": "innovator",
       "compatibility_level": "effective",
-      "recommendation": "Инноватором (дополняет его с"
+      "recommendation": "Инноватором (дополняет его скорость порядком)"
     },
     {
       "type_a_code": "conservative",
@@ -745,6 +793,12 @@
       "type_b_code": "aesthete",
       "compatibility_level": "conflict",
       "recommendation": "Модником (нестабильность вызывает тревогу)"
+    },
+    {
+      "type_a_code": "empath",
+      "type_b_code": "pragmatist",
+      "compatibility_level": "effective",
+      "recommendation": "Прагматиком (берёт на себя жёсткие решения)"
     },
     {
       "type_a_code": "empath",
@@ -762,13 +816,19 @@
       "type_a_code": "analyst",
       "type_b_code": "innovator",
       "compatibility_level": "effective",
-      "recommendation": "Инноватором (генерирует идеи"
+      "recommendation": "Инноватором (генерирует идеи, Аналитик их проверяет)"
     },
     {
       "type_a_code": "analyst",
       "type_b_code": "aesthete",
       "compatibility_level": "conflict",
       "recommendation": "Модником (нелогичность раздражает)"
+    },
+    {
+      "type_a_code": "pragmatist",
+      "type_b_code": "conservative",
+      "compatibility_level": "effective",
+      "recommendation": "Консерватором (оба любят порядок)"
     },
     {
       "type_a_code": "pragmatist",
