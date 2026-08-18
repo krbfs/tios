@@ -94,6 +94,11 @@ export const PSYCHOTYPE_META: Record<PsychotypeCode, PsychotypeMeta> = {
     tendency1: "Ригидность",
     tendency2: "Агрессивность",
   },
+  mixed: {
+    name: "Смешанный тип",
+    tendency1: "—",
+    tendency2: "—",
+  },
 };
 
 export function formatPsychotypeSummary(code: string): string {

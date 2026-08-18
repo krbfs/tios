@@ -1,6 +1,6 @@
 /**
- * Расчёты по ТЗ §3.1–3.3 и NAVIGATOR §7–8.
- * Источник формул: source_current/Текст_опросника_и_математика_финал.docx + NAVIGATOR v9.0.
+ * Расчёты по NAVIGATOR v9.0 + «Текст опросника и математика финал» v3.0.
+ * Принцип: каждая тенденция считается отдельно; сырой балл = итог; диапазон 0–30.
  */
 
 export const SCALE_KEYS = [
@@ -17,6 +17,7 @@ export const SCALE_KEYS = [
 export type ScaleKey = (typeof SCALE_KEYS)[number];
 export type ScaledScores = Record<ScaleKey, number>;
 
+/** Legacy bar keys (0–12 per subscale: LAB + RIG) + block 4 detail. */
 export const SYSTEMIC_KEYS = [
   "sys_energy",
   "sys_result",
@@ -26,7 +27,28 @@ export const SYSTEMIC_KEYS = [
 ] as const;
 
 export type SystemicKey = (typeof SYSTEMIC_KEYS)[number];
-export type SystemicScores = Record<SystemicKey, number>;
+
+export type WorkSubscaleKey =
+  | "sub4_1_LAB"
+  | "sub4_1_RIG"
+  | "sub4_2_LAB"
+  | "sub4_2_RIG"
+  | "sub4_3_LAB"
+  | "sub4_3_RIG"
+  | "sub4_4_LAB"
+  | "sub4_4_RIG"
+  | "sub4_5_LAB"
+  | "sub4_5_RIG";
+
+export type SystemicScores = Record<SystemicKey, number> &
+  Record<WorkSubscaleKey, number> & {
+    LAB_work: number;
+    RIG_work: number;
+    delta_LAB: number;
+    delta_RIG: number;
+    tension_zone: boolean;
+    correspondence_type: string | null;
+  };
 
 export type PsychotypeCode =
   | "individualist"
@@ -36,7 +58,8 @@ export type PsychotypeCode =
   | "conservative"
   | "empath"
   | "analyst"
-  | "pragmatist";
+  | "pragmatist"
+  | "mixed";
 
 export type PsychotypeResult = {
   psychotype_code: PsychotypeCode;
@@ -46,33 +69,85 @@ export type PsychotypeResult = {
   warnings: string[];
 };
 
-/** Блок 1: экстраверсия / интроверсия */
 const BLOCK_EI = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71];
-/** Блок 2: тревожность / агрессивность */
 const BLOCK_TA = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72];
-/** Блок 3: сензитивность / спонтанность */
 const BLOCK_SS = [3, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73];
-/** Блок 5: лабильность / ригидность */
 const BLOCK_LR = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
 
-const SYSTEMIC_BLOCKS: Record<SystemicKey, number[]> = {
-  sys_energy: [4, 9, 14],
-  sys_result: [19, 24, 29],
-  sys_quality: [34, 39, 44],
-  sys_rules: [49, 54, 59],
-  sys_delegation: [64, 69, 74],
+const PERSONALITY_BLOCKS: { questions: number[]; left: ScaleKey; right: ScaleKey }[] = [
+  { questions: BLOCK_EI, left: "extraversion", right: "introversion" },
+  { questions: BLOCK_TA, left: "anxiety", right: "aggression" },
+  { questions: BLOCK_SS, left: "sensitivity", right: "spontaneity" },
+  { questions: BLOCK_LR, left: "lability", right: "rigidity" },
+];
+
+const BLOCK4_SUBSCALES: {
+  questions: number[];
+  labKey: WorkSubscaleKey;
+  rigKey: WorkSubscaleKey;
+  inverted: boolean;
+}[] = [
+  {
+    questions: [4, 9, 14],
+    labKey: "sub4_1_LAB",
+    rigKey: "sub4_1_RIG",
+    inverted: false,
+  },
+  {
+    questions: [19, 24, 29],
+    labKey: "sub4_2_LAB",
+    rigKey: "sub4_2_RIG",
+    inverted: true,
+  },
+  {
+    questions: [34, 39, 44],
+    labKey: "sub4_3_LAB",
+    rigKey: "sub4_3_RIG",
+    inverted: true,
+  },
+  {
+    questions: [49, 54, 59],
+    labKey: "sub4_4_LAB",
+    rigKey: "sub4_4_RIG",
+    inverted: false,
+  },
+  {
+    questions: [64, 69, 74],
+    labKey: "sub4_5_LAB",
+    rigKey: "sub4_5_RIG",
+    inverted: false,
+  },
+];
+
+const SYS_KEY_BY_SUBSCALE: Record<number, SystemicKey> = {
+  1: "sys_energy",
+  2: "sys_result",
+  3: "sys_quality",
+  4: "sys_rules",
+  5: "sys_delegation",
 };
 
-/** Пары соседних секторов → психотип (NAVIGATOR §7.4) */
-const PSYCHOTYPE_PAIRS: { code: PsychotypeCode; a: ScaleKey; b: ScaleKey }[] = [
-  { code: "individualist", a: "aggression", b: "spontaneity" },
-  { code: "innovator", a: "spontaneity", b: "extraversion" },
-  { code: "influencer", a: "extraversion", b: "lability" },
-  { code: "aesthete", a: "lability", b: "anxiety" },
-  { code: "conservative", a: "anxiety", b: "sensitivity" },
-  { code: "empath", a: "sensitivity", b: "introversion" },
-  { code: "analyst", a: "introversion", b: "rigidity" },
-  { code: "pragmatist", a: "rigidity", b: "aggression" },
+/** Круг тенденций NAVIGATOR §4.6 (коды → ScaleKey). */
+const TENDENCY_CIRCLE: ScaleKey[] = [
+  "aggression",
+  "spontaneity",
+  "extraversion",
+  "lability",
+  "anxiety",
+  "sensitivity",
+  "introversion",
+  "rigidity",
+];
+
+const ADJACENT_PSYCHOTYPES: { a: ScaleKey; b: ScaleKey; code: PsychotypeCode }[] = [
+  { a: "aggression", b: "spontaneity", code: "individualist" },
+  { a: "spontaneity", b: "extraversion", code: "innovator" },
+  { a: "extraversion", b: "lability", code: "influencer" },
+  { a: "lability", b: "anxiety", code: "aesthete" },
+  { a: "anxiety", b: "sensitivity", code: "conservative" },
+  { a: "sensitivity", b: "introversion", code: "empath" },
+  { a: "introversion", b: "rigidity", code: "analyst" },
+  { a: "rigidity", b: "aggression", code: "pragmatist" },
 ];
 
 const OPPOSITE_PAIRS: [ScaleKey, ScaleKey][] = [
@@ -80,18 +155,6 @@ const OPPOSITE_PAIRS: [ScaleKey, ScaleKey][] = [
   ["anxiety", "aggression"],
   ["sensitivity", "spontaneity"],
   ["lability", "rigidity"],
-];
-
-/** Порядок шкал по кругу (NAVIGATOR §3.2). */
-const CIRCLE_SCALE_ORDER: ScaleKey[] = [
-  "anxiety",
-  "lability",
-  "extraversion",
-  "spontaneity",
-  "aggression",
-  "rigidity",
-  "introversion",
-  "sensitivity",
 ];
 
 const BLOCK_BY_PAIR: Record<string, number[]> = {
@@ -104,6 +167,9 @@ const BLOCK_BY_PAIR: Record<string, number[]> = {
 const QUESTION_COUNT = 75;
 const FAST_ANSWER_SECONDS = 2;
 const QUICK_TEST_SECONDS = 60;
+const TENSION_THRESHOLD = 10;
+
+const MIXED_PSYCHOTYPE_LABEL = "mixed";
 
 function assertAnswers(answers: readonly number[]): void {
   if (answers.length !== QUESTION_COUNT) {
@@ -116,73 +182,156 @@ function assertAnswers(answers: readonly number[]): void {
   }
 }
 
-function sumAnswers(answers: readonly number[], questionIds: readonly number[]): number {
-  return questionIds.reduce((sum, id) => sum + answers[id - 1], 0);
+function applySeparateAnswer(
+  val: number,
+  leftKey: ScaleKey | WorkSubscaleKey,
+  rightKey: ScaleKey | WorkSubscaleKey,
+  scores: Record<string, number>,
+): void {
+  if (val < 0) {
+    scores[leftKey] += Math.abs(val);
+  } else if (val > 0) {
+    scores[rightKey] += val;
+  }
 }
 
-/** Левое утверждение (−2…0) увеличивает «левую» шкалу, правое — «правую». */
-function scaleFromBlock(
-  answers: readonly number[],
-  questionIds: readonly number[],
-  pole: "left" | "right",
-): number {
-  const raw = sumAnswers(answers, questionIds); // 15 ответов → сумма всегда целая
-  const signedRaw = pole === "left" ? -raw : raw;
-  return Math.round((signedRaw + 30) / 2);
+function applyBlock4Answer(
+  val: number,
+  inverted: boolean,
+  labKey: WorkSubscaleKey,
+  rigKey: WorkSubscaleKey,
+  scores: Record<string, number>,
+): void {
+  if (inverted) {
+    applySeparateAnswer(val, rigKey, labKey, scores);
+  } else {
+    applySeparateAnswer(val, labKey, rigKey, scores);
+  }
 }
 
-/** 3 ответа на системное свойство; формула отдельная от 8 шкал. */
-function systemicFromBlock(answers: readonly number[], questionIds: readonly number[]): number {
-  const raw = sumAnswers(answers, questionIds);
-  return Math.round((raw + 6) * 2.5);
+function emptyScaledScores(): ScaledScores {
+  return {
+    extraversion: 0,
+    introversion: 0,
+    anxiety: 0,
+    aggression: 0,
+    sensitivity: 0,
+    spontaneity: 0,
+    lability: 0,
+    rigidity: 0,
+  };
+}
+
+function emptyWorkSubscales(): Record<WorkSubscaleKey, number> {
+  return {
+    sub4_1_LAB: 0,
+    sub4_1_RIG: 0,
+    sub4_2_LAB: 0,
+    sub4_2_RIG: 0,
+    sub4_3_LAB: 0,
+    sub4_3_RIG: 0,
+    sub4_4_LAB: 0,
+    sub4_4_RIG: 0,
+    sub4_5_LAB: 0,
+    sub4_5_RIG: 0,
+  };
 }
 
 export function calculate_scaled_scores(answers: readonly number[]): ScaledScores {
   assertAnswers(answers);
+  const scores = emptyScaledScores();
 
-  return {
-    extraversion: scaleFromBlock(answers, BLOCK_EI, "left"),
-    introversion: scaleFromBlock(answers, BLOCK_EI, "right"),
-    anxiety: scaleFromBlock(answers, BLOCK_TA, "left"),
-    aggression: scaleFromBlock(answers, BLOCK_TA, "right"),
-    sensitivity: scaleFromBlock(answers, BLOCK_SS, "left"),
-    spontaneity: scaleFromBlock(answers, BLOCK_SS, "right"),
-    lability: scaleFromBlock(answers, BLOCK_LR, "left"),
-    rigidity: scaleFromBlock(answers, BLOCK_LR, "right"),
-  };
+  for (const block of PERSONALITY_BLOCKS) {
+    for (const questionId of block.questions) {
+      applySeparateAnswer(
+        answers[questionId - 1],
+        block.left,
+        block.right,
+        scores,
+      );
+    }
+  }
+
+  return scores;
+}
+
+function classifyCorrespondence(deltaLab: number, deltaRig: number): string | null {
+  if (Math.abs(deltaLab) <= TENSION_THRESHOLD && Math.abs(deltaRig) <= TENSION_THRESHOLD) {
+    return "Соответствие";
+  }
+  if (deltaLab > TENSION_THRESHOLD && deltaRig < -TENSION_THRESHOLD) {
+    return "Гибкий по натуре – жёсткий в работе";
+  }
+  if (deltaLab < -TENSION_THRESHOLD && deltaRig > TENSION_THRESHOLD) {
+    return "Жёсткий по натуре – гибкий в работе";
+  }
+  if (deltaLab > TENSION_THRESHOLD && deltaRig > TENSION_THRESHOLD) {
+    return "Обе выше в личности";
+  }
+  if (deltaLab < -TENSION_THRESHOLD && deltaRig < -TENSION_THRESHOLD) {
+    return "Обе выше в работе";
+  }
+  return null;
 }
 
 export function calculate_systemic_scores(answers: readonly number[]): SystemicScores {
   assertAnswers(answers);
 
+  const subscales = emptyWorkSubscales();
+  const legacyBars: Record<SystemicKey, number> = {
+    sys_energy: 0,
+    sys_result: 0,
+    sys_quality: 0,
+    sys_rules: 0,
+    sys_delegation: 0,
+  };
+
+  BLOCK4_SUBSCALES.forEach((subscale, index) => {
+    for (const questionId of subscale.questions) {
+      applyBlock4Answer(
+        answers[questionId - 1],
+        subscale.inverted,
+        subscale.labKey,
+        subscale.rigKey,
+        subscales,
+      );
+    }
+    const lab = subscales[subscale.labKey];
+    const rig = subscales[subscale.rigKey];
+    legacyBars[SYS_KEY_BY_SUBSCALE[index + 1]] = lab + rig;
+  });
+
+  const LAB_work =
+    subscales.sub4_1_LAB +
+    subscales.sub4_2_LAB +
+    subscales.sub4_3_LAB +
+    subscales.sub4_4_LAB +
+    subscales.sub4_5_LAB;
+  const RIG_work =
+    subscales.sub4_1_RIG +
+    subscales.sub4_2_RIG +
+    subscales.sub4_3_RIG +
+    subscales.sub4_4_RIG +
+    subscales.sub4_5_RIG;
+
+  const personality = calculate_scaled_scores(answers);
+  const delta_LAB = personality.lability - LAB_work;
+  const delta_RIG = personality.rigidity - RIG_work;
+  const tension_zone =
+    Math.abs(delta_LAB) > TENSION_THRESHOLD || Math.abs(delta_RIG) > TENSION_THRESHOLD;
+
   return {
-    sys_energy: systemicFromBlock(answers, SYSTEMIC_BLOCKS.sys_energy),
-    sys_result: systemicFromBlock(answers, SYSTEMIC_BLOCKS.sys_result),
-    sys_quality: systemicFromBlock(answers, SYSTEMIC_BLOCKS.sys_quality),
-    sys_rules: systemicFromBlock(answers, SYSTEMIC_BLOCKS.sys_rules),
-    sys_delegation: systemicFromBlock(answers, SYSTEMIC_BLOCKS.sys_delegation),
+    ...legacyBars,
+    ...subscales,
+    LAB_work,
+    RIG_work,
+    delta_LAB,
+    delta_RIG,
+    tension_zone,
+    correspondence_type: classifyCorrespondence(delta_LAB, delta_RIG),
   };
 }
 
-function pairSum(scores: ScaledScores, code: PsychotypeCode): number {
-  const pair = PSYCHOTYPE_PAIRS.find((item) => item.code === code);
-  if (!pair) {
-    throw new Error(`Unknown psychotype code: ${code}`);
-  }
-  return scores[pair.a] + scores[pair.b];
-}
-
-function areAdjacent(a: PsychotypeCode, b: PsychotypeCode): boolean {
-  const indexA = PSYCHOTYPE_PAIRS.findIndex((item) => item.code === a);
-  const indexB = PSYCHOTYPE_PAIRS.findIndex((item) => item.code === b);
-  if (indexA < 0 || indexB < 0) {
-    return false;
-  }
-  const diff = Math.abs(indexA - indexB);
-  return diff === 1 || diff === PSYCHOTYPE_PAIRS.length - 1;
-}
-
-/** Средняя выраженность / avg_intensity: сумма 8 шкал ÷ 8 (ответ методолога 13.08.2026). */
 export function calculate_avg_intensity(scaled_scores: ScaledScores): number {
   return (
     SCALE_KEYS.reduce((sum, key) => sum + scaled_scores[key], 0) / SCALE_KEYS.length
@@ -190,14 +339,23 @@ export function calculate_avg_intensity(scaled_scores: ScaledScores): number {
 }
 
 function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
-  const indexA = CIRCLE_SCALE_ORDER.indexOf(a);
-  const indexB = CIRCLE_SCALE_ORDER.indexOf(b);
+  const indexA = TENDENCY_CIRCLE.indexOf(a);
+  const indexB = TENDENCY_CIRCLE.indexOf(b);
   if (indexA < 0 || indexB < 0) {
     return false;
   }
   const diff = Math.abs(indexA - indexB);
-  return diff === 1 || diff === CIRCLE_SCALE_ORDER.length - 1;
+  return diff === 1 || diff === TENDENCY_CIRCLE.length - 1;
 }
+
+function psychotypeForPair(a: ScaleKey, b: ScaleKey): PsychotypeCode | null {
+  const match = ADJACENT_PSYCHOTYPES.find(
+    (pair) =>
+      (pair.a === a && pair.b === b) || (pair.a === b && pair.b === a),
+  );
+  return match?.code ?? null;
+}
+
 
 function hasNonAdjacentHighPair(scores: ScaledScores, mean: number): boolean {
   const threshold = mean * 1.3;
@@ -232,7 +390,11 @@ function hasContradictoryOppositePair(scores: ScaledScores): boolean {
   return false;
 }
 
-function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): string[] {
+function buildThresholdWarnings(
+  scores: ScaledScores,
+  avgIntensity: number,
+  systemic?: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
+): string[] {
   const warnings: string[] = [];
   const meanOf8 = avgIntensity;
   const values = SCALE_KEYS.map((key) => scores[key]);
@@ -288,32 +450,63 @@ function buildThresholdWarnings(scores: ScaledScores, avgIntensity: number): str
     warnings.push("Высокая вероятность непредсказуемого поведения");
   }
 
+  if (systemic?.tension_zone) {
+    warnings.push("Выявлена зона напряжения между личным и рабочим профилем");
+  }
+
   return [...new Set(warnings)];
 }
 
-export function determine_psychotype(scaled_scores: ScaledScores): PsychotypeResult {
-  const ranked = PSYCHOTYPE_PAIRS.map((pair) => ({
-    code: pair.code,
-    sum: pairSum(scaled_scores, pair.code),
-  })).sort((a, b) => b.sum - a.sum);
+export function determine_psychotype(
+  scaled_scores: ScaledScores,
+  systemic?: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
+): PsychotypeResult {
+  const ranked = SCALE_KEYS.map((key) => ({
+    key,
+    score: scaled_scores[key],
+  })).sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
 
-  const leading = ranked[0];
-  const secondary = ranked[1];
+  const top1 = ranked[0]?.key;
+  const top2 = ranked[1]?.key;
+  const top3 = ranked[2]?.key;
   const avg_intensity = calculate_avg_intensity(scaled_scores);
 
-  const leadingAhead =
-    secondary.sum === 0
-      ? leading.sum > 0
-      : leading.sum > secondary.sum * 1.2;
-  const adjacent = areAdjacent(leading.code, secondary.code);
-  const is_dyad = !leadingAhead || !adjacent;
+  if (!top1 || !top2 || !top3) {
+    return {
+      psychotype_code: MIXED_PSYCHOTYPE_LABEL,
+      secondary: null,
+      is_dyad: false,
+      avg_intensity,
+      warnings: buildThresholdWarnings(scaled_scores, avg_intensity, systemic),
+    };
+  }
+
+  const candidatePairs: [ScaleKey, ScaleKey][] = [
+    [top1, top2],
+    [top1, top3],
+    [top2, top3],
+  ];
+
+  const adjacentCandidates = candidatePairs
+    .filter(([a, b]) => areScalesAdjacent(a, b))
+    .map(([a, b]) => ({
+      a,
+      b,
+      sum: scaled_scores[a] + scaled_scores[b],
+      code: psychotypeForPair(a, b),
+    }))
+    .filter((item): item is typeof item & { code: PsychotypeCode } => item.code !== null)
+    .sort((left, right) => right.sum - left.sum);
+
+  const psychotype_code =
+    adjacentCandidates[0]?.code ?? (MIXED_PSYCHOTYPE_LABEL as PsychotypeCode);
 
   return {
-    psychotype_code: leading.code,
-    secondary: is_dyad ? secondary.code : null,
-    is_dyad,
+    psychotype_code,
+    secondary: null,
+    is_dyad: false,
     avg_intensity,
-    warnings: buildThresholdWarnings(scaled_scores, avg_intensity),
+    warnings: buildThresholdWarnings(scaled_scores, avg_intensity, systemic),
   };
 }
 
@@ -374,16 +567,6 @@ export function validate_answers(
     }
   }
 
-  if (answered.length === QUESTION_COUNT) {
-    const scaled = calculate_scaled_scores(answers as number[]);
-    for (const [left, right] of OPPOSITE_PAIRS) {
-      if (scaled[left] > 15 && scaled[right] > 15) {
-        codes.push("impossible_tendencies");
-        break;
-      }
-    }
-  }
-
   return [...new Set(codes)];
 }
 
@@ -391,7 +574,7 @@ export function validate_answers(
 export function calculate_result(answers: readonly number[], time_per_question: readonly number[]) {
   const scaled_scores = calculate_scaled_scores(answers);
   const scaled_systemic = calculate_systemic_scores(answers);
-  const psychotype = determine_psychotype(scaled_scores);
+  const psychotype = determine_psychotype(scaled_scores, scaled_systemic);
   const validation_warnings = validate_answers(answers, time_per_question);
 
   return {
