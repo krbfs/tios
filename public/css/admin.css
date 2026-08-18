@@ -71,6 +71,54 @@
   margin-bottom: 16px;
 }
 
+.team-heatmap-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.team-heatmap {
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  min-width: 100%;
+}
+
+.team-heatmap th,
+.team-heatmap td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.team-heatmap th {
+  background: #f8fafc;
+  font-weight: 600;
+  max-width: 8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-heatmap-cell--effective {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.team-heatmap-cell--conflict {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.team-heatmap-cell--unknown {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.team-heatmap-cell--self {
+  background: #fff;
+  color: #94a3b8;
+}
+
 .admin-toolbar {
   display: grid;
   gap: 12px;

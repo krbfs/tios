@@ -73,6 +73,16 @@
           </div>
         </section>
 
+        <section id="heatmap-section" class="team-section" hidden>
+          <h2>Совместимость (N×N)</h2>
+          <p class="muted team-section-note">
+            Парная совместимость по матрице правил 8×8 (не евклидово расстояние).
+          </p>
+          <div class="team-heatmap-wrap">
+            <table id="heatmap-table" class="team-heatmap" aria-label="Тепловая карта совместимости"></table>
+          </div>
+        </section>
+
         <p id="status" class="status-msg muted"></p>
       </div>
     </main>
@@ -98,6 +108,14 @@
       const addResultForm = document.getElementById("add-result-form");
       const resultSelect = document.getElementById("result-select");
       const statusEl = document.getElementById("status");
+      const heatmapSection = document.getElementById("heatmap-section");
+      const heatmapTable = document.getElementById("heatmap-table");
+
+      const COMPAT_LABELS = {
+        effective: "Эффективно",
+        conflict: "Конфликт",
+        unknown: "Нет данных",
+      };
 
       document.getElementById("user-email").textContent = getStoredUser()?.email || "";
       document.getElementById("logout-btn").addEventListener("click", logoutUser);
