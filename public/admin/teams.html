@@ -29,6 +29,14 @@
         <h1>Команды</h1>
         <p class="muted">Экспорт JSON-отчёта: участники, матрица совместимости, средний профиль.</p>
 
+        <div class="admin-toolbar-row" style="margin-bottom: 16px">
+          <label class="admin-field">
+            <span class="admin-field-label">Импорт JSON</span>
+            <input id="import-file" type="file" accept="application/json,.json" />
+          </label>
+          <button id="import-btn" class="btn btn-outline" type="button">Импортировать</button>
+        </div>
+
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
@@ -149,6 +157,40 @@
           statusEl.className = "status-msg error";
         });
       }
+
+      document.getElementById("import-btn").addEventListener("click", async () => {
+        const fileInput = document.getElementById("import-file");
+        const file = fileInput.files?.[0];
+        if (!file) {
+          statusEl.textContent = "Выберите JSON-файл";
+          statusEl.className = "status-msg error";
+          return;
+        }
+
+        statusEl.textContent = "Импорт…";
+        statusEl.className = "status-msg muted";
+
+        try {
+          const payload = JSON.parse(await file.text());
+          const team = await adminApiJson("/api/admin/teams/import", {
+            method: "POST",
+            body: JSON.stringify({
+              team: payload.team,
+              participants: (payload.participants || []).map((item) => ({
+                result_id: item.result_id,
+                label: item.label,
+              })),
+            }),
+          });
+          fileInput.value = "";
+          statusEl.textContent = `Импортирована команда «${team.name}» (${team.imported_results} результатов)`;
+          statusEl.className = "status-msg success";
+          await loadTeams();
+        } catch (error) {
+          statusEl.textContent = error instanceof Error ? error.message : "Ошибка импорта";
+          statusEl.className = "status-msg error";
+        }
+      });
     </script>
   </body>
 </html>
