@@ -9,6 +9,7 @@
     <title>Личный кабинет — TIOS</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
   <body class="admin-layout">
     <!-- chrome:header-cabinet -->
@@ -17,10 +18,6 @@
     <a href="/" class="site-header-logo">
       <img src="/tc-logo-full.svg" alt="TIOS" width="108" height="34" />
     </a>
-    <nav class="cabinet-nav" aria-label="Кабинет">
-      <a href="/cabinet.html" class="active">История</a>
-      <a href="/teams.html">Команды</a>
-    </nav>
     <span class="admin-nav-spacer"></span>
     <span id="user-email" class="muted"></span>
     <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_cabinet_logout">Выйти</button>
@@ -36,6 +33,12 @@
           в том же браузере). Без входа результат остается только в скопированной
           ссылке <code>encdata</code> — регистрация не нужна.
         </p>
+
+        <section id="dynamics-section" class="chart-card cabinet-chart-card" hidden>
+          <h2>Динамика средней выраженности</h2>
+          <p class="muted">Среднее по 8 шкалам (0–30) по датам прохождения</p>
+          <canvas id="intensity-chart" height="180" aria-label="График динамики"></canvas>
+        </section>
 
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -78,6 +81,8 @@
 
       const historyBody = document.getElementById("history-body");
       const statusEl = document.getElementById("status");
+      const dynamicsSection = document.getElementById("dynamics-section");
+      let intensityChart = null;
 
       document.getElementById("user-email").textContent = getStoredUser()?.email || "";
       document.getElementById("logout-btn").addEventListener("click", logoutUser);
@@ -88,10 +93,63 @@
         statusEl.className = "status-msg success";
       }
 
+      function renderIntensityChart(items) {
+        const withIntensity = items.filter((item) => item.avg_intensity != null);
+        if (withIntensity.length < 2) {
+          dynamicsSection.hidden = true;
+          if (intensityChart) {
+            intensityChart.destroy();
+            intensityChart = null;
+          }
+          return;
+        }
+
+        const chronological = [...withIntensity].reverse();
+        const labels = chronological.map((item) =>
+          new Date(item.date_time).toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "short",
+          }),
+        );
+        const values = chronological.map((item) => Math.round(item.avg_intensity));
+
+        dynamicsSection.hidden = false;
+        const ctx = document.getElementById("intensity-chart");
+        if (intensityChart) {
+          intensityChart.destroy();
+        }
+
+        intensityChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Средняя выраженность",
+                data: values,
+                borderColor: "#1a54d8",
+                backgroundColor: "rgba(26, 84, 216, 0.12)",
+                fill: true,
+                tension: 0.25,
+                pointRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { min: 0, max: 30, ticks: { stepSize: 6 } },
+            },
+            plugins: { legend: { display: false } },
+          },
+        });
+      }
+
       async function loadHistory() {
         const items = await authApiJson("/api/results/history");
 
         if (!items.length) {
+          renderIntensityChart([]);
           historyBody.innerHTML =
             '<tr><td colspan="4" class="muted">Пока пусто. Пройдите тест ТИОС, будучи залогинены — или войдите после анонимного прохождения в этом же браузере. Без входа сохраните ссылку encdata со страницы результата.</td></tr>';
           statusEl.textContent = "0 результатов";
@@ -126,6 +184,7 @@
           button.addEventListener("click", () => copyLink(button.dataset.url));
         });
 
+        renderIntensityChart(items);
         statusEl.textContent = `${items.length} результат(ов)`;
       }
 
