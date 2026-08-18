@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildSortedPersonalScales,
   calculate_avg_intensity,
   calculate_result,
   calculate_scaled_scores,
   calculate_systemic_scores,
+  computeLeaderScores,
   determine_psychotype,
   fillAnswers,
   fillTimings,
+  LEADER_SCORE_THRESHOLD,
+  normalizeExtraversionBand,
   validate_answers,
 } from "./calculations";
 
@@ -309,5 +313,48 @@ describe("validate_answers", () => {
     }
     const codes = validate_answers(answers, fillTimings(5));
     expect(codes).not.toContain("impossible_tendencies");
+  });
+});
+
+describe("buildSortedPersonalScales", () => {
+  it("orders scales descending by raw value", () => {
+    const scores = calculate_scaled_scores(fillAnswers(-2));
+    const sorted = buildSortedPersonalScales(scores);
+    expect(sorted[0].key).toBe("extraversion");
+    expect(sorted[0].value).toBe(30);
+    for (let i = 1; i < sorted.length; i += 1) {
+      expect(sorted[i - 1].value).toBeGreaterThanOrEqual(sorted[i].value);
+    }
+  });
+});
+
+describe("computeLeaderScores", () => {
+  it("returns four leader types with threshold at 70% of 30", () => {
+    const scores = calculate_scaled_scores(fillAnswers(-2));
+    const leaders = computeLeaderScores(scores);
+    expect(leaders).toHaveLength(4);
+    expect(leaders.map((item) => item.code)).toEqual([
+      "influencer_leader",
+      "pragmatist_leader",
+      "routine_leader",
+      "individualist_leader",
+    ]);
+    for (const entry of leaders) {
+      expect(entry.is_leader).toBe(entry.score > LEADER_SCORE_THRESHOLD);
+    }
+  });
+
+  it("normalizeExtraversionBand peaks in 12–20 range", () => {
+    expect(normalizeExtraversionBand(16)).toBe(30);
+    expect(normalizeExtraversionBand(0)).toBe(0);
+    expect(normalizeExtraversionBand(30)).toBe(0);
+  });
+});
+
+describe("calculate_result extras", () => {
+  it("includes sorted_personal_scales and leader_scores", () => {
+    const result = calculate_result(fillAnswers(-2), fillTimings(5));
+    expect(result.sorted_personal_scales).toHaveLength(8);
+    expect(result.leader_scores).toHaveLength(4);
   });
 });

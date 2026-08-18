@@ -32,6 +32,7 @@
       <div id="result-card" class="card">
         <h1 id="result-title">Загрузка результата…</h1>
         <p id="psychotype-title" class="muted"></p>
+        <p id="sorted-scales-summary" class="muted sorted-scales-summary" hidden></p>
 
         <div class="chart-card chart-card--radar">
           <h2>8 шкал личности</h2>
@@ -195,6 +196,7 @@
 
       const resultTitle = document.getElementById("result-title");
       const psychotypeTitle = document.getElementById("psychotype-title");
+      const sortedScalesSummary = document.getElementById("sorted-scales-summary");
       const radarAverageEl = document.getElementById("radar-average");
       const scaleTableBody = document.getElementById("scale-table-body");
       const contentBlocksEl = document.getElementById("content-blocks");
@@ -465,6 +467,25 @@
         return SCALE_KEYS.some((key) => Number(scores[key] ?? 0) > 22);
       }
 
+      function renderSortedScales(sorted) {
+        sortedScalesSummary.replaceChildren();
+        if (!Array.isArray(sorted) || sorted.length === 0) {
+          sortedScalesSummary.hidden = true;
+          return;
+        }
+
+        const top = sorted
+          .slice(0, 3)
+          .map(
+            (item) =>
+              `${SCALE_LABELS[item.key] || item.key} (${formatScaleValue(item.value)})`,
+          )
+          .join(" · ");
+
+        sortedScalesSummary.textContent = `Ведущие тенденции: ${top}`;
+        sortedScalesSummary.hidden = false;
+      }
+
       function renderThresholdWarnings(warnings, scores) {
         thresholdWarningsList.replaceChildren();
         const items = Array.isArray(warnings)
@@ -681,6 +702,7 @@
         resultData = result;
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
         psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
+        renderSortedScales(result.sorted_personal_scales);
 
         const scores = result.scaled_scores || {};
 

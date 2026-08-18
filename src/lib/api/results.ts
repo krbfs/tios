@@ -1,6 +1,8 @@
 import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 
 import {
+  buildSortedPersonalScales,
+  computeLeaderScores,
   determine_psychotype,
   type ScaledScores,
   type SystemicScores,
@@ -155,6 +157,7 @@ export async function serializeResult(
   );
 
   const encdata = getEncdataFromAnswers(result.answers);
+  const scaledScores = result.scaledScores as ScaledScores;
 
   return {
     id: result.id,
@@ -165,6 +168,8 @@ export async function serializeResult(
     answers: result.answers,
     scaled_scores: result.scaledScores,
     scaled_systemic: result.scaledSystemic,
+    sorted_personal_scales: buildSortedPersonalScales(scaledScores),
+    leader_scores: computeLeaderScores(scaledScores),
     psychotype_code: result.psychotypeCode,
     psychotype_secondary: result.psychotypeSecondary,
     avg_intensity: result.avgIntensity,

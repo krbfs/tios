@@ -574,6 +574,96 @@ export function validate_answers(
   return [...new Set(codes)];
 }
 
+export type SortedPersonalScale = {
+  key: ScaleKey;
+  value: number;
+};
+
+/** ТЗ JSON: 8 личностных тенденций по убыванию. */
+export function buildSortedPersonalScales(scores: ScaledScores): SortedPersonalScale[] {
+  return SCALE_KEYS.map((key) => ({ key, value: scores[key] })).sort(
+    (left, right) => right.value - left.value,
+  );
+}
+
+export type LeaderTypeCode =
+  | "influencer_leader"
+  | "pragmatist_leader"
+  | "routine_leader"
+  | "individualist_leader";
+
+export type LeaderScore = {
+  code: LeaderTypeCode;
+  label: string;
+  score: number;
+  is_leader: boolean;
+};
+
+/** 70% от теоретического максимума 30 (NAVIGATOR §4.8 / ТЗ §3.5). */
+export const LEADER_SCORE_THRESHOLD = 21;
+
+/** E в «комfortной» зоне 12–20 → 30; иначе линейный спад к краям 0–30. */
+export function normalizeExtraversionBand(extraversion: number): number {
+  if (extraversion >= 12 && extraversion <= 20) {
+    return 30;
+  }
+  if (extraversion < 12) {
+    return (extraversion / 12) * 30;
+  }
+  return ((30 - extraversion) / (30 - 20)) * 30;
+}
+
+/** Четыре типа лидерства по взвешенным тенденциям (0–30). */
+export function computeLeaderScores(scores: ScaledScores): LeaderScore[] {
+  const influencer =
+    0.4 * scores.extraversion +
+    0.3 * scores.lability +
+    0.2 * (30 - scores.introversion) +
+    0.1 * (30 - scores.anxiety);
+
+  const pragmatist =
+    0.4 * scores.aggression +
+    0.3 * scores.rigidity +
+    0.2 * (30 - scores.spontaneity) +
+    0.1 * (30 - scores.anxiety);
+
+  const routine =
+    0.3 * normalizeExtraversionBand(scores.extraversion) +
+    0.3 * scores.sensitivity +
+    0.2 * scores.rigidity +
+    0.2 * (30 - scores.anxiety);
+
+  const individualist =
+    0.3 * scores.aggression +
+    0.4 * scores.spontaneity +
+    0.2 * (30 - scores.rigidity) +
+    0.1 * (30 - scores.anxiety);
+
+  const entries: Omit<LeaderScore, "is_leader">[] = [
+    { code: "influencer_leader", label: "Лидер мнений", score: influencer },
+    {
+      code: "pragmatist_leader",
+      label: "Прагматик (кризисный)",
+      score: pragmatist,
+    },
+    { code: "routine_leader", label: "Рутинный лидер", score: routine },
+    {
+      code: "individualist_leader",
+      label: "Индивидуалист (спасатель)",
+      score: individualist,
+    },
+  ];
+
+  return entries.map((entry) => {
+    const score = Math.round(entry.score * 10) / 10;
+    return {
+      ...entry,
+      score,
+      is_leader: score > LEADER_SCORE_THRESHOLD,
+    };
+  });
+}
+
 /** Удобная обёртка для API submit. */
 export function calculate_result(answers: readonly number[], time_per_question: readonly number[]) {
   const scaled_scores = calculate_scaled_scores(answers);
@@ -593,6 +683,8 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     avg_intensity: psychotype.avg_intensity,
     warnings: psychotype.warnings,
     validation_warnings: [...new Set(validation_warnings)],
+    sorted_personal_scales: buildSortedPersonalScales(scaled_scores),
+    leader_scores: computeLeaderScores(scaled_scores),
   };
 }
 
