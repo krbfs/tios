@@ -287,6 +287,7 @@ describe("calculate_result", () => {
     expect(result.psychotype_code).toBe("mixed");
     expect(result.scaled_scores.extraversion).toBe(0);
     expect(result.scaled_systemic.LAB_work).toBe(0);
+    expect(result.validation_warnings).toContain("irregular_psycho_type");
   });
 });
 

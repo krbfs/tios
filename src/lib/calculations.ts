@@ -581,6 +581,10 @@ export function calculate_result(answers: readonly number[], time_per_question: 
   const psychotype = determine_psychotype(scaled_scores, scaled_systemic);
   const validation_warnings = validate_answers(answers, time_per_question);
 
+  if (psychotype.psychotype_code === MIXED_PSYCHOTYPE_LABEL) {
+    validation_warnings.push("irregular_psycho_type");
+  }
+
   return {
     scaled_scores,
     scaled_systemic,
@@ -588,7 +592,7 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     psychotype_secondary: psychotype.secondary,
     avg_intensity: psychotype.avg_intensity,
     warnings: psychotype.warnings,
-    validation_warnings,
+    validation_warnings: [...new Set(validation_warnings)],
   };
 }
 
