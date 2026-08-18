@@ -230,58 +230,60 @@ npm run chrome:assemble
 - `answers`: массив **75** целых **−2…+2**
 - `time_per_question`: массив **75** чисел (секунды)
 
-### 6.2 Блоки вопросов → 8 шкал (0–30, целые)
+### 6.2 Восемь тенденций (0–30, раздельный подсчёт)
 
-Каждая шкала — **15 ответов** из своего блока (противоположная пара тенденций):
+Каждая тенденция считается **отдельно** по 15 вопросам своего блока. На ответ `val` (−2…+2):
 
-| Блок | Вопросы (номера 1-based) | Левая шкала | Правая шкала |
-|------|---------------------------|-------------|--------------|
-| E/I | 1,6,11,…,71 (15 шт.) | extraversion | introversion |
+- `val < 0` → левая (A) += |val|, правая += 0  
+- `val > 0` → правая (B) += val, левая += 0  
+
+**Без** `(signedRaw + 30) / 2`. EXT и INT **независимы**.
+
+| Блок | Вопросы | Левая | Правая |
+|------|---------|-------|--------|
+| E/I | 1,6,11,…,71 | extraversion | introversion |
 | T/A | 2,7,12,…,72 | anxiety | aggression |
 | S/Sp | 3,8,13,…,73 | sensitivity | spontaneity |
 | L/R | 5,10,15,…,75 | lability | rigidity |
 
-Формула для полюса:
+### 6.3 Блок 4 — рабочий профиль
+
+15 вопросов (4,9,14,…,74). Пять подшкал: стороны LAB/RIG по 0–6. Инверсия Q19,24,29 и Q34,39,44 (A=RIG, B=LAB).
+
+Интегралы: `LAB_work`, `RIG_work` (0–30). Legacy UI-ключи `sys_*` = LAB+RIG по подшкале (0–12).
+
+### 6.4 Анализ соответствия
 
 ```
-signedRaw = pole === "left" ? -sum(block) : sum(block)
-scale = round((signedRaw + 30) / 2)   // 0…30
+ΔLAB = lability − LAB_work
+ΔRIG = rigidity − RIG_work
 ```
 
-### 6.3 Системные свойства (5 шт.)
+Зона напряжения: |Δ| > 10. Типология в `classifyCorrespondence()`.
 
-По **3 ответа** на свойство (блок 4, вопросы 4,9,14 / 19,24,29 / …):
+### 6.5 Психотип (NAVIGATOR §4.6)
 
-```
-systemic = round((raw + 6) * 2.5)
-```
+Круг: **AGG → SPO → EXT → LAB → ANX → SEN → INT → RIG**.
 
-Ключи: `sys_energy`, `sys_result`, `sys_quality`, `sys_rules`, `sys_delegation`.
+1. Сортировка 8 тенденций по убыванию  
+2. top1 + top2 соседние → психотип пары  
+3. Иначе fallback (top1,top3) / (top2,top3) — max сумма среди соседних  
+4. Иначе `mixed`  
 
-### 6.4 Психотип
+MVP: **без диад** (`secondary` всегда null).
 
-8 психотипов = **8 пар соседних шкал** на круге (NAVIGATOR §7.4):
+| code | Пара | RU |
+|------|------|-----|
+| individualist | AGG + SPO | Индивидуалист |
+| innovator | SPO + EXT | Инноватор |
+| influencer | EXT + LAB | Лидер мнений |
+| aesthete | LAB + ANX | Эстет |
+| conservative | ANX + SEN | Консерватор |
+| empath | SEN + INT | Эмпат |
+| analyst | INT + RIG | Аналитик |
+| pragmatist | RIG + AGG | Прагматик |
 
-| code | Шкалы (a + b) | Название RU |
-|------|---------------|-------------|
-| individualist | aggression + spontaneity | Индивидуалист |
-| innovator | spontaneity + extraversion | Инноватор |
-| influencer | extraversion + lability | Лидер мнений |
-| aesthete | lability + anxiety | Эстет |
-| conservative | anxiety + sensitivity | Консерватор |
-| empath | sensitivity + introversion | Эмпат |
-| analyst | introversion + rigidity | Аналитик |
-| pragmatist | rigidity + aggression | Прагматик |
-
-Алгоритм:
-
-1. Сумма двух шкал для каждого кода
-2. Сортировка по убыванию
-3. **Диада** (`is_dyad: true`, `psychotype_secondary` заполнен), если:
-   - лидер **не** опережает второго на **>20%**, **или**
-   - лидер и второй **не соседние** на кольце психотипов
-
-### 6.5 avg_intensity
+### 6.6 avg_intensity
 
 ```
 avg_intensity = sum(8 scales) / 8
@@ -289,7 +291,7 @@ avg_intensity = sum(8 scales) / 8
 
 В UI радара среднее показывается **округлённым до целого**.
 
-### 6.6 Предупреждения (threshold warnings)
+### 6.7 Предупреждения (threshold warnings)
 
 Функция `buildThresholdWarnings()` — NAVIGATOR §7.5. Примеры:
 
@@ -348,11 +350,23 @@ avg_intensity = sum(8 scales) / 8
 |------|----------|-------------------|
 | `leader_resource` | Ресурс руководителя | `source_current/Предложение_пo_изменению_ТК_вопросы (2).docx` — **default** |
 | `insighter` | Инсайтер | `source_current/insighter_outer для разработки.xlsx` → «Результат (новый)» |
-| `insighter_you` | Инсайтер (ты) | `source_current/ответы инсайтер 1.xlsx` — V1, пока не в коде |
+| `insighter_you` | Инсайтер (ты) | `source_current/ответы инсайтер 1.xlsx` → `npm run db:import-insighter-you` |
 | `stressless` | Стресслесс | `source_current/StressLess worksheet 2 (2).xlsx` |
 | `hr_table` | Таблица для HR | `source_current/Таблицы для HR (3).docx` |
 
-**Правило:** режим — **параметр результата**, переключает **админ**, не отдельная страница.
+| `ModeRequest` | заявки пользователя на смену режима (stressless / insighter_you) |
+
+### Автопереключение контента (`content_mode` в API)
+
+| Зритель | Режим блоков |
+|---------|----------------|
+| Владелец результата (user / session) | `insighter_you` |
+| Админ | `insighter` |
+| Аноним по encdata / share | `result.mode` (default `leader_resource`) |
+
+Ручное переключение **insighter ↔ insighter_you** в админке **запрещено**.
+
+**Правило:** `TestResult.mode` — режим для анонимного доступа и заявок; `content_mode` в ответе API — фактически загруженный контент.
 
 ### Content blocks
 
@@ -379,6 +393,9 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 | POST | `/api/auth/register` | — | Регистрация |
 | GET | `/api/content/{psychotype}/{mode}` | — | Блоки контента |
 | GET/POST | `/api/admin/results` | admin | Список/фильтры |
+| POST | `/api/results/{id}/request-mode` | user/session | Заявка на stressless / insighter_you |
+| GET | `/api/admin/mode-requests` | admin | Список заявок |
+| PATCH | `/api/admin/mode-requests/{id}/resolve` | admin | Одобрить / отклонить |
 | PATCH | `/api/admin/results/{id}/mode` | admin | Смена режима |
 | PATCH | `/api/admin/results/{id}/comment` | admin | Комментарий |
 | PATCH | `/api/admin/results/{id}/visibility` | admin | Видимость блоков |
