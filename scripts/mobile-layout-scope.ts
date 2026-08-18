@@ -85,6 +85,12 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
     "public/css/admin.css",
     "public/js/admin-auth.js",
   ],
+  "admin-compatibility": [
+    "public/admin/compatibility.html",
+    "public/css/admin.css",
+    "public/js/admin-auth.js",
+    "public/js/psychotypes.js",
+  ],
 };
 
 export type PageSelection =

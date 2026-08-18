@@ -148,6 +148,21 @@ const PAGES: PageCase[] = [
       await page.locator("h1").waitFor({ state: "visible", timeout: 10_000 });
     },
   },
+  {
+    name: "admin-compatibility",
+    path: "/admin/compatibility.html",
+    mockApi: "admin",
+    initScript: () => {
+      localStorage.setItem("tc26_access_token", "layout-test-token");
+      localStorage.setItem(
+        "tc26_user",
+        JSON.stringify({ email: "admin@layout.test", role: "admin" }),
+      );
+    },
+    ready: async (page) => {
+      await page.locator("h1").waitFor({ state: "visible", timeout: 10_000 });
+    },
+  },
 ];
 
 function sleep(ms: number) {
@@ -266,6 +281,25 @@ async function mockLayoutApi(page: Page, mockApi: "user" | "admin") {
         status: 200,
         contentType: "application/json",
         body: "[]",
+      });
+    });
+    await page.route("**/api/compatibility**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          psychotypes: ["influencer", "analyst"],
+          matrix: [
+            [
+              { compatibility_level: "self" },
+              { compatibility_level: "effective", recommendation: "ok" },
+            ],
+            [
+              { compatibility_level: "conflict", recommendation: "care" },
+              { compatibility_level: "self" },
+            ],
+          ],
+        }),
       });
     });
   }
