@@ -30,7 +30,7 @@
     "db:import-stressless": "tsx scripts/import_stressless.ts",
     "db:import-hr-table": "tsx scripts/import_hr_table.ts",
     "db:import-all": "tsx scripts/import_all.ts",
-    "db:prod-setup": "npm run db:deploy && npm run db:import-all",
+    "db:verify-content": "tsx scripts/verify_content_modes.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts",
     "chrome:assemble": "tsx scripts/assemble-chrome.ts"
