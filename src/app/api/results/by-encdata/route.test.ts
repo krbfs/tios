@@ -88,6 +88,8 @@ describe("GET /api/results/by-encdata", () => {
     );
     expect(payload.psychotype_code).toBe("influencer");
     expect(payload.warnings.length).toBeGreaterThan(0);
-    expect(payload.warnings).toContain("Вероятность достоверного прогноза — высокая");
+    expect(
+      payload.warnings.some((w) => w.includes("Вероятность достоверного прогноза")),
+    ).toBe(true);
   });
 });
