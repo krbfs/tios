@@ -9,6 +9,7 @@
     <title>Команда — TIOS</title>
     <link rel="stylesheet" href="/css/test.css" />
     <link rel="stylesheet" href="/css/admin.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   </head>
   <body class="admin-layout">
     <header class="site-header">
@@ -70,6 +71,16 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <section id="radar-section" class="team-section chart-card" hidden>
+          <h2>Сводный радар команды</h2>
+          <p class="muted team-section-note">
+            Профили участников — полупрозрачные линии; жирная линия — средний профиль по 8 шкалам.
+          </p>
+          <div class="team-radar-panel">
+            <canvas id="team-radar-chart" height="360"></canvas>
           </div>
         </section>
 
@@ -139,6 +150,61 @@
           return "—";
         }
         return active.map((item) => item.label).join(", ");
+      }
+
+      function participantLabel(item, index) {
+        if (item.label) {
+          return item.label;
+        }
+        return formatPsychotype(item.psychotype_code) || `#${index + 1}`;
+      }
+
+      function renderHeatmap(participants, matrix) {
+        heatmapTable.replaceChildren();
+
+        if (!participants.length || participants.length < 2) {
+          heatmapSection.hidden = true;
+          return;
+        }
+
+        heatmapSection.hidden = false;
+
+        const headerRow = document.createElement("tr");
+        headerRow.appendChild(document.createElement("th"));
+        for (const [index, item] of participants.entries()) {
+          const th = document.createElement("th");
+          th.textContent = participantLabel(item, index);
+          th.title = formatPsychotype(item.psychotype_code);
+          headerRow.appendChild(th);
+        }
+        heatmapTable.appendChild(headerRow);
+
+        for (const [rowIndex, rowParticipant] of participants.entries()) {
+          const row = document.createElement("tr");
+          const rowHeader = document.createElement("th");
+          rowHeader.textContent = participantLabel(rowParticipant, rowIndex);
+          rowHeader.title = formatPsychotype(rowParticipant.psychotype_code);
+          row.appendChild(rowHeader);
+
+          for (const [colIndex, cell] of (matrix[rowIndex] || []).entries()) {
+            const td = document.createElement("td");
+            if (cell === null) {
+              td.className = "team-heatmap-cell team-heatmap-cell--self";
+              td.textContent = "—";
+            } else {
+              const level = cell.compatibility_level || "unknown";
+              td.className = `team-heatmap-cell team-heatmap-cell--${level}`;
+              td.textContent = COMPAT_LABELS[level] || level;
+              const tip = cell.recommendation
+                ? `${COMPAT_LABELS[level] || level}: ${cell.recommendation}`
+                : `${formatPsychotype(cell.type_a)} × ${formatPsychotype(cell.type_b)}`;
+              td.title = tip;
+            }
+            row.appendChild(td);
+          }
+
+          heatmapTable.appendChild(row);
+        }
       }
 
       function renderParticipants(participants) {
@@ -211,6 +277,7 @@
 
         document.getElementById("max-results").textContent = String(team.max_results || 9);
         renderParticipants(team.participants || []);
+        renderHeatmap(team.participants || [], team.compatibility_matrix || []);
         await populateResultSelect(team.participants || [], history);
 
         const atLimit = (team.participants || []).length >= (team.max_results || 9);
