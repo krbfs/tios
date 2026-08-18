@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="ga-measurement-id" content="G-TYYGE7DS6E" />
+    <title>Команды — Админ TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <header class="site-header">
+      <div class="container admin-nav">
+        <strong>TIOS Admin</strong>
+        <a href="/admin/index.html">Результаты</a>
+        <a href="/admin/content.html">Контент</a>
+        <a href="/admin/mode-requests.html">Заявки</a>
+        <a href="/admin/teams.html" class="active">Команды</a>
+        <span class="admin-nav-spacer"></span>
+        <span id="admin-email" class="muted"></span>
+        <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <h1>Команды</h1>
+        <p class="muted">Экспорт JSON-отчёта: участники, матрица совместимости, средний профиль.</p>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Создатель</th>
+                <th>Результатов</th>
+                <th>Создана</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="teams-body">
+              <tr>
+                <td colspan="5" class="muted">Загрузка…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="status" class="status-msg muted"></p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { initSiteAnalytics } from "/js/analytics.js";
+      import { formatDate } from "/js/session.js";
+      import {
+        adminApiJson,
+        clearSession,
+        getStoredUser,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      initSiteAnalytics();
+
+      const teamsBody = document.getElementById("teams-body");
+      const statusEl = document.getElementById("status");
+
+      document.getElementById("admin-email").textContent = getStoredUser()?.email || "";
+      document.getElementById("logout-btn").addEventListener("click", () => {
+        clearSession();
+        window.location.href = "/admin/login.html";
+      });
+
+      async function exportTeam(teamId, teamName) {
+        const token = localStorage.getItem("tc26_access_token");
+        const response = await fetch(
+          `/api/admin/teams/${encodeURIComponent(teamId)}/export`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || `HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `team-${teamName.replace(/[^\w\-]+/g, "_") || teamId}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function loadTeams() {
+        const teams = await adminApiJson("/api/admin/teams");
+
+        if (!teams.length) {
+          teamsBody.innerHTML =
+            '<tr><td colspan="5" class="muted">Команд пока нет.</td></tr>';
+          statusEl.textContent = "0 команд";
+          return;
+        }
+
+        teamsBody.replaceChildren();
+        for (const team of teams) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${escapeHtml(team.name)}</td>
+            <td>${escapeHtml(team.created_by)}</td>
+            <td>${team.result_count} / 9</td>
+            <td>${formatDate(team.created_at)}</td>
+            <td>
+              <button type="button" class="btn btn-outline btn-sm export-btn">JSON</button>
+              <a href="/team.html?id=${encodeURIComponent(team.id)}" target="_blank" rel="noopener">Открыть</a>
+            </td>
+          `;
+          row.querySelector(".export-btn").addEventListener("click", async () => {
+            statusEl.textContent = "Экспорт…";
+            try {
+              await exportTeam(team.id, team.name);
+              statusEl.textContent = `Экспорт: ${team.name}`;
+              statusEl.className = "status-msg success";
+            } catch (error) {
+              statusEl.textContent = error instanceof Error ? error.message : "Ошибка";
+              statusEl.className = "status-msg error";
+            }
+          });
+          teamsBody.appendChild(row);
+        }
+
+        statusEl.textContent = `${teams.length} команд(ы)`;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      if (await requireAdmin()) {
+        loadTeams().catch((error) => {
+          statusEl.textContent = error.message;
+          statusEl.className = "status-msg error";
+        });
+      }
+    </script>
+  </body>
+</html>

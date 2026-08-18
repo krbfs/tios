@@ -53,6 +53,12 @@
   min-width: 12rem;
 }
 
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+  min-height: 32px;
+}
+
 .team-section {
   margin-top: 24px;
 }
