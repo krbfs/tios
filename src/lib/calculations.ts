@@ -266,10 +266,10 @@ function classifyCorrespondence(deltaLab: number, deltaRig: number): string | nu
     return "Жёсткий по натуре – гибкий в работе";
   }
   if (deltaLab > TENSION_THRESHOLD && deltaRig > TENSION_THRESHOLD) {
-    return "Обе выше в личности";
+    return "Обе шкалы выше в личности";
   }
   if (deltaLab < -TENSION_THRESHOLD && deltaRig < -TENSION_THRESHOLD) {
-    return "Обе выше в работе";
+    return "Обе шкалы выше в работе";
   }
   return null;
 }
@@ -481,25 +481,29 @@ export function determine_psychotype(
     };
   }
 
-  const candidatePairs: [ScaleKey, ScaleKey][] = [
-    [top1, top2],
-    [top1, top3],
-    [top2, top3],
-  ];
+  let psychotype_code: PsychotypeCode = MIXED_PSYCHOTYPE_LABEL;
 
-  const adjacentCandidates = candidatePairs
-    .filter(([a, b]) => areScalesAdjacent(a, b))
-    .map(([a, b]) => ({
-      a,
-      b,
-      sum: scaled_scores[a] + scaled_scores[b],
-      code: psychotypeForPair(a, b),
-    }))
-    .filter((item): item is typeof item & { code: PsychotypeCode } => item.code !== null)
-    .sort((left, right) => right.sum - left.sum);
+  // NAVIGATOR §4.6 / опросник §5.3: сначала top1+top2, иначе fallback top1+top3 / top2+top3.
+  if (areScalesAdjacent(top1, top2)) {
+    psychotype_code = psychotypeForPair(top1, top2) ?? MIXED_PSYCHOTYPE_LABEL;
+  } else {
+    const fallbackPairs: [ScaleKey, ScaleKey][] = [
+      [top1, top3],
+      [top2, top3],
+    ];
+    const bestFallback = fallbackPairs
+      .filter(([a, b]) => areScalesAdjacent(a, b))
+      .map(([a, b]) => ({
+        sum: scaled_scores[a] + scaled_scores[b],
+        code: psychotypeForPair(a, b),
+      }))
+      .filter((item): item is { sum: number; code: PsychotypeCode } => item.code !== null)
+      .sort((left, right) => right.sum - left.sum)[0];
 
-  const psychotype_code =
-    adjacentCandidates[0]?.code ?? (MIXED_PSYCHOTYPE_LABEL as PsychotypeCode);
+    if (bestFallback) {
+      psychotype_code = bestFallback.code;
+    }
+  }
 
   return {
     psychotype_code,
