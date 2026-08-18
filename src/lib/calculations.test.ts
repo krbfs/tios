@@ -135,7 +135,6 @@ describe("calculate_systemic_scores", () => {
   });
 
   it("questionnaire JSON example subscales sum to LAB_work=10 and RIG_work=22", () => {
-    const answers = fillAnswers(0);
     // Inject doc example sub4 totals by setting raw subscale keys via answers is heavy;
     // verify integral formula on synthetic subscale totals instead.
     const sub = {

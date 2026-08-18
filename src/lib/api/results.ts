@@ -7,13 +7,9 @@ import {
 } from "@/lib/calculations";
 import { db } from "@/lib/db";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
-import {
-  type ResultMode,
-  resolveContentModeForSession,
-} from "@/lib/modes";
+import { resolveContentModeForSession } from "@/lib/modes";
 
 export { ALLOWED_MODES, type ResultMode } from "@/lib/modes";
-import { ALLOWED_MODES } from "@/lib/modes";
 
 type ResultWithSession = TestResult & { session: TestSession };
 

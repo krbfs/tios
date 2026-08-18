@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
-import { ALLOWED_MODES, serializeAdminResult } from "@/lib/api/results";
+import { serializeAdminResult } from "@/lib/api/results";
 import { db } from "@/lib/db";
 import { isAllowedMode, isManualInsighterPairSwitch } from "@/lib/modes";
 
