@@ -118,6 +118,36 @@ const PAGES: PageCase[] = [
       );
     },
   },
+  {
+    name: "teams",
+    path: "/teams.html",
+    mockApi: "user",
+    initScript: () => {
+      localStorage.setItem("tc26_access_token", "layout-test-token");
+      localStorage.setItem(
+        "tc26_user",
+        JSON.stringify({ email: "user@layout.test", role: "user" }),
+      );
+    },
+    ready: async (page) => {
+      await page.locator("h1").waitFor({ state: "visible", timeout: 10_000 });
+    },
+  },
+  {
+    name: "admin-teams",
+    path: "/admin/teams.html",
+    mockApi: "admin",
+    initScript: () => {
+      localStorage.setItem("tc26_access_token", "layout-test-token");
+      localStorage.setItem(
+        "tc26_user",
+        JSON.stringify({ email: "admin@layout.test", role: "admin" }),
+      );
+    },
+    ready: async (page) => {
+      await page.locator("h1").waitFor({ state: "visible", timeout: 10_000 });
+    },
+  },
 ];
 
 function sleep(ms: number) {
@@ -214,10 +244,24 @@ async function mockLayoutApi(page: Page, mockApi: "user" | "admin") {
         body: "[]",
       });
     });
+    await page.route("**/api/teams", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "[]",
+      });
+    });
   }
 
   if (mockApi === "admin") {
     await page.route("**/api/admin/results**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "[]",
+      });
+    });
+    await page.route("**/api/admin/teams**", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",

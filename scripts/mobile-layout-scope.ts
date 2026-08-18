@@ -72,6 +72,19 @@ export const PAGE_WATCH: Record<string, readonly string[]> = {
     "public/js/psychotypes.js",
     "src/lib/encdata.ts",
   ],
+  teams: [
+    "public/teams.html",
+    "public/team.html",
+    "public/teams/accept.html",
+    "public/css/admin.css",
+    "public/js/user-auth.js",
+    "public/js/psychotypes.js",
+  ],
+  "admin-teams": [
+    "public/admin/teams.html",
+    "public/css/admin.css",
+    "public/js/admin-auth.js",
+  ],
 };
 
 export type PageSelection =
