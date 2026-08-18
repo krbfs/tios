@@ -166,6 +166,106 @@ function createLabeledSectionsBlock(sections) {
   return wrapper;
 }
 
+function createAccordionBlock(title, contentText) {
+  const details = document.createElement("details");
+  details.className = "content-accordion";
+  details.open = false;
+
+  const summary = document.createElement("summary");
+  summary.className = "content-accordion-summary";
+  summary.textContent = title || "Подробнее";
+
+  const body = document.createElement("div");
+  body.className = "content-accordion-body";
+  body.textContent = contentText;
+
+  details.append(summary, body);
+  return details;
+}
+
+function parseTableBlock(contentText) {
+  const text = contentText.trim();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed.headers) && Array.isArray(parsed.rows)) {
+      return parsed;
+    }
+  } catch {
+    // plain-text table fallback below
+  }
+
+  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length < 2) {
+    return null;
+  }
+
+  const delimiter = lines[0].includes("\t")
+    ? "\t"
+    : lines[0].includes("|")
+      ? "|"
+      : null;
+  if (!delimiter) {
+    return null;
+  }
+
+  const splitRow = (line) =>
+    line
+      .split(delimiter)
+      .map((cell) => cell.trim())
+      .filter((cell, index, arr) => !(delimiter === "|" && index === 0 && cell === ""))
+      .filter((cell, index, arr) => !(delimiter === "|" && index === arr.length - 1 && cell === ""));
+
+  const headers = splitRow(lines[0]);
+  const rows = lines.slice(1).map(splitRow).filter((row) => row.length > 0);
+  if (headers.length < 2 || rows.length === 0) {
+    return null;
+  }
+  return { headers, rows };
+}
+
+function createTableBlock(contentText) {
+  const parsed = parseTableBlock(contentText);
+  if (!parsed) {
+    const fallback = document.createElement("div");
+    fallback.textContent = contentText;
+    return fallback;
+  }
+
+  const table = document.createElement("table");
+  table.className = "content-table";
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  for (const header of parsed.headers) {
+    const th = document.createElement("th");
+    th.textContent = header;
+    headRow.appendChild(th);
+  }
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const row of parsed.rows) {
+    const tr = document.createElement("tr");
+    for (const cell of row) {
+      const td = document.createElement("td");
+      td.textContent = cell;
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+
+  const wrap = document.createElement("div");
+  wrap.className = "content-table-wrap";
+  wrap.appendChild(table);
+  return wrap;
+}
+
 export function shouldRenderAsCardBlock(block) {
   return (
     block.block_template === "card_block" || block.block_key === "efficiency_map"
@@ -174,6 +274,14 @@ export function shouldRenderAsCardBlock(block) {
 
 export function renderBlockBody(block) {
   const contentText = block.content_text.replace(/^\?\s*/, "");
+
+  if (block.block_template === "accordion_block") {
+    return createAccordionBlock(block.title, contentText);
+  }
+
+  if (block.block_template === "table_block") {
+    return createTableBlock(contentText);
+  }
 
   if (shouldRenderAsCardBlock(block)) {
     return createEfficiencyCardBlock(contentText);

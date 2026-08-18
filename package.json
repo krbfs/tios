@@ -27,6 +27,7 @@
     "db:import-content": "tsx scripts/import_content.ts",
     "db:import-insighter-you": "tsx scripts/import_insighter_you.ts",
     "db:import-insighter": "tsx scripts/import_insighter.ts",
+    "db:import-stressless": "tsx scripts/import_stressless.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts",
     "chrome:assemble": "tsx scripts/assemble-chrome.ts"
