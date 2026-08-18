@@ -37,6 +37,16 @@ export async function GET(request: Request, context: RouteContext) {
           addedAt: true,
         },
       },
+      members: {
+        orderBy: { joinedAt: "asc" },
+        select: {
+          id: true,
+          role: true,
+          invitationEmail: true,
+          joinedAt: true,
+          user: { select: { email: true } },
+        },
+      },
     },
   });
 
@@ -53,6 +63,13 @@ export async function GET(request: Request, context: RouteContext) {
     name: team.name,
     description: team.description,
     created_at: team.createdAt.toISOString(),
+    is_owner: team.createdById === user.id,
+    members: team.members.map((member) => ({
+      id: member.id,
+      role: member.role,
+      email: member.user?.email ?? member.invitationEmail,
+      joined_at: member.joinedAt?.toISOString() ?? null,
+    })),
     participants,
     compatibility_matrix,
     average_profile,

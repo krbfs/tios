@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Приглашение в команду — TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <main class="container">
+      <div class="card">
+        <h1>Приглашение в команду</h1>
+        <p id="status" class="status-msg muted">Проверка…</p>
+        <p class="actions">
+          <a href="/teams.html" class="btn btn-outline">К командам</a>
+          <a href="/login.html" id="login-link" class="btn btn-primary" hidden>Войти</a>
+        </p>
+      </div>
+    </main>
+
+    <script type="module">
+      import { authApiJson, getStoredUser, requireUser } from "/js/user-auth.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const statusEl = document.getElementById("status");
+      const loginLink = document.getElementById("login-link");
+
+      if (!token) {
+        statusEl.textContent = "Ссылка приглашения недействительна.";
+        statusEl.className = "status-msg error";
+      } else if (!getStoredUser()) {
+        statusEl.textContent =
+          "Войдите под email, на который пришло приглашение, затем откройте ссылку снова.";
+        loginLink.hidden = false;
+        loginLink.href = `/login.html?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      } else {
+        requireUser()
+          .then(async () => {
+            const result = await authApiJson("/api/teams/invitations/accept", {
+              method: "POST",
+              json: { token },
+            });
+            statusEl.textContent =
+              result.status === "already_joined"
+                ? `Вы уже в команде «${result.team_name}».`
+                : `Вы присоединились к команде «${result.team_name}».`;
+            statusEl.className = "status-msg success";
+            setTimeout(() => {
+              window.location.href = `/team.html?id=${encodeURIComponent(result.team_id)}`;
+            }, 1200);
+          })
+          .catch((error) => {
+            statusEl.textContent = error.message || "Не удалось принять приглашение.";
+            statusEl.className = "status-msg error";
+          });
+      }
+    </script>
+  </body>
+</html>

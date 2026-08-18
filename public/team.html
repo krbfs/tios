@@ -74,6 +74,23 @@
           </div>
         </section>
 
+        <section id="members-section" class="team-section" hidden>
+          <h2>Доступ к команде</h2>
+          <p class="muted team-section-note">
+            Пригласите коллегу по email — после входа под этим адресом он сможет открыть команду.
+          </p>
+          <ul id="members-list" class="team-members-list"></ul>
+          <form id="invite-form" class="admin-toolbar team-add-form">
+            <div class="admin-toolbar-row">
+              <label class="admin-field admin-field--wide">
+                <span class="admin-field-label">Email</span>
+                <input id="invite-email" type="email" required placeholder="colleague@company.com" />
+              </label>
+              <button class="btn btn-outline" type="submit">Пригласить</button>
+            </div>
+          </form>
+        </section>
+
         <section id="radar-section" class="team-section chart-card" hidden>
           <h2>Сводный радар команды</h2>
           <p class="muted team-section-note">
@@ -131,6 +148,9 @@
         "team-recommendations-section",
       );
       const teamRecommendationsList = document.getElementById("team-recommendations");
+      const membersSection = document.getElementById("members-section");
+      const membersList = document.getElementById("members-list");
+      const inviteForm = document.getElementById("invite-form");
       let teamRadarChart = null;
 
       const PARTICIPANT_COLORS = [
@@ -383,6 +403,21 @@
         }
       }
 
+      function renderMembers(members, isOwner) {
+        membersSection.hidden = !isOwner;
+        if (!isOwner) {
+          return;
+        }
+
+        membersList.replaceChildren();
+        for (const member of members || []) {
+          const item = document.createElement("li");
+          const status = member.joined_at ? "в команде" : "ожидает входа";
+          item.textContent = `${member.email || "—"} (${status})`;
+          membersList.appendChild(item);
+        }
+      }
+
       function escapeHtml(value) {
         return String(value)
           .replace(/&/g, "&amp;")
@@ -439,12 +474,43 @@
           team.compatibility_matrix || [],
         );
         renderTeamRadar(team.participants || [], team.average_profile || null);
+        renderMembers(team.members || [], Boolean(team.is_owner));
         await populateResultSelect(team.participants || [], history);
 
         const atLimit = (team.participants || []).length >= (team.max_results || 9);
         addResultForm.hidden = atLimit;
         statusEl.textContent = `${(team.participants || []).length} / ${team.max_results || 9} результатов`;
       }
+
+      inviteForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const email = document.getElementById("invite-email").value.trim();
+        if (!email) {
+          return;
+        }
+
+        statusEl.textContent = "Отправка приглашения…";
+        statusEl.className = "status-msg muted";
+
+        try {
+          const payload = await authApiJson(
+            `/api/teams/${encodeURIComponent(teamId)}/invite`,
+            {
+              method: "POST",
+              json: { email },
+            },
+          );
+          document.getElementById("invite-email").value = "";
+          statusEl.textContent = payload.joined
+            ? "Пользователь уже зарегистрирован и добавлен в команду."
+            : `Приглашение создано. Ссылка: ${window.location.origin}${payload.invite_path}`;
+          statusEl.className = "status-msg success";
+          await loadTeam();
+        } catch (error) {
+          statusEl.textContent = error.message || "Не удалось отправить приглашение";
+          statusEl.className = "status-msg error";
+        }
+      });
 
       addResultForm.addEventListener("submit", async (event) => {
         event.preventDefault();
