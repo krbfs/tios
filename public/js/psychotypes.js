@@ -55,6 +55,44 @@ export function formatScaleValue(rawValue) {
   return String(Math.round(Number(rawValue ?? 0)));
 }
 
+/** Legacy sys_* = LAB+RIG по подшкале (0–12) → отображение 0–30 (ТЗ §3.2). */
+export function systemicBarDisplayValue(rawLegacySum) {
+  return Math.round(Number(rawLegacySum ?? 0) * (30 / 12));
+}
+
+export const WORK_PROFILE_ROWS = [
+  {
+    labKey: "sub4_1_LAB",
+    rigKey: "sub4_1_RIG",
+    labLabel: "Энергоэффективность",
+    rigLabel: "Затратность",
+  },
+  {
+    labKey: "sub4_2_LAB",
+    rigKey: "sub4_2_RIG",
+    labLabel: "Фокус на процессе",
+    rigLabel: "Фокус на результате",
+  },
+  {
+    labKey: "sub4_3_LAB",
+    rigKey: "sub4_3_RIG",
+    labLabel: "Скорость",
+    rigLabel: "Качество",
+  },
+  {
+    labKey: "sub4_4_LAB",
+    rigKey: "sub4_4_RIG",
+    labLabel: "Гибкость в правилах",
+    rigLabel: "Следование правилам",
+  },
+  {
+    labKey: "sub4_5_LAB",
+    rigKey: "sub4_5_RIG",
+    labLabel: "Коллективная ответственность",
+    rigLabel: "Личная ответственность",
+  },
+];
+
 const SCALE_KEYS = [
   "extraversion",
   "introversion",

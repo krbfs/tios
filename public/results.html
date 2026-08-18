@@ -48,6 +48,7 @@
 
         <div class="chart-card chart-card--systemic">
           <h2>5 системных свойств</h2>
+          <p class="muted systemic-scale-note">Шкала 0–30 (сумма LAB+RIG по подшкале, как в ТЗ)</p>
           <div class="systemic-layout">
             <div id="systemic-bars" class="systemic-bars" aria-label="5 системных свойств"></div>
             <aside
@@ -60,6 +61,12 @@
             </aside>
           </div>
         </div>
+
+        <section id="work-profile-section" class="chart-card work-profile-card" hidden>
+          <h2>Рабочий профиль</h2>
+          <p class="muted">Доминантная сторона по каждой из 5 подшкал (LAB / RIG, 0–6 → 0–30)</p>
+          <div id="work-profile-grid" class="work-profile-grid" aria-label="Рабочий профиль"></div>
+        </section>
 
         <section id="correspondence-section" class="chart-card correspondence-card" hidden>
           <h2>Анализ соответствия личности и работы</h2>
@@ -169,6 +176,8 @@
         SYSTEMIC_LABELS,
         SYSTEMIC_COLORS,
         formatScaleValue,
+        systemicBarDisplayValue,
+        WORK_PROFILE_ROWS,
       } from "/js/psychotypes.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
@@ -483,11 +492,12 @@
         const root = document.getElementById("systemic-bars");
         root.replaceChildren();
 
-        const SYSTEMIC_MAX = 12;
+        const SYSTEMIC_DISPLAY_MAX = 30;
 
         for (const [index, key] of Object.keys(SYSTEMIC_LABELS).entries()) {
           const raw = Number(systemic[key] ?? 0);
-          const barTarget = `${Math.max(0, Math.min(100, (raw / SYSTEMIC_MAX) * 100))}%`;
+          const display = systemicBarDisplayValue(raw);
+          const barTarget = `${Math.max(0, Math.min(100, (display / SYSTEMIC_DISPLAY_MAX) * 100))}%`;
 
           const colors = SYSTEMIC_COLORS[key];
           const row = document.createElement("div");
@@ -511,10 +521,65 @@
 
           const value = document.createElement("span");
           value.className = "systemic-value";
-          value.textContent = formatScaleValue(raw);
+          value.textContent = formatScaleValue(display);
 
           row.append(label, track, value);
           root.appendChild(row);
+        }
+      }
+
+      function buildWorkProfile(systemic) {
+        const section = document.getElementById("work-profile-section");
+        const root = document.getElementById("work-profile-grid");
+        root.replaceChildren();
+
+        const hasData = WORK_PROFILE_ROWS.some(
+          (rowDef) =>
+            systemic[rowDef.labKey] != null || systemic[rowDef.rigKey] != null,
+        );
+
+        for (const [index, rowDef] of WORK_PROFILE_ROWS.entries()) {
+          const lab = Number(systemic[rowDef.labKey] ?? 0);
+          const rig = Number(systemic[rowDef.rigKey] ?? 0);
+
+          const labDominant = lab >= rig;
+          const dominantValue = labDominant ? lab : rig;
+          const display = Math.round(dominantValue * 5);
+          const barTarget = `${Math.max(0, Math.min(100, (display / 30) * 100))}%`;
+          const sideLabel = labDominant ? rowDef.labLabel : rowDef.rigLabel;
+          const sideCode = labDominant ? "LAB" : "RIG";
+
+          const row = document.createElement("div");
+          row.className = "work-profile-row";
+          row.style.setProperty("--work-profile-row-delay", `${80 + index * 60}ms`);
+          row.style.setProperty("--work-profile-bar-target", barTarget);
+
+          const label = document.createElement("span");
+          label.className = "work-profile-label";
+          label.textContent = sideLabel;
+
+          const meta = document.createElement("span");
+          meta.className = "work-profile-meta";
+          meta.textContent = sideCode;
+
+          const track = document.createElement("span");
+          track.className = "work-profile-track";
+          track.setAttribute("aria-hidden", "true");
+          const fill = document.createElement("span");
+          fill.className = "work-profile-fill";
+          track.appendChild(fill);
+
+          const value = document.createElement("span");
+          value.className = "work-profile-value";
+          value.textContent = formatScaleValue(display);
+
+          row.append(label, meta, track, value);
+          root.appendChild(row);
+        }
+
+        section.hidden = !hasData;
+        if (hasData) {
+          section.classList.add("motion-reveal");
         }
       }
 
@@ -622,6 +687,7 @@
         buildScaleTable(scores);
         updateRadarAverage(scores);
         renderThresholdWarnings(result.warnings, scores);
+        buildWorkProfile(result.scaled_systemic || {});
         renderCorrespondence(result);
 
         contentBlocksEl.replaceChildren();
