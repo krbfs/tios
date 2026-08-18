@@ -887,6 +887,35 @@ input[type="range"] {
   color: #92400e;
 }
 
+.leader-scores {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leader-scores__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+}
+
+.leader-scores__item--active {
+  border-color: #1a54d8;
+  background: #eff6ff;
+}
+
+.leader-scores__score {
+  color: #475569;
+  white-space: nowrap;
+}
+
 .mode-request-card {
   margin-top: 20px;
 }

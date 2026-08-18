@@ -79,6 +79,12 @@
           <ul id="coaching-recommendations" class="coaching-recommendations" hidden></ul>
         </section>
 
+        <section id="leader-section" class="chart-card leader-card" hidden>
+          <h2>Лидерский потенциал</h2>
+          <p class="muted">4 типа по формулам ТЗ §3.5 (порог 21 из 30)</p>
+          <ul id="leader-scores" class="leader-scores" aria-label="Типы лидерства"></ul>
+        </section>
+
         <section id="mode-request-section" class="card mode-request-card" hidden>
           <h2>Дополнительные режимы</h2>
           <p class="muted">Отправьте заявку администратору — после одобрения контент обновится.</p>
@@ -229,6 +235,8 @@
       const correspondenceMeta = document.getElementById("correspondence-meta");
       const correspondenceType = document.getElementById("correspondence-type");
       const coachingRecommendations = document.getElementById("coaching-recommendations");
+      const leaderSection = document.getElementById("leader-section");
+      const leaderScoresList = document.getElementById("leader-scores");
       const modeRequestSection = document.getElementById("mode-request-section");
       const modeRequestStatus = document.getElementById("mode-request-status");
       const resultDisclaimer = document.getElementById("result-disclaimer");
@@ -729,6 +737,29 @@
         }
       }
 
+      function renderLeaderScores(leaderScores) {
+        leaderScoresList.replaceChildren();
+        const items = Array.isArray(leaderScores) ? leaderScores : [];
+
+        if (!items.length) {
+          leaderSection.hidden = true;
+          return;
+        }
+
+        for (const item of items) {
+          const row = document.createElement("li");
+          row.className = item.is_leader
+            ? "leader-scores__item leader-scores__item--active"
+            : "leader-scores__item";
+          const score = Math.round(Number(item.score ?? 0));
+          row.innerHTML = `<span class="leader-scores__label">${item.label || item.code}</span><span class="leader-scores__score">${score}${item.is_leader ? " · лидер" : ""}</span>`;
+          leaderScoresList.appendChild(row);
+        }
+
+        leaderSection.hidden = false;
+        leaderSection.classList.add("motion-reveal");
+      }
+
       function renderModeRequestNotice(notice) {
         if (!notice || !resultData?.id) {
           return;
@@ -799,6 +830,7 @@
         renderThresholdWarnings(result.warnings, scores);
         buildWorkProfile(result.scaled_systemic || {});
         renderCorrespondence(result);
+        renderLeaderScores(result.leader_scores);
 
         contentBlocksEl.replaceChildren();
         (result.content_blocks || []).forEach((block) => {
