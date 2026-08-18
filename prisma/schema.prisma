@@ -22,6 +22,20 @@ enum PsychotypeLevel {
   triad
 }
 
+enum ContentMode {
+  leader_resource
+  insighter
+  insighter_you
+  stressless
+  hr_table
+}
+
+enum ModeRequestStatus {
+  pending
+  approved
+  rejected
+}
+
 /// 1. User
 model User {
   id           String   @id @default(cuid())
@@ -62,7 +76,7 @@ model TestResult {
   psychotypeSecondary  String?  @map("psychotype_secondary")
   avgIntensity         Float?   @map("avg_intensity")
   validationWarnings   Json?    @map("validation_warnings") @db.JsonB
-  mode                 String   @default("leader_resource")
+  mode                 ContentMode @default(leader_resource)
   adminComment         String?  @map("admin_comment")
   showAdminComment     Boolean  @default(false) @map("show_admin_comment")
   visibilityOverrides  Json?    @map("visibility_overrides") @db.JsonB
@@ -70,7 +84,8 @@ model TestResult {
   shareToken           String?  @unique @map("share_token") @db.Uuid
   createdAt            DateTime @default(now()) @map("created_at")
 
-  session TestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session      TestSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  modeRequests ModeRequest[]
 
   @@index([sessionId])
   @@index([psychotypeCode])
@@ -82,7 +97,7 @@ model TestResult {
 model ContentBlock {
   id               Int      @id @default(autoincrement())
   psychotypeCode   String   @map("psychotype_code")
-  mode             String
+  mode             ContentMode
   blockKey         String   @map("block_key")
   blockTemplate    String   @map("block_template")
   title            String?
@@ -124,7 +139,25 @@ model PsychotypeDefinition {
   @@map("psychotype_definitions")
 }
 
-/// 7. UserConsent
+/// 7. ModeRequest — user requests to switch result content mode
+model ModeRequest {
+  id             String            @id @default(cuid())
+  resultId       String            @map("result_id")
+  requestedMode  ContentMode       @map("requested_mode")
+  status         ModeRequestStatus @default(pending)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  resolvedAt     DateTime?         @map("resolved_at")
+  resolvedById   String?           @map("resolved_by_id")
+  adminNote      String?           @map("admin_note")
+
+  result TestResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+  @@index([status])
+  @@map("mode_requests")
+}
+
+/// 8. UserConsent
 model UserConsent {
   id             Int       @id @default(autoincrement())
   userId         String?   @map("user_id")

@@ -95,7 +95,8 @@ export function logout() {
 
 export const MODES = [
   { value: "leader_resource", label: "Ресурс руководителя" },
-  { value: "insighter", label: "Инсайтер" },
+  { value: "insighter", label: "Инсайтер (он/она)" },
+  { value: "insighter_you", label: "Инсайтер (ты)" },
   { value: "stressless", label: "Стресслесс" },
   { value: "hr_table", label: "Таблица для HR" },
 ];
