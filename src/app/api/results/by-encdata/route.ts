@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       validation_warnings: computed.validation_warnings,
       warnings: computed.warnings,
       mode: "leader_resource",
+      content_mode: "leader_resource",
       admin_comment: null,
       content_blocks: blocks,
     });

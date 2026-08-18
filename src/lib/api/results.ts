@@ -3,26 +3,17 @@ import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 import {
   determine_psychotype,
   type ScaledScores,
+  type SystemicScores,
 } from "@/lib/calculations";
 import { db } from "@/lib/db";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
+import {
+  type ResultMode,
+  resolveContentModeForSession,
+} from "@/lib/modes";
 
-function thresholdWarningsFromResult(result: TestResult): string[] {
-  if (!result.scaledScores || typeof result.scaledScores !== "object") {
-    return [];
-  }
-
-  return determine_psychotype(result.scaledScores as ScaledScores).warnings;
-}
-
-export const ALLOWED_MODES = [
-  "leader_resource",
-  "insighter",
-  "stressless",
-  "hr_table",
-] as const;
-
-export type ResultMode = (typeof ALLOWED_MODES)[number];
+export { ALLOWED_MODES, type ResultMode } from "@/lib/modes";
+import { ALLOWED_MODES } from "@/lib/modes";
 
 type ResultWithSession = TestResult & { session: TestSession };
 
@@ -126,11 +117,44 @@ export function buildShareUrl(encdata: string): string {
   return buildResultUrl(encdata);
 }
 
-export async function serializeResult(result: ResultWithSession) {
+export type SerializeViewer = {
+  user: { id: string; role: string } | null;
+  sessionUuid: string | null;
+};
+
+function thresholdWarningsFromResult(result: TestResult): string[] {
+  if (!result.scaledScores || typeof result.scaledScores !== "object") {
+    return [];
+  }
+
+  const systemic =
+    result.scaledSystemic && typeof result.scaledSystemic === "object"
+      ? (result.scaledSystemic as Pick<
+          SystemicScores,
+          "tension_zone" | "correspondence_type"
+        >)
+      : undefined;
+
+  return determine_psychotype(
+    result.scaledScores as ScaledScores,
+    systemic,
+  ).warnings;
+}
+
+export async function serializeResult(
+  result: ResultWithSession,
+  viewer: SerializeViewer = { user: null, sessionUuid: null },
+) {
   const visibilityOverrides = parseVisibilityOverrides(result.visibilityOverrides);
+  const contentMode = resolveContentModeForSession(
+    result.mode,
+    result.session.userId,
+    result.session.sessionUuid,
+    viewer,
+  );
   const blocks = await loadVisibleContentBlocks(
     result.psychotypeCode,
-    result.mode,
+    contentMode,
     visibilityOverrides,
   );
 
@@ -151,6 +175,7 @@ export async function serializeResult(result: ResultWithSession) {
     validation_warnings: result.validationWarnings,
     warnings: thresholdWarningsFromResult(result),
     mode: result.mode,
+    content_mode: contentMode,
     admin_comment:
       result.showAdminComment && result.adminComment ? result.adminComment : null,
     visibility_overrides: visibilityOverrides,
@@ -164,13 +189,17 @@ export async function serializeAdminResult(result: ResultWithSession) {
   const visibilityOverrides = parseVisibilityOverrides(result.visibilityOverrides);
   const blocks = await loadContentBlocks(
     result.psychotypeCode,
-    result.mode,
+    "insighter",
     visibilityOverrides,
     { includeHidden: true },
   );
 
   return {
-    ...(await serializeResult(result)),
+    ...(await serializeResult(result, {
+      user: { id: "admin", role: "admin" },
+      sessionUuid: null,
+    })),
+    mode: result.mode,
     admin_comment: result.adminComment,
     show_admin_comment: result.showAdminComment,
     content_blocks: blocks,

@@ -17,6 +17,7 @@
     <strong>TIOS Admin</strong>
     <a href="/admin/index.html" class="">Результаты</a>
     <a href="/admin/content.html" class="">Контент</a>
+    <a href="/admin/mode-requests.html" class="">Заявки</a>
     <span class="admin-nav-spacer"></span>
     <span id="admin-email" class="muted"></span>
     <button id="logout-btn" class="btn btn-outline" type="button" data-ga-event="cta_admin_logout">Выйти</button>
@@ -57,7 +58,10 @@
       <div class="admin-grid-2" style="margin-top: 20px">
         <section class="admin-panel">
           <h2>Режим отображения</h2>
-          <p class="muted">Переключение доступно только администратору.</p>
+          <p class="muted">
+            Переключение insighter ↔ insighter_you вручную запрещено (автоматически по роли зрителя).
+            Остальные режимы — только администратору.
+          </p>
           <label class="admin-field">
             Режим
             <select id="mode-select"></select>

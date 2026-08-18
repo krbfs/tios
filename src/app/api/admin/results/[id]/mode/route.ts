@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { ALLOWED_MODES, serializeAdminResult } from "@/lib/api/results";
 import { db } from "@/lib/db";
+import { isAllowedMode, isManualInsighterPairSwitch } from "@/lib/modes";
 
 type RouteContext = { params: Promise<{ id: string }> };
 type ModeBody = { mode?: string };
@@ -18,8 +19,23 @@ export async function PUT(request: Request, context: RouteContext) {
     return body;
   }
 
-  if (!body.mode || !ALLOWED_MODES.includes(body.mode as (typeof ALLOWED_MODES)[number])) {
+  if (!body.mode || !isAllowedMode(body.mode)) {
     return error("Invalid mode", 400);
+  }
+
+  const existing = await db.testResult.findUnique({
+    where: { id },
+    select: { mode: true },
+  });
+  if (!existing) {
+    return error("Result not found", 404);
+  }
+
+  if (isManualInsighterPairSwitch(existing.mode, body.mode)) {
+    return error(
+      "Ручное переключение между insighter и insighter_you запрещено",
+      400,
+    );
   }
 
   try {

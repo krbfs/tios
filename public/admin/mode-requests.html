@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Заявки на режим — Админ TIOS</title>
+    <link rel="stylesheet" href="/css/test.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-layout">
+    <!-- chrome:header-admin activePage=mode-requests -->
+<header class="site-header">
+  <div class="container admin-nav">
+    <strong>TIOS Admin</strong>
+    <a href="/admin/index.html" class="">Результаты</a>
+    <a href="/admin/content.html" class="">Контент</a>
+    <a href="/admin/mode-requests.html" class="active">Заявки</a>
+    <span class="admin-nav-spacer"></span>
+    <span id="admin-email" class="muted"></span>
+    <button id="logout-btn" class="btn btn-outline" type="button">Выйти</button>
+  </div>
+</header>
+<!-- /chrome:header-admin -->
+
+    <main class="container">
+      <div class="card">
+        <h1>Заявки на смену режима</h1>
+        <form id="filters" class="admin-toolbar">
+          <label class="admin-field">
+            Статус
+            <select id="filter-status">
+              <option value="">Все</option>
+              <option value="pending" selected>Ожидают</option>
+              <option value="approved">Одобрены</option>
+              <option value="rejected">Отклонены</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" type="submit">Обновить</button>
+        </form>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Режим</th>
+                <th>Психотип</th>
+                <th>Result ID</th>
+                <th>Статус</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="requests-body">
+              <tr><td colspan="6" class="muted">Загрузка…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="status" class="status-msg muted"></p>
+      </div>
+      <p id="error" class="error" hidden></p>
+    </main>
+
+    <script type="module">
+      import { formatDate } from "/js/session.js";
+      import {
+        adminApiJson,
+        getStoredUser,
+        logout,
+        modeLabel,
+        requireAdmin,
+      } from "/js/admin-auth.js";
+
+      document.getElementById("logout-btn").addEventListener("click", logout);
+      document.getElementById("admin-email").textContent =
+        getStoredUser()?.email || "";
+
+      const requestsBody = document.getElementById("requests-body");
+      const statusEl = document.getElementById("status");
+      const errorEl = document.getElementById("error");
+
+      function showError(message) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+
+      async function resolveRequest(id, action) {
+        await adminApiJson(`/api/admin/mode-requests/${id}/resolve`, {
+          method: "PATCH",
+          body: JSON.stringify({ action }),
+        });
+        await loadRequests();
+      }
+
+      function renderRows(requests) {
+        requestsBody.replaceChildren();
+        if (!requests.length) {
+          requestsBody.innerHTML =
+            '<tr><td colspan="6" class="muted">Нет заявок</td></tr>';
+          return;
+        }
+
+        for (const item of requests) {
+          const row = document.createElement("tr");
+          const actions =
+            item.status === "pending"
+              ? `<button type="button" class="btn btn-outline btn-sm" data-action="approve" data-id="${item.id}">Одобрить</button>
+                 <button type="button" class="btn btn-outline btn-sm" data-action="reject" data-id="${item.id}">Отклонить</button>`
+              : "—";
+
+          row.innerHTML = `
+            <td>${formatDate(item.created_at)}</td>
+            <td>${modeLabel(item.requested_mode)}</td>
+            <td>${item.psychotype_code}</td>
+            <td><a href="/admin/result.html?id=${item.result_id}">${item.result_id.slice(0, 8)}…</a></td>
+            <td>${item.status}</td>
+            <td class="admin-actions">${actions}</td>
+          `;
+          requestsBody.appendChild(row);
+        }
+
+        requestsBody.querySelectorAll("button[data-action]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            try {
+              await resolveRequest(
+                button.dataset.id,
+                button.dataset.action,
+              );
+            } catch (err) {
+              showError(err instanceof Error ? err.message : "Ошибка");
+            }
+          });
+        });
+      }
+
+      async function loadRequests() {
+        statusEl.textContent = "Загрузка…";
+        const status = document.getElementById("filter-status").value;
+        const query = status ? `?status=${encodeURIComponent(status)}` : "";
+        const data = await adminApiJson(`/api/admin/mode-requests${query}`);
+        renderRows(data.requests || []);
+        statusEl.textContent = `${data.requests?.length || 0} заявок`;
+      }
+
+      document.getElementById("filters").addEventListener("submit", (event) => {
+        event.preventDefault();
+        loadRequests().catch((err) => showError(err.message));
+      });
+
+      if (await requireAdmin()) {
+        loadRequests().catch((err) => showError(err.message));
+      }
+    </script>
+  </body>
+</html>

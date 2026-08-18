@@ -61,6 +61,26 @@
           </div>
         </div>
 
+        <section id="correspondence-section" class="chart-card correspondence-card" hidden>
+          <h2>Анализ соответствия личности и работы</h2>
+          <dl class="correspondence-meta" id="correspondence-meta"></dl>
+          <p id="correspondence-type" class="correspondence-type"></p>
+        </section>
+
+        <section id="mode-request-section" class="card mode-request-card" hidden>
+          <h2>Дополнительные режимы</h2>
+          <p class="muted">Отправьте заявку администратору — после одобрения контент обновится.</p>
+          <div class="actions">
+            <button id="request-stressless-btn" class="btn btn-outline" type="button">
+              Мне нужны данные, как бороться со стрессом
+            </button>
+            <button id="request-insighter-you-btn" class="btn btn-outline" type="button">
+              Мне нужны данные о моих зонах роста
+            </button>
+          </div>
+          <p id="mode-request-status" class="muted" hidden></p>
+        </section>
+
         <section id="content-blocks"></section>
 
         <section id="admin-note" class="content-block admin-note" hidden>
@@ -180,6 +200,11 @@
       const errorEl = document.getElementById("error");
       const thresholdWarningsEl = document.getElementById("threshold-warnings");
       const thresholdWarningsList = document.getElementById("threshold-warnings-list");
+      const correspondenceSection = document.getElementById("correspondence-section");
+      const correspondenceMeta = document.getElementById("correspondence-meta");
+      const correspondenceType = document.getElementById("correspondence-type");
+      const modeRequestSection = document.getElementById("mode-request-section");
+      const modeRequestStatus = document.getElementById("mode-request-status");
       const resultDisclaimer = document.getElementById("result-disclaimer");
 
       let resultData = null;
@@ -458,9 +483,11 @@
         const root = document.getElementById("systemic-bars");
         root.replaceChildren();
 
+        const SYSTEMIC_MAX = 12;
+
         for (const [index, key] of Object.keys(SYSTEMIC_LABELS).entries()) {
           const raw = Number(systemic[key] ?? 0);
-          const barTarget = `${Math.max(0, Math.min(100, (raw / 30) * 100))}%`;
+          const barTarget = `${Math.max(0, Math.min(100, (raw / SYSTEMIC_MAX) * 100))}%`;
 
           const colors = SYSTEMIC_COLORS[key];
           const row = document.createElement("div");
@@ -523,6 +550,68 @@
         resultLinkInput.value = buildResultUrl(encdata);
       }
 
+      function renderCorrespondence(result) {
+        const systemic = result.scaled_systemic || {};
+        if (systemic.delta_LAB == null && systemic.delta_RIG == null) {
+          correspondenceSection.hidden = true;
+          return;
+        }
+
+        const deltaLab = Number(systemic.delta_LAB ?? 0);
+        const deltaRig = Number(systemic.delta_RIG ?? 0);
+        const labWork = Number(systemic.LAB_work ?? 0);
+        const rigWork = Number(systemic.RIG_work ?? 0);
+        const labPers = Number(result.scaled_scores?.lability ?? 0);
+        const rigPers = Number(result.scaled_scores?.rigidity ?? 0);
+
+        correspondenceMeta.innerHTML = `
+          <dt>LAB (личность / работа)</dt><dd>${labPers} / ${labWork}</dd>
+          <dt>RIG (личность / работа)</dt><dd>${rigPers} / ${rigWork}</dd>
+          <dt>ΔLAB</dt><dd>${deltaLab > 0 ? "+" : ""}${deltaLab}</dd>
+          <dt>ΔRIG</dt><dd>${deltaRig > 0 ? "+" : ""}${deltaRig}</dd>
+        `;
+
+        if (systemic.tension_zone) {
+          correspondenceType.textContent =
+            systemic.correspondence_type ||
+            "Выявлена зона напряжения между личным и рабочим профилем";
+          correspondenceType.className = "correspondence-type correspondence-type--tension";
+        } else {
+          correspondenceType.textContent =
+            systemic.correspondence_type || "Соответствие";
+          correspondenceType.className = "correspondence-type";
+        }
+
+        correspondenceSection.hidden = false;
+        correspondenceSection.classList.add("motion-reveal");
+      }
+
+      async function requestMode(mode) {
+        if (!resultData?.id) {
+          modeRequestStatus.textContent =
+            "Заявку можно отправить только для сохранённого результата (войдите в кабинет).";
+          modeRequestStatus.hidden = false;
+          return;
+        }
+
+        modeRequestStatus.textContent = "Отправка…";
+        modeRequestStatus.hidden = false;
+
+        try {
+          const response = await apiJson(
+            `/api/results/${encodeURIComponent(resultData.id)}/request-mode`,
+            {
+              method: "POST",
+              body: JSON.stringify({ mode }),
+            },
+          );
+          modeRequestStatus.textContent = response.message || "Заявка отправлена";
+        } catch (err) {
+          modeRequestStatus.textContent =
+            err instanceof Error ? err.message : "Не удалось отправить заявку";
+        }
+      }
+
       function renderResult(result) {
         resultData = result;
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
@@ -533,6 +622,7 @@
         buildScaleTable(scores);
         updateRadarAverage(scores);
         renderThresholdWarnings(result.warnings, scores);
+        renderCorrespondence(result);
 
         contentBlocksEl.replaceChildren();
         (result.content_blocks || []).forEach((block) => {
@@ -550,9 +640,17 @@
         }
 
         updateResultLink(result);
+        modeRequestSection.hidden = !result.id;
         markResultLoaded();
         initChartReveal(result);
       }
+
+      document
+        .getElementById("request-stressless-btn")
+        .addEventListener("click", () => requestMode("stressless"));
+      document
+        .getElementById("request-insighter-you-btn")
+        .addEventListener("click", () => requestMode("insighter_you"));
 
       async function loadResult() {
         try {

@@ -25,5 +25,10 @@ export async function GET(request: Request, context: RouteContext) {
     return error("Forbidden", 403);
   }
 
-  return json(await serializeResult(result));
+  return json(
+    await serializeResult(result, {
+      user,
+      sessionUuid,
+    }),
+  );
 }
