@@ -25,6 +25,8 @@
 *.pem
 __pycache__/
 *.pyc
+*-screenshot.png
+prod-radar-check.png
 
 # debug
 npm-debug.log*
