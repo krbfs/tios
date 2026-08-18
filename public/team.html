@@ -127,6 +127,10 @@
       const heatmapSection = document.getElementById("heatmap-section");
       const heatmapTable = document.getElementById("heatmap-table");
       const radarSection = document.getElementById("radar-section");
+      const teamRecommendationsSection = document.getElementById(
+        "team-recommendations-section",
+      );
+      const teamRecommendationsList = document.getElementById("team-recommendations");
       let teamRadarChart = null;
 
       const PARTICIPANT_COLORS = [
@@ -224,6 +228,72 @@
 
           heatmapTable.appendChild(row);
         }
+      }
+
+      function renderTeamRecommendations(participants, matrix) {
+        teamRecommendationsList.replaceChildren();
+
+        if (!participants.length || participants.length < 2) {
+          teamRecommendationsSection.hidden = true;
+          return;
+        }
+
+        const tips = new Set();
+        let conflictCount = 0;
+        let effectiveCount = 0;
+
+        for (let row = 0; row < matrix.length; row += 1) {
+          for (let col = 0; col < (matrix[row]?.length ?? 0); col += 1) {
+            const cell = matrix[row]?.[col];
+            if (!cell) {
+              continue;
+            }
+            if (cell.compatibility_level === "conflict") {
+              conflictCount += 1;
+              if (cell.recommendation) {
+                tips.add(cell.recommendation);
+              }
+            }
+            if (cell.compatibility_level === "effective") {
+              effectiveCount += 1;
+            }
+          }
+        }
+
+        if (conflictCount === 0 && effectiveCount > 0) {
+          tips.add(
+            "Парная совместимость в команде преимущественно эффективная — используйте сильные пары как опору для совместных задач.",
+          );
+        }
+
+        if (conflictCount > 0) {
+          tips.add(
+            `Выявлено ${conflictCount} напряжённых пар. Имеет смысл заранее договориться о правилах взаимодействия и зонах ответственности.`,
+          );
+        }
+
+        const leaders = participants.flatMap((item, index) =>
+          (item.leader_scores || [])
+            .filter((entry) => entry.is_leader)
+            .map((entry) => `${participantLabel(item, index)} — ${entry.label}`),
+        );
+
+        if (leaders.length) {
+          tips.add(`Потенциальные лидеры: ${leaders.join("; ")}.`);
+        }
+
+        if (tips.size === 0) {
+          teamRecommendationsSection.hidden = true;
+          return;
+        }
+
+        for (const text of tips) {
+          const item = document.createElement("li");
+          item.textContent = text;
+          teamRecommendationsList.appendChild(item);
+        }
+
+        teamRecommendationsSection.hidden = false;
       }
 
       function scaledValues(scores) {
@@ -364,6 +434,10 @@
         document.getElementById("max-results").textContent = String(team.max_results || 9);
         renderParticipants(team.participants || []);
         renderHeatmap(team.participants || [], team.compatibility_matrix || []);
+        renderTeamRecommendations(
+          team.participants || [],
+          team.compatibility_matrix || [],
+        );
         renderTeamRadar(team.participants || [], team.average_profile || null);
         await populateResultSelect(team.participants || [], history);
 
