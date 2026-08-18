@@ -868,6 +868,25 @@ input[type="range"] {
   color: #334155;
 }
 
+.validation-warnings {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius);
+  background: #fffbeb;
+}
+
+.validation-warnings__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #92400e;
+}
+
 .mode-request-card {
   margin-top: 20px;
 }

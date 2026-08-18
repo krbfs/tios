@@ -33,6 +33,9 @@
         <h1 id="result-title">Загрузка результата…</h1>
         <p id="psychotype-title" class="muted"></p>
         <p id="sorted-scales-summary" class="muted sorted-scales-summary" hidden></p>
+        <aside id="validation-warnings" class="validation-warnings" hidden aria-label="Предупреждения валидации">
+          <ul id="validation-warnings-list" class="validation-warnings__list"></ul>
+        </aside>
 
         <div class="chart-card chart-card--radar">
           <h2>8 шкал личности</h2>
@@ -198,6 +201,16 @@
       const resultTitle = document.getElementById("result-title");
       const psychotypeTitle = document.getElementById("psychotype-title");
       const sortedScalesSummary = document.getElementById("sorted-scales-summary");
+      const validationWarningsEl = document.getElementById("validation-warnings");
+      const validationWarningsList = document.getElementById("validation-warnings-list");
+
+      const VALIDATION_LABELS = {
+        falsy_answers: "Все ответы одинаковые — достоверность результата снижена.",
+        quickly_answers: "Тест пройден слишком быстро — проверьте внимательность ответов.",
+        too_many_fast_answers: "Более 10% ответов дано слишком быстро.",
+        incompletely_answered_block: "Один из блоков вопросов заполнен неполно или без выраженных предпочтений.",
+        irregular_psycho_type: "Смешанный тип — требуется углублённый анализ специалистом.",
+      };
       const radarAverageEl = document.getElementById("radar-average");
       const scaleTableBody = document.getElementById("scale-table-body");
       const contentBlocksEl = document.getElementById("content-blocks");
@@ -471,6 +484,26 @@
 
       function hasHighTendency(scores) {
         return SCALE_KEYS.some((key) => Number(scores[key] ?? 0) > 22);
+      }
+
+      function renderValidationWarnings(warnings) {
+        validationWarningsList.replaceChildren();
+        const items = Array.isArray(warnings)
+          ? warnings.filter((item) => typeof item === "string" && item.trim())
+          : [];
+
+        if (!items.length) {
+          validationWarningsEl.hidden = true;
+          return;
+        }
+
+        for (const code of items) {
+          const item = document.createElement("li");
+          item.textContent = VALIDATION_LABELS[code] || code;
+          validationWarningsList.appendChild(item);
+        }
+
+        validationWarningsEl.hidden = false;
       }
 
       function renderSortedScales(sorted) {
@@ -757,10 +790,11 @@
         resultTitle.textContent = `Ваш результат от ${formatDate(result.created_at)}`;
         psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
         renderSortedScales(result.sorted_personal_scales);
+        renderValidationWarnings(result.validation_warnings);
 
         const scores = result.scaled_scores || {};
 
-        buildScaleTable(scores);
+        buildScaleTable(scores, result.sorted_personal_scales);
         updateRadarAverage(scores);
         renderThresholdWarnings(result.warnings, scores);
         buildWorkProfile(result.scaled_systemic || {});
