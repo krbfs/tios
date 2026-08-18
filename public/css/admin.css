@@ -130,6 +130,16 @@
   margin: 0 auto;
 }
 
+.team-recommendations {
+  margin: 10px 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
 .admin-toolbar {
   display: grid;
   gap: 12px;
