@@ -225,6 +225,9 @@ function buildRadarChart(scores, root) {
   const avgEl = root.querySelector("[data-analytics-radar-average]");
   if (!canvas) return;
 
+  const card = canvas.closest(".chart-card--radar");
+  card?.classList.add("chart-card--in-view");
+
   const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
   const values = RADAR_SCALE_ORDER.map((key) => Math.round(Number(scores[key] ?? 0)));
   const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length);
