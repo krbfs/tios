@@ -94,6 +94,14 @@
       </div>
 
       <section class="admin-panel" style="margin-top: 20px">
+        <h2>Расширенная аналитика</h2>
+        <p class="muted">
+          Системные свойства, рабочий профиль, соответствие и лидерский потенциал — только для администратора.
+        </p>
+        <div id="result-analytics" class="result-analytics"></div>
+      </section>
+
+      <section class="admin-panel" style="margin-top: 20px">
         <h2>Видимость блоков</h2>
         <p class="muted">
           Снимите галочку, чтобы скрыть блок для этого результата. Изменения применяются к текущему режиму.
@@ -119,6 +127,10 @@
       import { initSiteAnalytics } from "/js/analytics.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { formatPsychotypeSummary } from "/js/psychotypes.js";
+      import {
+        renderResultAnalytics,
+        RESULT_ANALYTICS_HTML,
+      } from "/js/result-analytics.js";
       import { formatDate } from "/js/session.js";
       import {
         MODES,
@@ -144,7 +156,10 @@
       const visibilityList = document.getElementById("visibility-list");
       const visibilityStatus = document.getElementById("visibility-status");
       const contentPreview = document.getElementById("content-preview");
+      const resultAnalytics = document.getElementById("result-analytics");
       const errorEl = document.getElementById("error");
+
+      resultAnalytics.innerHTML = RESULT_ANALYTICS_HTML;
 
       let resultData = null;
       let visibilityDraft = {};
@@ -284,6 +299,7 @@
 
         renderVisibilityList(result.content_blocks);
         renderPreview(result.content_blocks);
+        renderResultAnalytics(result, resultAnalytics);
       }
 
       async function loadResult() {

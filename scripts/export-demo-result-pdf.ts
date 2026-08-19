@@ -26,10 +26,10 @@ async function main() {
   );
   await page.waitForFunction(() => Chart.getChart("radar-chart") != null);
   await page.evaluate(() => {
-    document.querySelector(".chart-card--systemic")?.scrollIntoView({ block: "center" });
+    document.querySelector(".chart-card--radar")?.scrollIntoView({ block: "center" });
   });
   await page.waitForFunction(
-    () => document.querySelector(".chart-card--systemic.chart-card--in-view") != null,
+    () => document.querySelector(".chart-card--radar.chart-card--in-view") != null,
   );
   await page.waitForTimeout(800);
 

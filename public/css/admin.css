@@ -24,6 +24,12 @@
   flex: 1;
 }
 
+.result-analytics {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .cabinet-nav {
   display: flex;
   gap: 14px;

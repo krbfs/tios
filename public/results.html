@@ -50,41 +50,6 @@
           </div>
         </div>
 
-        <div class="chart-card chart-card--systemic">
-          <h2>5 системных свойств</h2>
-          <p class="muted systemic-scale-note">Шкала 0–30 (сумма LAB+RIG по подшкале, как в ТЗ)</p>
-          <div class="systemic-layout">
-            <div id="systemic-bars" class="systemic-bars" aria-label="5 системных свойств"></div>
-            <aside
-              id="threshold-warnings"
-              class="threshold-warnings"
-              hidden
-              aria-label="Предупреждения"
-            >
-              <ul id="threshold-warnings-list" class="threshold-warnings__list"></ul>
-            </aside>
-          </div>
-        </div>
-
-        <section id="work-profile-section" class="chart-card work-profile-card" hidden>
-          <h2>Рабочий профиль</h2>
-          <p class="muted">Доминантная сторона по каждой из 5 подшкал (LAB / RIG, 0–6 → 0–30)</p>
-          <div id="work-profile-grid" class="work-profile-grid" aria-label="Рабочий профиль"></div>
-        </section>
-
-        <section id="correspondence-section" class="chart-card correspondence-card" hidden>
-          <h2>Анализ соответствия личности и работы</h2>
-          <dl class="correspondence-meta" id="correspondence-meta"></dl>
-          <p id="correspondence-type" class="correspondence-type"></p>
-          <ul id="coaching-recommendations" class="coaching-recommendations" hidden></ul>
-        </section>
-
-        <section id="leader-section" class="chart-card leader-card" hidden>
-          <h2>Лидерский потенциал</h2>
-          <p class="muted">4 типа по формулам ТЗ §3.5 (порог 21 из 30)</p>
-          <ul id="leader-scores" class="leader-scores" aria-label="Типы лидерства"></ul>
-        </section>
-
         <section id="mode-request-section" class="card mode-request-card" hidden>
           <h2>Дополнительные режимы</h2>
           <p class="muted">Отправьте заявку администратору — после одобрения контент обновится.</p>
@@ -184,11 +149,7 @@
         RADAR_SCALE_ORDER,
         SCALE_LABELS,
         SCALE_TABLE_ORDER,
-        SYSTEMIC_LABELS,
-        SYSTEMIC_COLORS,
         formatScaleValue,
-        systemicBarDisplayValue,
-        WORK_PROFILE_ROWS,
       } from "/js/psychotypes.js";
       import { renderBlockBody } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
@@ -229,14 +190,6 @@
       const copyResultBtn = document.getElementById("copy-result-btn");
       const copyStatus = document.getElementById("copy-status");
       const errorEl = document.getElementById("error");
-      const thresholdWarningsEl = document.getElementById("threshold-warnings");
-      const thresholdWarningsList = document.getElementById("threshold-warnings-list");
-      const correspondenceSection = document.getElementById("correspondence-section");
-      const correspondenceMeta = document.getElementById("correspondence-meta");
-      const correspondenceType = document.getElementById("correspondence-type");
-      const coachingRecommendations = document.getElementById("coaching-recommendations");
-      const leaderSection = document.getElementById("leader-section");
-      const leaderScoresList = document.getElementById("leader-scores");
       const modeRequestSection = document.getElementById("mode-request-section");
       const modeRequestStatus = document.getElementById("mode-request-status");
       const resultDisclaimer = document.getElementById("result-disclaimer");
@@ -255,28 +208,9 @@
 
       function initChartReveal(result) {
         const scores = result.scaled_scores || {};
-        const systemic = result.scaled_systemic || {};
         const radarCard = document.querySelector(".chart-card--radar");
-        const systemicCard = document.querySelector(".chart-card--systemic");
-
-        function revealRadar() {
-          radarCard?.classList.add("chart-card--in-view");
-          buildRadarChart(scores);
-        }
-
-        function revealSystemic() {
-          buildSystemicBars(systemic);
-          window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(() => {
-              systemicCard?.classList.add("chart-card--in-view");
-            });
-          });
-        }
-
-        // Radar + systemic render immediately (no invisible layout gaps).
-        revealRadar();
-        buildSystemicBars(systemic);
-        systemicCard?.classList.add("chart-card--in-view");
+        radarCard?.classList.add("chart-card--in-view");
+        buildRadarChart(scores);
       }
 
       function chartAnimation() {
@@ -525,122 +459,11 @@
         sortedScalesSummary.hidden = false;
       }
 
-      function renderThresholdWarnings(warnings, scores) {
-        thresholdWarningsList.replaceChildren();
-        const items = Array.isArray(warnings)
-          ? warnings.filter((item) => typeof item === "string" && item.trim())
-          : [];
-
-        if (items.length === 0) {
-          thresholdWarningsEl.hidden = true;
-        } else {
-          for (const text of items) {
-            const item = document.createElement("li");
-            item.textContent = text;
-            thresholdWarningsList.appendChild(item);
-          }
-          thresholdWarningsEl.hidden = false;
-        }
-
+      function updateDisclaimerHighlight(scores) {
         resultDisclaimer.classList.toggle(
           "disclaimer--highlight",
           hasHighTendency(scores),
         );
-      }
-
-      function buildSystemicBars(systemic) {
-        const root = document.getElementById("systemic-bars");
-        root.replaceChildren();
-
-        const SYSTEMIC_DISPLAY_MAX = 30;
-
-        for (const [index, key] of Object.keys(SYSTEMIC_LABELS).entries()) {
-          const raw = Number(systemic[key] ?? 0);
-          const display = systemicBarDisplayValue(raw);
-          const barTarget = `${Math.max(0, Math.min(100, (display / SYSTEMIC_DISPLAY_MAX) * 100))}%`;
-
-          const colors = SYSTEMIC_COLORS[key];
-          const row = document.createElement("div");
-          row.className = "systemic-row";
-          row.style.setProperty("--systemic-row-delay", `${80 + index * 70}ms`);
-          row.style.setProperty("--systemic-bar-target", barTarget);
-          row.style.setProperty("--systemic-fill-from", colors.from);
-          row.style.setProperty("--systemic-fill-to", colors.to);
-          row.style.setProperty("--systemic-value-color", colors.value);
-
-          const label = document.createElement("span");
-          label.className = "systemic-label";
-          label.textContent = SYSTEMIC_LABELS[key];
-
-          const track = document.createElement("span");
-          track.className = "systemic-track";
-          track.setAttribute("aria-hidden", "true");
-          const fill = document.createElement("span");
-          fill.className = "systemic-fill";
-          track.appendChild(fill);
-
-          const value = document.createElement("span");
-          value.className = "systemic-value";
-          value.textContent = formatScaleValue(display);
-
-          row.append(label, track, value);
-          root.appendChild(row);
-        }
-      }
-
-      function buildWorkProfile(systemic) {
-        const section = document.getElementById("work-profile-section");
-        const root = document.getElementById("work-profile-grid");
-        root.replaceChildren();
-
-        const hasData = WORK_PROFILE_ROWS.some(
-          (rowDef) =>
-            systemic[rowDef.labKey] != null || systemic[rowDef.rigKey] != null,
-        );
-
-        for (const [index, rowDef] of WORK_PROFILE_ROWS.entries()) {
-          const lab = Number(systemic[rowDef.labKey] ?? 0);
-          const rig = Number(systemic[rowDef.rigKey] ?? 0);
-
-          const labDominant = lab >= rig;
-          const dominantValue = labDominant ? lab : rig;
-          const display = Math.round(dominantValue * 5);
-          const barTarget = `${Math.max(0, Math.min(100, (display / 30) * 100))}%`;
-          const sideLabel = labDominant ? rowDef.labLabel : rowDef.rigLabel;
-          const sideCode = labDominant ? "LAB" : "RIG";
-
-          const row = document.createElement("div");
-          row.className = "work-profile-row";
-          row.style.setProperty("--work-profile-row-delay", `${80 + index * 60}ms`);
-          row.style.setProperty("--work-profile-bar-target", barTarget);
-
-          const label = document.createElement("span");
-          label.className = "work-profile-label";
-          label.textContent = sideLabel;
-
-          const meta = document.createElement("span");
-          meta.className = "work-profile-meta";
-          meta.textContent = sideCode;
-
-          const track = document.createElement("span");
-          track.className = "work-profile-track";
-          track.setAttribute("aria-hidden", "true");
-          const fill = document.createElement("span");
-          fill.className = "work-profile-fill";
-          track.appendChild(fill);
-
-          const value = document.createElement("span");
-          value.className = "work-profile-value";
-          value.textContent = formatScaleValue(display);
-
-          row.append(label, meta, track, value);
-          root.appendChild(row);
-        }
-
-        section.hidden = !hasData;
-        if (hasData) {
-          section.classList.add("motion-reveal", "is-visible");
-        }
       }
 
       function renderBlock(block) {
@@ -673,83 +496,6 @@
 
         copyResultBtn.disabled = false;
         resultLinkInput.value = buildResultUrl(encdata);
-      }
-
-      function renderCorrespondence(result) {
-        const systemic = result.scaled_systemic || {};
-        if (systemic.delta_LAB == null && systemic.delta_RIG == null) {
-          correspondenceSection.hidden = true;
-          return;
-        }
-
-        const deltaLab = Number(systemic.delta_LAB ?? 0);
-        const deltaRig = Number(systemic.delta_RIG ?? 0);
-        const labWork = Number(systemic.LAB_work ?? 0);
-        const rigWork = Number(systemic.RIG_work ?? 0);
-        const labPers = Number(result.scaled_scores?.lability ?? 0);
-        const rigPers = Number(result.scaled_scores?.rigidity ?? 0);
-
-        correspondenceMeta.innerHTML = `
-          <dt>LAB (личность / работа)</dt><dd>${labPers} / ${labWork}</dd>
-          <dt>RIG (личность / работа)</dt><dd>${rigPers} / ${rigWork}</dd>
-          <dt>ΔLAB</dt><dd>${deltaLab > 0 ? "+" : ""}${deltaLab}</dd>
-          <dt>ΔRIG</dt><dd>${deltaRig > 0 ? "+" : ""}${deltaRig}</dd>
-        `;
-
-        if (systemic.tension_zone) {
-          correspondenceType.textContent =
-            systemic.correspondence_type ||
-            "Выявлена зона напряжения между личным и рабочим профилем";
-          correspondenceType.className = "correspondence-type correspondence-type--tension";
-        } else {
-          correspondenceType.textContent =
-            systemic.correspondence_type || "Соответствие";
-          correspondenceType.className = "correspondence-type";
-        }
-
-        correspondenceSection.hidden = false;
-        correspondenceSection.classList.add("motion-reveal", "is-visible");
-
-        coachingRecommendations.replaceChildren();
-        const coaching = Array.isArray(result.coaching_recommendations)
-          ? result.coaching_recommendations.filter(
-              (item) => typeof item === "string" && item.trim(),
-            )
-          : [];
-
-        if (coaching.length === 0) {
-          coachingRecommendations.hidden = true;
-        } else {
-          for (const text of coaching) {
-            const item = document.createElement("li");
-            item.textContent = text;
-            coachingRecommendations.appendChild(item);
-          }
-          coachingRecommendations.hidden = false;
-        }
-      }
-
-      function renderLeaderScores(leaderScores) {
-        leaderScoresList.replaceChildren();
-        const items = Array.isArray(leaderScores) ? leaderScores : [];
-
-        if (!items.length) {
-          leaderSection.hidden = true;
-          return;
-        }
-
-        for (const item of items) {
-          const row = document.createElement("li");
-          row.className = item.is_leader
-            ? "leader-scores__item leader-scores__item--active"
-            : "leader-scores__item";
-          const score = Math.round(Number(item.score ?? 0));
-          row.innerHTML = `<span class="leader-scores__label">${item.label || item.code}</span><span class="leader-scores__score">${score}${item.is_leader ? " · лидер" : ""}</span>`;
-          leaderScoresList.appendChild(row);
-        }
-
-        leaderSection.hidden = false;
-        leaderSection.classList.add("motion-reveal", "is-visible");
       }
 
       function renderModeRequestNotice(notice) {
@@ -819,10 +565,7 @@
 
         buildScaleTable(scores, result.sorted_personal_scales);
         updateRadarAverage(scores);
-        renderThresholdWarnings(result.warnings, scores);
-        buildWorkProfile(result.scaled_systemic || {});
-        renderCorrespondence(result);
-        renderLeaderScores(result.leader_scores);
+        updateDisclaimerHighlight(scores);
 
         contentBlocksEl.replaceChildren();
         (result.content_blocks || []).forEach((block, index) => {
