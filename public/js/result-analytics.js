@@ -4,6 +4,10 @@ import {
   formatScaleValue,
   systemicBarDisplayValue,
   WORK_PROFILE_ROWS,
+  RADAR_SCALE_ORDER,
+  SCALE_LABELS,
+  SCALE_TABLE_ORDER,
+  interpretScaleValue,
 } from "/js/psychotypes.js";
 
 const SYSTEMIC_DISPLAY_MAX = 30;
@@ -214,12 +218,90 @@ function renderLeaderScores(leaderScores, root) {
   section.classList.add("motion-reveal", "is-visible");
 }
 
+let _radarChart = null;
+
+function buildRadarChart(scores, root) {
+  const canvas = root.querySelector("[data-analytics-radar]");
+  const avgEl = root.querySelector("[data-analytics-radar-average]");
+  if (!canvas) return;
+
+  const labels = RADAR_SCALE_ORDER.map((key) => SCALE_LABELS[key]);
+  const values = RADAR_SCALE_ORDER.map((key) => Math.round(Number(scores[key] ?? 0)));
+  const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length);
+
+  if (avgEl) {
+    avgEl.textContent = `Среднее по 8 шкалам: ${avg} (${interpretScaleValue(avg)})`;
+  }
+
+  if (_radarChart) {
+    _radarChart.destroy();
+    _radarChart = null;
+  }
+
+  _radarChart = new Chart(canvas, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Профиль",
+          data: values,
+          borderColor: "#1a54d8",
+          backgroundColor: "rgba(26, 84, 216, 0.22)",
+          borderWidth: 2,
+          pointRadius: 3,
+          order: 1,
+        },
+        {
+          label: `Среднее (${avg})`,
+          data: labels.map(() => avg),
+          borderColor: "#5b8df7",
+          borderDash: [8, 5],
+          borderWidth: 2,
+          backgroundColor: "transparent",
+          pointRadius: 0,
+          fill: false,
+          order: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: { min: 0, max: 30, ticks: { display: false, stepSize: 6 }, pointLabels: { font: { size: 12 } } },
+      },
+      plugins: { legend: { position: "bottom" } },
+    },
+  });
+}
+
+function buildScaleTable(scores, root) {
+  const tbody = root.querySelector("[data-analytics-scale-table]");
+  if (!tbody) return;
+  tbody.replaceChildren();
+
+  for (const key of SCALE_TABLE_ORDER) {
+    const row = document.createElement("tr");
+    const th = document.createElement("th");
+    th.scope = "row";
+    th.textContent = (SCALE_LABELS[key] || key).toLowerCase();
+    const td = document.createElement("td");
+    td.textContent = formatScaleValue(scores[key]);
+    row.append(th, td);
+    tbody.appendChild(row);
+  }
+}
+
 export function renderResultAnalytics(result, root) {
   if (!root || !result) {
     return;
   }
 
+  const scores = result.scaled_scores || {};
   const systemic = result.scaled_systemic || {};
+
+  buildRadarChart(scores, root);
+  buildScaleTable(scores, root);
   buildSystemicBars(systemic, root);
   renderThresholdWarnings(result.warnings, root);
   buildWorkProfile(systemic, root);
@@ -230,6 +312,18 @@ export function renderResultAnalytics(result, root) {
 }
 
 export const RESULT_ANALYTICS_HTML = `
+  <div class="chart-card chart-card--radar">
+    <h2>8 шкал личности</h2>
+    <p data-analytics-radar-average class="muted" style="margin:0 0 12px"></p>
+    <div class="radar-chart-layout">
+      <div class="radar-chart-panel">
+        <canvas data-analytics-radar height="360"></canvas>
+      </div>
+      <table class="scale-table" aria-label="Значения 8 шкал личности">
+        <tbody data-analytics-scale-table></tbody>
+      </table>
+    </div>
+  </div>
   <div class="chart-card chart-card--systemic" data-analytics-systemic>
     <h2>5 системных свойств</h2>
     <p class="muted systemic-scale-note">Шкала 0–30 (сумма LAB+RIG по подшкале, как в ТЗ)</p>
