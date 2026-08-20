@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
@@ -6,20 +5,12 @@ import { getDemoEncdata } from "@/lib/encdata";
 import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
+  buildPageMetadata,
   faqItems,
   pages,
 } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: pages.home.title },
-  description: pages.home.description,
-  alternates: { canonical: pages.home.path },
-  openGraph: {
-    title: pages.home.title,
-    description: pages.home.description,
-    url: pages.home.path,
-  },
-};
+export const metadata = buildPageMetadata(pages.home);
 
 const reasons = [
   {

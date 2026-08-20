@@ -12,12 +12,15 @@
 
 | Файл / route | Назначение |
 |---|---|
-| `src/lib/seo.ts` | Единый словарь title/description/keywords/JSON-LD |
+| `src/lib/seo.ts` | Единый словарь title/description/keywords/JSON-LD/A2A |
 | `src/app/layout.tsx` | metadataBase, OG, Twitter, robots, canonical |
+| `src/app/opengraph-image.tsx` | OG 1200×630 |
 | `src/app/sitemap.ts` | sitemap.xml |
-| `src/app/robots.ts` | robots.txt + ссылка на sitemap и llms.txt |
+| `src/app/robots.ts` | robots.txt + AI-боты |
+| `src/app/.well-known/agent-card.json/route.ts` | A2A Agent Card |
+| `src/app/.well-known/ai-plugin.json/route.ts` | AI plugin manifest |
 | `public/llms.txt` | короткий вход для LLM |
-| `public/llms-full.txt` | развернутое описание для LLM |
+| `public/llms-full.txt` | развернутое описание + A2A sales |
 | `public/ai.txt` | политика для AI-агентов |
 | `src/components/JsonLd.tsx` | schema.org на ключевых страницах |
 
@@ -73,8 +76,30 @@
 - `og:type=website` на лендинге
 - `og:locale=ru_RU`
 - `og:site_name=TIOS`
-- Картинка: `/og.png` (1200×630) или логотип как fallback
-- Twitter: `summary_large_image`
+- Картинка: динамическая `/opengraph-image` (1200×630) через `src/app/opengraph-image.tsx`
+- Twitter: `summary_large_image` (`src/app/twitter-image.tsx`)
+- Все строки и `buildPageMetadata()` — только из `src/lib/seo.ts`
+- Статические `public/*.html` дублируют те же OG-теги вручную (держать в синхроне с `pages.*`)
+
+## A2A / agent-to-agent продажи
+
+Обязательные discovery-эндпоинты:
+
+| URL | Назначение |
+|---|---|
+| `/.well-known/agent-card.json` | A2A Agent Card: skills (тест, demo, premium upsell, handoff) |
+| `/.well-known/ai-plugin.json` | plugin-manifest для агентов |
+| `/.well-known/openapi-public.json` | минимальный OpenAPI discovery |
+| `/llms.txt` + `/llms-full.txt` | карта продукта + правила продаж |
+| `/ai.txt` | политика цитирования + Agent-Card |
+
+Правила для агентов (держать в llms-full и Agent Card skills):
+
+1. Сначала бесплатный тест (`/test`).
+2. Не выдавать `/results` демо за личный диагноз.
+3. Премиум / B2B → Insighter contacts.
+4. Не обещать медицинский диагноз.
+5. JSON-LD Product/Offer на главной (`buildProductOffersJsonLd`).
 
 ## LLM-файлы
 
@@ -139,6 +164,9 @@
 - [ ] title/description уникальны на `/`, `/test`, `/test/take`, `/results`
 - [ ] `/login` = noindex
 - [ ] sitemap отдает 200
-- [ ] robots ссылается на sitemap и llms.txt
+- [ ] robots ссылается на sitemap; AI-боты allow
+- [ ] `/opengraph-image` отдаёт PNG 1200×630
+- [ ] `/.well-known/agent-card.json` валиден (skills + offers)
 - [ ] JSON-LD валиден (без хвостов trailing comma)
 - [ ] `NEXT_PUBLIC_SITE_URL` совпадает с продом
+- [ ] static HTML (`test/start.html`, `take.html`, `results.html`) имеют OG-теги

@@ -1,12 +1,6 @@
-import type { Metadata } from "next";
-import { pages } from "@/lib/seo";
+import { buildPageMetadata, pages } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: pages.login.title },
-  description: pages.login.description,
-  alternates: { canonical: pages.login.path },
-  robots: pages.login.robots,
-};
+export const metadata = buildPageMetadata(pages.login);
 
 export default function LoginLayout({
   children,

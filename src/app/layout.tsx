@@ -6,9 +6,12 @@ import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import {
   absoluteUrl,
+  buildOrganizationJsonLd,
+  buildProductOffersJsonLd,
   buildWebAppJsonLd,
   buildWebsiteJsonLd,
   defaultKeywords,
+  ogImageMeta,
   pages,
   siteConfig,
 } from "@/lib/seo";
@@ -18,6 +21,8 @@ const openSans = Open_Sans({
   variable: "--font-open-sans",
   subsets: ["latin", "cyrillic"],
 });
+
+const ogImage = ogImageMeta();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -34,6 +39,12 @@ export const metadata: Metadata = {
   category: "psychology",
   alternates: {
     canonical: pages.home.path,
+    types: {
+      "text/plain": [
+        { url: absoluteUrl("/llms.txt"), title: "llms.txt" },
+        { url: absoluteUrl("/llms-full.txt"), title: "llms-full.txt" },
+      ],
+    },
   },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
@@ -45,20 +56,13 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: pages.home.title,
     description: pages.home.description,
-    images: [
-      {
-        url: absoluteUrl("/tc-logo-full.svg"),
-        width: 108,
-        height: 34,
-        alt: "TIOS",
-      },
-    ],
+    images: [ogImage],
   },
   twitter: {
     card: "summary_large_image",
     title: pages.home.title,
     description: pages.home.description,
-    images: [absoluteUrl("/tc-logo-full.svg")],
+    images: [ogImage.url],
   },
   robots: {
     index: true,
@@ -74,6 +78,9 @@ export const metadata: Metadata = {
   other: {
     "ai-description": pages.home.description,
     "llms-txt": absoluteUrl("/llms.txt"),
+    "llms-full-txt": absoluteUrl("/llms-full.txt"),
+    "ai-txt": absoluteUrl("/ai.txt"),
+    "a2a-agent-card": absoluteUrl("/.well-known/agent-card.json"),
   },
 };
 
@@ -86,7 +93,14 @@ export default function RootLayout({
     <html lang="ru">
       <body className={`${openSans.variable} antialiased`}>
         <GoogleAnalytics />
-        <JsonLd data={[buildWebsiteJsonLd(), buildWebAppJsonLd()]} />
+        <JsonLd
+          data={[
+            buildWebsiteJsonLd(),
+            buildOrganizationJsonLd(),
+            buildWebAppJsonLd(),
+            buildProductOffersJsonLd(),
+          ]}
+        />
         <div className="app-shell">
           <Header />
           <main className="app-main">{children}</main>

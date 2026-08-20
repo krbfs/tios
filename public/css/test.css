@@ -505,6 +505,10 @@ input[type="range"] {
   margin-top: 24px;
 }
 
+.actions--center {
+  justify-content: center;
+}
+
 .result-link-section {
   margin-top: 32px;
   padding-top: 24px;
@@ -1091,9 +1095,11 @@ input[type="range"] {
 
 .result-promo-card {
   border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
   border-radius: var(--radius);
   background: #fff;
   padding: 20px;
+  transition: border-color 0.35s ease, background-color 0.35s ease;
 }
 
 .result-promo-banner-head {
@@ -1443,29 +1449,80 @@ input[type="range"] {
   animation: tc-pulse-once 0.9s var(--motion-ease) 0.4s both;
 }
 
+@keyframes promo-card-colors {
+  0%,
+  100% {
+    border-left-color: var(--primary);
+    background: #fff;
+  }
+  33% {
+    border-left-color: var(--primary-light);
+    background: #f3f7ff;
+  }
+  66% {
+    border-left-color: var(--primary-dark);
+    background: #eef2fb;
+  }
+}
+
+@keyframes promo-btn-colors {
+  0%,
+  100% {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  33% {
+    background: var(--primary-light);
+    border-color: var(--primary-light);
+  }
+  66% {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+  }
+}
+
 .result-promo.motion-reveal.is-visible .result-promo-banner {
   animation: tc-fade-up 0.5s var(--motion-ease) both;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-card {
-  animation: tc-fade-up 0.45s var(--motion-ease) both;
+  animation:
+    tc-fade-up 0.45s var(--motion-ease) both,
+    promo-card-colors 7s ease-in-out infinite;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(1) {
-  animation-delay: 120ms;
+  animation-delay: 120ms, 0s;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(2) {
-  animation-delay: 220ms;
+  animation-delay: 220ms, 2.3s;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(3) {
-  animation-delay: 320ms;
+  animation-delay: 320ms, 4.6s;
+}
+
+.result-promo.motion-reveal.is-visible .result-promo-card .btn-promo {
+  animation: promo-btn-colors 7s ease-in-out infinite;
+}
+
+.result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(1) .btn-promo {
+  animation-delay: 0s;
+}
+
+.result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(2) .btn-promo {
+  animation-delay: 2.3s;
+}
+
+.result-promo.motion-reveal.is-visible .result-promo-grid .result-promo-card:nth-child(3) .btn-promo {
+  animation-delay: 4.6s;
 }
 
 .result-promo-card .btn-promo:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(26, 84, 216, 0.22);
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

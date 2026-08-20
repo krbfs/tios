@@ -1,20 +1,10 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { authorInfo } from "@/lib/author";
-import { buildBreadcrumbJsonLd, pages, siteConfig } from "@/lib/seo";
+import { buildBreadcrumbJsonLd, buildPageMetadata, pages, siteConfig } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: pages.author.title },
-  description: pages.author.description,
-  alternates: { canonical: pages.author.path },
-  openGraph: {
-    title: pages.author.title,
-    description: pages.author.description,
-    url: pages.author.path,
-  },
-};
+export const metadata = buildPageMetadata(pages.author);
 
 export default function AuthorPage() {
   return (

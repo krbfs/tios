@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
@@ -11,21 +10,13 @@ import {
 } from "@/lib/psychotypes";
 import {
   buildBreadcrumbJsonLd,
+  buildPageMetadata,
   pages,
   siteConfig,
 } from "@/lib/seo";
 import { tiosAcronymLines, tiosAcronymNote, tiosAcronymTitle } from "@/lib/tios-acronym";
 
-export const metadata: Metadata = {
-  title: { absolute: pages.about.title },
-  description: pages.about.description,
-  alternates: { canonical: pages.about.path },
-  openGraph: {
-    title: pages.about.title,
-    description: pages.about.description,
-    url: pages.about.path,
-  },
-};
+export const metadata = buildPageMetadata(pages.about);
 
 const steps = [
   {
