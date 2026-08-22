@@ -368,8 +368,8 @@
         });
         resizeObserver.observe(sliderTrack);
 
-        sliderWrap.append(sliderControl, labels, caption);
-        mobile.append(heading, statements, sliderWrap);
+        sliderWrap.append(sliderControl, labels);
+        mobile.append(heading, statements, caption, sliderWrap);
         return mobile;
       }
 
