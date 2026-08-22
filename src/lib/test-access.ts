@@ -12,16 +12,30 @@ const TEST_TOKEN_HEADER = "x-test-token";
 /** Minimum time between challenge issue and /api/test/start redeem. */
 export const START_MIN_DWELL_MS = 2_000;
 
-const QUESTIONS_LIMIT = 30;
+/** Questions dump: page fetches per IP per hour (~3 full tests). */
+const QUESTIONS_LIMIT = 45;
 const SUBMIT_LIMIT = 20;
 const CHALLENGE_LIMIT = 60;
 const WINDOW_MS = 60 * 60 * 1000;
 const USED_CHALLENGE_TTL_MS = CHALLENGE_TTL_SEC * 1000;
 
+export const QUESTION_PAGE_SIZE = 5;
+export const QUESTION_TOTAL = 75;
+export const QUESTION_TOTAL_PAGES = QUESTION_TOTAL / QUESTION_PAGE_SIZE;
+
+/** Hard floor for sum(time_per_question) — bots finish in seconds. */
+export const MIN_TEST_SECONDS = 120;
+/** Same bucket (0.1s) for this many answers → bot-like flat timing. */
+const UNIFORM_TIMING_COUNT = 60;
+/** Sub-0.5s answers share that triggers bot signal. */
+const FAST_SHARE_LIMIT = 0.5;
+
 type RateBucket = { count: number; resetAt: number };
 
 const rateBuckets = new Map<string, RateBucket>();
 const usedChallenges = new Map<string, number>();
+/** token → highest page index successfully unlocked (inclusive). -1 = none yet. */
+const questionPageUnlocked = new Map<string, number>();
 
 function jwtSecret(): Uint8Array {
   const value = process.env.JWT_SECRET;
@@ -193,6 +207,69 @@ export function isHoneypotFilled(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+/**
+ * Reject scripted submit payloads: too short overall, or unnatural flat/fast timings.
+ * `time_per_question` is in seconds (same as calculations / take.html).
+ */
+export function assertHumanLikeTimings(
+  timePerQuestion: readonly number[],
+): Response | null {
+  if (timePerQuestion.length !== 75) {
+    return error("time_per_question must be an array of 75 numbers", 400);
+  }
+
+  for (const value of timePerQuestion) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+      return error("time_per_question must contain non-negative numbers", 400);
+    }
+  }
+
+  const totalSeconds = timePerQuestion.reduce((sum, value) => sum + value, 0);
+  if (totalSeconds < MIN_TEST_SECONDS) {
+    return error(
+      "Test completed too quickly. Please take the test more carefully.",
+      429,
+    );
+  }
+
+  const fastShare =
+    timePerQuestion.filter((seconds) => seconds < 0.5).length /
+    timePerQuestion.length;
+  if (fastShare > FAST_SHARE_LIMIT) {
+    return error(
+      "Suspicious answer timing detected. Please take the test more carefully.",
+      429,
+    );
+  }
+
+  const buckets = new Map<number, number>();
+  for (const seconds of timePerQuestion) {
+    const bucket = Math.round(seconds * 10) / 10;
+    buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
+  }
+  const maxSame = Math.max(...buckets.values());
+  if (maxSame >= UNIFORM_TIMING_COUNT) {
+    return error(
+      "Suspicious answer timing detected. Please take the test more carefully.",
+      429,
+    );
+  }
+
+  const mean = totalSeconds / timePerQuestion.length;
+  const variance =
+    timePerQuestion.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+    timePerQuestion.length;
+  const std = Math.sqrt(variance);
+  if (mean > 0 && mean < 8 && std / mean < 0.08) {
+    return error(
+      "Suspicious answer timing detected. Please take the test more carefully.",
+      429,
+    );
+  }
+
+  return null;
+}
+
 export async function issueTestToken(sessionUuid?: string): Promise<string> {
   const builder = new SignJWT({ typ: TEST_TOKEN_TYP })
     .setProtectedHeader({ alg: JWT_ALG })
@@ -254,8 +331,30 @@ export function requireChallengeRateLimit(request: Request): Response | null {
   return null;
 }
 
+/**
+ * Pages must be fetched in order (0, then 1, …). Re-fetching earlier pages is OK.
+ */
+export function assertQuestionPageAccess(
+  token: string,
+  page: number,
+): Response | null {
+  const unlocked = questionPageUnlocked.get(token) ?? -1;
+  if (page > unlocked + 1) {
+    return error("Complete previous question pages first", 403);
+  }
+  return null;
+}
+
+export function advanceQuestionPageAccess(token: string, page: number) {
+  const unlocked = questionPageUnlocked.get(token) ?? -1;
+  if (page === unlocked + 1) {
+    questionPageUnlocked.set(token, page);
+  }
+}
+
 /** Test helper: clear in-memory rate buckets and used challenges. */
 export function resetTestAccessStateForTests() {
   rateBuckets.clear();
   usedChallenges.clear();
+  questionPageUnlocked.clear();
 }

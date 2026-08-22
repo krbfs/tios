@@ -32,8 +32,14 @@ vi.mock("@/lib/db", () => ({
 
 import { POST } from "./route";
 
+/** Varied human-like timings (seconds), sum ≫ 120s. */
+function humanTimes(): number[] {
+  return Array.from({ length: 75 }, (_, i) => 2.5 + (i % 11) * 0.4);
+}
+
 describe("POST /api/test/submit", () => {
   const answers = fillAnswers(0);
+  const times = humanTimes();
   let testToken: string;
 
   beforeEach(async () => {
@@ -49,7 +55,7 @@ describe("POST /api/test/submit", () => {
     const response = await POST(
       apiRequest("/api/test/submit", {
         method: "POST",
-        json: { answers },
+        json: { answers, time_per_question: times },
       }),
     );
     expect(response.status).toBe(401);
@@ -61,7 +67,7 @@ describe("POST /api/test/submit", () => {
         testToken,
         apiRequest("/api/test/submit", {
           method: "POST",
-          json: { answers: [0, 1, 2] },
+          json: { answers: [0, 1, 2], time_per_question: times },
         }),
       ),
     );
@@ -70,6 +76,51 @@ describe("POST /api/test/submit", () => {
     expect(await readJson(response)).toEqual({
       error: "answers must be an array of 75 integers",
     });
+  });
+
+  it("returns 400 when time_per_question is missing", async () => {
+    const response = await POST(
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: { answers },
+        }),
+      ),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 429 when total duration is too short", async () => {
+    const response = await POST(
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: {
+            answers,
+            time_per_question: Array.from({ length: 75 }, () => 0.5),
+          },
+        }),
+      ),
+    );
+    expect(response.status).toBe(429);
+  });
+
+  it("returns 429 when timings are uniformly flat", async () => {
+    const response = await POST(
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: {
+            answers,
+            time_per_question: Array.from({ length: 75 }, () => 5),
+          },
+        }),
+      ),
+    );
+    expect(response.status).toBe(429);
   });
 
   it("creates a new session and result with minimal payload", async () => {
@@ -102,6 +153,7 @@ describe("POST /api/test/submit", () => {
           json: {
             session_uuid: "22222222-2222-2222-2222-222222222222",
             answers,
+            time_per_question: times,
           },
         }),
       ),
@@ -155,6 +207,7 @@ describe("POST /api/test/submit", () => {
           json: {
             session_uuid: "22222222-2222-2222-2222-222222222222",
             answers,
+            time_per_question: times,
           },
         }),
       ),
@@ -206,6 +259,7 @@ describe("POST /api/test/submit", () => {
         json: {
           session_uuid: "33333333-3333-3333-3333-333333333333",
           answers,
+          time_per_question: times,
         },
       }),
     );

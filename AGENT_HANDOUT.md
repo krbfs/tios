@@ -189,7 +189,7 @@ npm run chrome:assemble
 ### 5.2 Прохождение (`/test/take.html`)
 
 1. При необходимости обновляет `test_token` через challenge → `/api/test/start` (refresh страницы)
-2. `GET /api/test/questions` с заголовком `X-Test-Token` — только `id`, `left_text`, `right_text` (без ключей шкал)
+2. `GET /api/test/questions?page=N` с `X-Test-Token` — по 5 вопросов (только тексты), страницы строго по порядку
 3. Ответы −2…+2, батчами по UI
 4. Тайминг каждого ответа (`time_per_question`)
 5. `POST /api/test/submit` (тоже с `X-Test-Token`) → расчёт на сервере + запись в БД; ответ только `encdata` / `result_id` / `session_uuid`
@@ -418,7 +418,7 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 | POST | `/api/consent` | optional | Согласие GDPR |
 | POST | `/api/test/start` | — | Выдаёт `test_token` (challenge + honeypot + rate-limit) |
 | GET | `/api/test/challenge` | — | Выдаёт start-challenge JWT (dwell / one-time) |
-| GET | `/api/test/questions` | `X-Test-Token` | 75 вопросов (только тексты) |
+| GET | `/api/test/questions?page=` | `X-Test-Token` | Страница из 5 вопросов (только тексты; по порядку) |
 | POST | `/api/test/submit` | `X-Test-Token` | Submit + расчёт; ответ: encdata + ids |
 | GET | `/api/results/by-encdata` | — | Результат из encdata (без raw answers) |
 | GET | `/api/results/{id}` | session/user/admin | Result by ID |
@@ -450,11 +450,13 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 ### Защита методики (публичный контур)
 
 - Расчёт только в `src/lib/calculations.ts` (не в `public/js`).
-- `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`.
+- `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`; `?page=0..14` по 5 шт., без прыжков вперёд.
 - `/api/test/submit` — ответ без scores; нужен `X-Test-Token`.
 - `/api/results/by-encdata` — **публичный**, без логина; **без** raw `answers`. Ссылки `?encdata=` открываются анонимно.
 - Rate-limit in-memory на challenge/start/questions/submit по IP.
 - Антибот на старте: `GET /api/test/challenge` → JWT challenge; `POST /api/test/start` требует challenge (min dwell ~2s, one-time), пустой honeypot `website`, в production — Origin/Referer с сайта.
+- Submit: обязателен `time_per_question`; отказ 429 при сумме менее 120 с или подозрительно ровных/мгновенных таймингах.
+- `/api/test/questions`: ≤45 запросов страниц / IP / час (~3 полных прохождения).
 
 ---
 

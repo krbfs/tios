@@ -3,7 +3,7 @@ import { encodeAnswers } from "@/lib/encdata";
 import { getAuthUser } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { db } from "@/lib/db";
-import { requireTestAccess } from "@/lib/test-access";
+import { assertHumanLikeTimings, requireTestAccess } from "@/lib/test-access";
 
 type SubmitBody = {
   session_uuid?: string;
@@ -27,12 +27,14 @@ export async function POST(request: Request) {
     return error("answers must be an array of 75 integers", 400);
   }
 
-  const timePerQuestion =
-    body.time_per_question ??
-    Array.from({ length: 75 }, () => 5);
-
-  if (!Array.isArray(timePerQuestion) || timePerQuestion.length !== 75) {
+  if (!Array.isArray(body.time_per_question)) {
     return error("time_per_question must be an array of 75 numbers", 400);
+  }
+
+  const timePerQuestion = body.time_per_question;
+  const timingDenied = assertHumanLikeTimings(timePerQuestion);
+  if (timingDenied) {
+    return timingDenied;
   }
 
   let computed;

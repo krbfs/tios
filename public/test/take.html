@@ -167,13 +167,28 @@
       const fastModal = document.getElementById("fast-modal");
       const submitOverlay = document.getElementById("submit-overlay");
 
-      let questions = [];
+      let questions = Array(TOTAL).fill(null);
       let pageIndex = 0;
       let answers = Array(TOTAL).fill(null);
       let times = Array(TOTAL).fill(0);
       let questionStartedAt = Array(TOTAL).fill(0);
       let pageShownAt = Date.now();
       let isAnimating = false;
+
+      async function ensurePageLoaded(page) {
+        const start = page * QUESTIONS_PER_PAGE;
+        if (questions[start]) {
+          return;
+        }
+        const data = await apiJson(`/api/test/questions?page=${page}`);
+        const batch = data?.questions;
+        if (!Array.isArray(batch) || batch.length === 0) {
+          throw new Error("Не удалось загрузить вопросы");
+        }
+        for (let offset = 0; offset < batch.length; offset += 1) {
+          questions[start + offset] = batch[offset];
+        }
+      }
 
       function pageQuestionIndices() {
         const start = pageIndex * QUESTIONS_PER_PAGE;
@@ -468,6 +483,9 @@
 
       function createQuestionRow(questionIndex) {
         const question = questions[questionIndex];
+        if (!question) {
+          throw new Error(`Вопрос ${questionIndex + 1} ещё не загружен`);
+        }
         const row = document.createElement("article");
         row.className = "question-row";
         row.dataset.questionIndex = String(questionIndex);
@@ -476,17 +494,6 @@
           createDesktopRow(questionIndex, question),
         );
         return row;
-      }
-
-      function updateProgress() {
-        const indices = pageQuestionIndices();
-        const first = indices[0] + 1;
-        const last = indices[indices.length - 1] + 1;
-        progressLabel.textContent = `Вопросы ${first}–${last} из ${TOTAL}`;
-        progressFill.style.width = `${(last / TOTAL) * 100}%`;
-        nextBtn.textContent = pageIndex === TOTAL_PAGES - 1 ? "Отправить" : "Далее";
-        nextBtn.dataset.gaEvent =
-          pageIndex === TOTAL_PAGES - 1 ? "cta_test_submit" : "cta_test_next";
       }
 
       function renderPage() {
@@ -501,6 +508,20 @@
             questionStartedAt[questionIndex] = pageShownAt;
           }
         }
+        if (pageIndex < TOTAL_PAGES - 1) {
+          ensurePageLoaded(pageIndex + 1).catch(() => {});
+        }
+      }
+
+      function updateProgress() {
+        const indices = pageQuestionIndices();
+        const first = indices[0] + 1;
+        const last = indices[indices.length - 1] + 1;
+        progressLabel.textContent = `Вопросы ${first}–${last} из ${TOTAL}`;
+        progressFill.style.width = `${(last / TOTAL) * 100}%`;
+        nextBtn.textContent = pageIndex === TOTAL_PAGES - 1 ? "Отправить" : "Далее";
+        nextBtn.dataset.gaEvent =
+          pageIndex === TOTAL_PAGES - 1 ? "cta_test_submit" : "cta_test_next";
       }
 
       function isDesktopLayout() {
@@ -617,7 +638,7 @@
         submitAnswers();
       }
 
-      nextBtn.addEventListener("click", () => {
+      nextBtn.addEventListener("click", async () => {
         if (isAnimating) return;
         errorEl.hidden = true;
 
@@ -629,8 +650,17 @@
         recordPageTimes();
 
         if (pageIndex < TOTAL_PAGES - 1) {
-          pageIndex += 1;
-          runPageTransition(() => {});
+          const nextPage = pageIndex + 1;
+          nextBtn.disabled = true;
+          try {
+            await ensurePageLoaded(nextPage);
+            pageIndex = nextPage;
+            runPageTransition(() => {});
+          } catch (err) {
+            showError(err instanceof Error ? err.message : "Не удалось загрузить вопросы");
+          } finally {
+            nextBtn.disabled = false;
+          }
           return;
         }
 
@@ -656,10 +686,7 @@
       async function init() {
         try {
           await ensureTestToken();
-          questions = await apiJson("/api/test/questions");
-          if (!Array.isArray(questions) || questions.length !== TOTAL) {
-            throw new Error(`Ожидалось ${TOTAL} вопросов`);
-          }
+          await ensurePageLoaded(0);
           questionArea.hidden = false;
           renderPage();
         } catch (err) {
