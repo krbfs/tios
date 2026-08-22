@@ -1,12 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="34" viewBox="0 0 108 34" role="img" aria-label="TIOS">
-  <g transform="translate(17 17)" fill="none" stroke-linecap="round">
-    <polygon points="0,-8.5 6.01,-6.01 8.5,0 6.01,6.01 0,8.5 -6.01,6.01 -8.5,0 -6.01,-6.01" stroke="#1a54d8" stroke-width="0.65" opacity="0.55"/>
-    <polygon points="0,-5.667 4.007,-4.007 5.667,0 4.007,4.007 0,5.667 -4.007,4.007 -5.667,0 -4.007,-4.007" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
-    <polygon points="0,-2.833 2.003,-2.003 2.833,0 2.003,2.003 0,2.833 -2.003,2.003 -2.833,0 -2.003,-2.003" stroke="#5b8df7" stroke-width="0.5" opacity="0.5"/>
-    <line y1="-8.5" y2="8.5" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
-    <line x1="-8.5" x2="8.5" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
-    <line x1="-6.01" y1="-6.01" x2="6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
-    <line x1="6.01" y1="-6.01" x2="-6.01" y2="6.01" stroke="#1a54d8" stroke-width="0.55" opacity="0.45"/>
-  </g>
-  <text x="40" y="24" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#17255a">TIOS</text>
+  <rect x="1" y="3" width="28" height="28" rx="7" fill="#17255a"/>
+  <circle cx="15" cy="17" r="8.5" fill="none" stroke="#5b8df7" stroke-width="1.1" opacity="0.9"/>
+  <polygon
+    points="15,9.5 19.5,12.8 18,17.5 12,17.5 10.5,12.8"
+    fill="#1a54d8"
+    stroke="#ffffff"
+    stroke-width="0.6"
+    stroke-linejoin="round"
+  />
+  <circle cx="15" cy="17" r="1.8" fill="#eab308"/>
+  <text x="36" y="23" font-family="Open Sans, ui-sans-serif, system-ui, sans-serif" font-size="21" font-weight="700" fill="#17255a">TIOS</text>
+  <rect x="36" y="27" width="42" height="2.5" rx="1.25" fill="#eab308" opacity="0.85"/>
 </svg>
