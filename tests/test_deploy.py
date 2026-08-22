@@ -57,6 +57,22 @@ class DeployHelperTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.d.validate_runtime_env({"JWT_SECRET": "change-me-in-production"})
 
+    def test_validate_ai_agent_files_ok(self):
+        self.d.validate_ai_agent_files(self.d.ROOT)
+
+    def test_validate_ai_agent_files_missing_marker(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            public = root / "public"
+            public.mkdir()
+            (public / "llms.txt").write_text("# TIOS\n", encoding="utf-8")
+            (public / "llms-full.txt").write_text("x", encoding="utf-8")
+            (public / "ai.txt").write_text("agent-card.json", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                self.d.validate_ai_agent_files(root)
+
 
 if __name__ == "__main__":
     unittest.main()

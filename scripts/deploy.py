@@ -51,6 +51,19 @@ RUNTIME_ENV_KEYS = (
     "TELEGRAM_CHAT_ID",
 )
 
+LLMS_TXT_REQUIRED_MARKERS = (
+    "## A2A",
+    "agent-card.json",
+    "### Чего не говорить",
+    "#pricing",
+)
+
+AI_AGENT_STATIC_FILES = (
+    "llms.txt",
+    "llms-full.txt",
+    "ai.txt",
+)
+
 
 def load_env(path: Path) -> dict[str, str]:
     data = dict(DEFAULTS)
@@ -290,8 +303,63 @@ def mobile_layout_base_url(cfg: dict[str, str]) -> str:
     return service_url(cfg).rstrip("/")
 
 
+def validate_ai_agent_files(root: Path | None = None) -> None:
+    """Validate llms/ai static files and seo.ts agent card (local, pre-deploy)."""
+    base = root or ROOT
+    public = base / "public"
+    errors: list[str] = []
+
+    for name in AI_AGENT_STATIC_FILES:
+        path = public / name
+        if not path.is_file():
+            errors.append(f"missing public/{name}")
+
+    llms_path = public / "llms.txt"
+    if llms_path.is_file():
+        llms_text = llms_path.read_text(encoding="utf-8")
+        for marker in LLMS_TXT_REQUIRED_MARKERS:
+            if marker not in llms_text:
+                errors.append(f"llms.txt missing marker: {marker!r}")
+
+    llms_full_path = public / "llms-full.txt"
+    if llms_full_path.is_file():
+        llms_full = llms_full_path.read_text(encoding="utf-8")
+        if "important_notes_for_ai_agents" not in llms_full:
+            errors.append("llms-full.txt missing important_notes_for_ai_agents")
+        if "#pricing" not in llms_full:
+            errors.append("llms-full.txt missing #pricing URLs")
+
+    ai_path = public / "ai.txt"
+    if ai_path.is_file():
+        ai_text = ai_path.read_text(encoding="utf-8")
+        if "agent-card.json" not in ai_text:
+            errors.append("ai.txt missing agent-card.json reference")
+
+    validate_script = base / "scripts" / "validate_seo_a2a.ts"
+    if not validate_script.is_file():
+        errors.append("missing scripts/validate_seo_a2a.ts")
+    else:
+        proc = subprocess.run(
+            ["npx", "tsx", str(validate_script)],
+            cwd=base,
+            text=True,
+            capture_output=True,
+        )
+        if proc.returncode != 0:
+            detail = (proc.stderr or proc.stdout or "validate_seo_a2a.ts failed").strip()
+            errors.append(detail)
+
+    if errors:
+        raise SystemExit(
+            "validate_ai_agent_files failed:\n- " + "\n- ".join(errors),
+        )
+
+    print("==> validate_ai_agent_files OK", flush=True)
+
+
 def run_unit_tests() -> None:
     """Mandatory pre-deploy gate. Do not bypass."""
+    validate_ai_agent_files()
     print("==> vitest: calculations, encdata, API routes", flush=True)
     run(["npm", "test"])
     print("==> deploy.py unit tests", flush=True)

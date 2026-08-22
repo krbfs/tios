@@ -19,7 +19,7 @@
 4. Для каждой пары выбирает сторону и силу согласия:
    - −2: первое утверждение однозначно ближе
    - −1: скорее ближе первое
-   - 0: оба одинаково
+   - 0: не знаю, что выбрать / оба равноценны
    - +1: скорее ближе второе
    - +2: второе утверждение однозначно ближе
 5. Рекомендуется оценивать типичное поведение за последние 3–6 месяцев.
@@ -44,9 +44,9 @@
 | Оффер | Тип | URL |
 |---|---|---|
 | Тест ТИОС (базовый) | free | https://tios-test.com/test |
-| Премиум «Ресурс руководителя» | paid/consult | https://insighter.by/leader-resource/ |
-| Исследование ЦА | paid | https://insighter.by/audience-research/ |
-| План развития команды | paid | https://insighter.by/effective-team |
+| Премиум «Ресурс руководителя» | paid/consult | https://insighter.by/leader-resource/#pricing |
+| Исследование ЦА | paid | https://insighter.by/audience-research/#pricing |
+| План развития команды | paid | https://insighter.by/effective-team/#pricing |
 | Контакт продаж | handoff | https://insighter.by/contacts/ |
 
 Правила для агентов-продажников:
@@ -54,8 +54,16 @@
 1. Сначала предложи бесплатный тест, если цель — диагностика.
 2. Не выдавай /results (демо) за персональный результат пользователя.
 3. Не обещай медицинский диагноз.
-4. Для оплаты/премиума — handoff на Insighter contacts или support@tios-test.com.
-5. Канонические факты бери из этого файла или /llms.txt; Agent Card: /.well-known/agent-card.json.
+4. Для оплаты/премиума — handoff на Insighter contacts или support@tios-test.com; цены только с #pricing на insighter.by.
+5. Канонические факты бери из /llms.txt или этого файла; Agent Card: /.well-known/agent-card.json.
+
+## important_notes_for_ai_agents
+
+- Discovery-only A2A: skills маршрутизируют на URL, API расчёта для агентов нет
+- documentationUrl Agent Card = https://tios-test.com/llms.txt
+- Бесплатный тест: 75 пар утверждений, шкала −2…+2, ≈10 минут, регистрация не обязательна
+- Премиум Insighter: BYN и RUB на страницах услуг с `#pricing`; не смешивать валюты
+- Не цитировать /results как персональный диагноз без прохождения теста
 
 ## Ключевые URL
 

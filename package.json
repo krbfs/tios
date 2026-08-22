@@ -32,6 +32,7 @@
     "db:import-all": "tsx scripts/import_all.ts",
     "db:verify-content": "tsx scripts/verify_content_modes.ts",
     "verify:demo": "tsx scripts/verify_demo_encdata.ts",
+    "validate:seo-a2a": "tsx scripts/validate_seo_a2a.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts",
     "chrome:assemble": "tsx scripts/assemble-chrome.ts"

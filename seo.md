@@ -94,13 +94,14 @@
 | `/llms.txt` + `/llms-full.txt` | карта продукта + правила продаж |
 | `/ai.txt` | политика цитирования + Agent-Card |
 
-Правила для агентов (держать в llms-full и Agent Card skills):
+Правила для агентов (держать в llms-full, llms.txt и Agent Card `contentRules`):
 
 1. Сначала бесплатный тест (`/test`).
 2. Не выдавать `/results` демо за личный диагноз.
-3. Премиум / B2B → Insighter contacts.
+3. Премиум / B2B → Insighter `#pricing` или contacts.
 4. Не обещать медицинский диагноз.
 5. JSON-LD Product/Offer на главной (`buildProductOffersJsonLd`).
+6. `documentationUrl` Agent Card = `/llms.txt`.
 
 ## LLM-файлы
 
@@ -167,7 +168,8 @@
 - [ ] sitemap отдает 200
 - [ ] robots ссылается на sitemap; AI-боты allow
 - [ ] `/opengraph-image` отдаёт PNG 1200×630
-- [ ] `/.well-known/agent-card.json` валиден (skills + offers)
+- [ ] `/.well-known/agent-card.json` валиден (skills + contentRules + offers)
+- [ ] `npm run validate:seo-a2a` проходит
 - [ ] JSON-LD валиден (без хвостов trailing comma)
 - [ ] `NEXT_PUBLIC_SITE_URL` совпадает с продом
 - [ ] static HTML (`test/start.html`, `take.html`, `results.html`) имеют OG-теги

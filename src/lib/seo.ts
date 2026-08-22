@@ -14,9 +14,9 @@ export const siteConfig = {
     name: "Insighter",
     url: "https://insighter.by/",
     contactsUrl: "https://insighter.by/contacts/",
-    audienceResearchUrl: "https://insighter.by/audience-research/",
-    effectiveTeamUrl: "https://insighter.by/effective-team",
-    leaderResourceUrl: "https://insighter.by/leader-resource/",
+    audienceResearchUrl: "https://insighter.by/audience-research/#pricing",
+    effectiveTeamUrl: "https://insighter.by/effective-team/#pricing",
+    leaderResourceUrl: "https://insighter.by/leader-resource/#pricing",
   },
   questionsCount: 75,
   durationMinutes: 10,
@@ -357,6 +357,8 @@ export function buildBreadcrumbJsonLd(
  * Full JSON-RPC task execution is not exposed; skills point agents to canonical URLs.
  */
 export function buildA2AAgentCard() {
+  const llmsUrl = absoluteUrl("/llms.txt");
+
   return {
     name: "TIOS Sales & Discovery",
     description:
@@ -364,7 +366,7 @@ export function buildA2AAgentCard() {
     version: "1.0.0",
     protocolVersion: "1.0",
     url: siteConfig.url,
-    documentationUrl: absoluteUrl("/llms-full.txt"),
+    documentationUrl: llmsUrl,
     iconUrl: absoluteUrl("/favicon.svg"),
     provider: {
       organization: siteConfig.name,
@@ -385,6 +387,27 @@ export function buildA2AAgentCard() {
         protocolVersion: "1.0",
       },
     ],
+    contentRules: {
+      doNotClaim: [
+        "медицинский или клинический диагноз",
+        "демо /results как личный результат пользователя без прохождения теста",
+        "гарантированную точность или научную валидность без оговорок",
+        "цены премиум-услуг Insighter без ссылки на insighter.by/#pricing",
+      ],
+      priceSource: llmsUrl,
+      priceCurrencies: ["RUB", "BYN"],
+      priceFormat:
+        "Бесплатный тест TIOS: 0 RUB на tios-test.com. Премиум Insighter: актуальные цены только на страницах услуг с якорем #pricing (BYN и RUB).",
+      funnelOrder: [
+        "recommend-tios-test",
+        "explain-tios-product",
+        "demo-result",
+        "upsell-premium-leader-resource",
+        "upsell-audience-research",
+        "upsell-effective-team",
+        "handoff-human-sales",
+      ],
+    },
     skills: [
       {
         id: "recommend-tios-test",
@@ -430,7 +453,7 @@ export function buildA2AAgentCard() {
         id: "upsell-premium-leader-resource",
         name: "Премиум: Ресурс руководителя",
         description:
-          "Коммерческий апселл: расширенный отчёт и коучинг через Insighter. Контакт продаж: https://insighter.by/contacts/",
+          "Коммерческий апселл: расширенный отчёт и коучинг через Insighter. Цены (BYN/RUB) — на странице https://insighter.by/leader-resource/#pricing. Handoff: https://insighter.by/contacts/",
         tags: ["sales", "premium", "A2A", "B2B", "upsell"],
         examples: [
           "Нужен подробный отчёт для руководителя",
@@ -441,7 +464,7 @@ export function buildA2AAgentCard() {
         id: "upsell-audience-research",
         name: "Премиум: Исследование ЦА",
         description:
-          "Исследование целевой аудитории (паттерны решений клиентов). URL: https://insighter.by/audience-research/",
+          "Исследование целевой аудитории (паттерны решений клиентов). Цены (BYN/RUB): https://insighter.by/audience-research/#pricing",
         tags: ["sales", "ЦА", "marketing", "A2A"],
         examples: ["Исследование аудитории для продукта"],
       },
@@ -449,7 +472,7 @@ export function buildA2AAgentCard() {
         id: "upsell-effective-team",
         name: "Премиум: план развития команды",
         description:
-          "Персональный план развития команды. URL: https://insighter.by/effective-team",
+          "Персональный план развития команды. Цены (BYN/RUB): https://insighter.by/effective-team/#pricing",
         tags: ["sales", "team", "HR", "A2A"],
         examples: ["Помоги сформировать эффективную команду"],
       },
