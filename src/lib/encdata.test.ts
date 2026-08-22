@@ -109,7 +109,8 @@ describe("encdata", () => {
   it("demo encdata resolves to influencer with curated sample warnings", () => {
     const demo = getDemoEncdata();
     expect(isDemoEncdata(demo)).toBe(true);
-    expect(isSignedEncdata(demo)).toBe(true);
+    expect(isSignedEncdata(demo)).toBe(false);
+    expect(() => assertPublicEncdata(demo)).not.toThrow();
     const result = computeFromEncdata(demo);
     expect(result.psychotype_code).toBe("influencer");
     expect(result.warnings).toEqual([...DEMO_THRESHOLD_WARNINGS]);
@@ -119,5 +120,40 @@ describe("encdata", () => {
       (v) => v > 0,
     ).length;
     expect(nonZeroScales).toBeGreaterThanOrEqual(6);
+  });
+
+  it("accepts demo signed with a foreign JWT secret", () => {
+    const prev = process.env.JWT_SECRET;
+    process.env.JWT_SECRET = "foreign-secret-for-test";
+    let foreignSigned: string;
+    try {
+      foreignSigned = encodeAnswers(getDemoAnswers());
+    } finally {
+      if (prev === undefined) delete process.env.JWT_SECRET;
+      else process.env.JWT_SECRET = prev;
+    }
+    expect(isSignedEncdata(foreignSigned)).toBe(false);
+    expect(isDemoEncdata(foreignSigned)).toBe(true);
+    expect(() => assertPublicEncdata(foreignSigned)).not.toThrow();
+  });
+
+  it("getDemoEncdata is stable without JWT_SECRET in production", () => {
+    const prevNode = process.env.NODE_ENV;
+    const prevSecret = process.env.JWT_SECRET;
+    process.env.NODE_ENV = "production";
+    delete process.env.JWT_SECRET;
+    try {
+      const encdata = getDemoEncdata();
+      expect(isSignedEncdata(encdata)).toBe(false);
+      expect(isDemoEncdata(encdata)).toBe(true);
+      expect(() => assertPublicEncdata(encdata)).not.toThrow();
+    } finally {
+      process.env.NODE_ENV = prevNode;
+      if (prevSecret === undefined) {
+        delete process.env.JWT_SECRET;
+      } else {
+        process.env.JWT_SECRET = prevSecret;
+      }
+    }
   });
 });
