@@ -186,7 +186,7 @@ body {
   text-decoration: none;
 }
 
-.site-header-nav .site-header-login--desktop {
+.site-header .site-header-login--desktop {
   display: none !important;
 }
 
@@ -222,7 +222,7 @@ body {
     display: flex;
   }
 
-  .site-header-login--desktop {
+  .site-header .site-header-login--desktop {
     display: inline-flex !important;
   }
 

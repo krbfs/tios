@@ -529,7 +529,7 @@ details > p {
   margin-top: 12px;
 }
 
-.site-header-nav .site-header-login--desktop {
+.site-header .site-header-login--desktop {
   display: none !important;
 }
 
@@ -540,7 +540,7 @@ details > p {
 }
 
 @media (min-width: 768px) {
-  .site-header-nav .site-header-login--desktop {
+  .site-header .site-header-login--desktop {
     display: inline-flex !important;
   }
 
