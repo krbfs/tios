@@ -88,6 +88,52 @@ export async function initSiteAnalytics() {
 
   initGoogleAnalytics(measurementId);
   bindGaClickTracking();
+  initSiteHeader();
+}
+
+export function initSiteHeader() {
+  const header = document.querySelector(".site-header");
+  if (!header) {
+    return;
+  }
+
+  const burger = header.querySelector(".site-header-burger");
+  const drawer = document.getElementById("site-header-drawer");
+  if (!burger || !drawer) {
+    return;
+  }
+
+  const close = () => {
+    header.classList.remove("site-header--open");
+    burger.setAttribute("aria-expanded", "false");
+    burger.setAttribute("aria-label", "Открыть меню");
+    drawer.hidden = true;
+  };
+
+  const open = () => {
+    header.classList.add("site-header--open");
+    burger.setAttribute("aria-expanded", "true");
+    burger.setAttribute("aria-label", "Закрыть меню");
+    drawer.hidden = false;
+  };
+
+  burger.addEventListener("click", () => {
+    if (header.classList.contains("site-header--open")) {
+      close();
+      return;
+    }
+    open();
+  });
+
+  drawer.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", close);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      close();
+    }
+  });
 }
 
 /** @deprecated use initSiteAnalytics */

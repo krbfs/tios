@@ -155,6 +155,12 @@ input {
   color: #b91c1c;
 }
 
+.contact-form-home {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
 .text-link {
   color: var(--link);
   font-weight: 600;
@@ -458,4 +464,66 @@ details > p {
   .benefit-card:hover {
     transform: none;
   }
+}
+
+/* Header burger — keep in sync with public/css/test.css */
+.site-header-spacer {
+  flex: 1;
+}
+
+.site-header-burger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.site-header-burger-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--foreground);
+  border-radius: 1px;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.site-header--open .site-header-burger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.site-header--open .site-header-burger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.site-header--open .site-header-burger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.site-header-drawer {
+  border-top: 1px solid var(--border);
+  background: #fff;
+}
+
+.site-header-menu--drawer a {
+  display: block;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header-menu--drawer a:last-of-type {
+  border-bottom: none;
+}
+
+.site-header-drawer-login {
+  margin-top: 12px;
 }

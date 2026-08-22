@@ -1,5 +1,10 @@
 import { error, json } from "@/lib/api/http";
-import { computeFromEncdata, buildResultUrl, canonicalizeEncdata } from "@/lib/encdata";
+import {
+  computeFromEncdata,
+  buildResultUrl,
+  canonicalizeEncdata,
+  isDemoEncdata,
+} from "@/lib/encdata";
 import { loadVisibleContentBlocks } from "@/lib/api/results";
 
 export async function GET(request: Request) {
@@ -12,6 +17,7 @@ export async function GET(request: Request) {
   try {
     const computed = computeFromEncdata(encdata);
     const canonical = canonicalizeEncdata(encdata);
+    const isDemo = isDemoEncdata(canonical);
     const blocks = await loadVisibleContentBlocks(
       computed.psychotype_code,
       "leader_resource",
@@ -21,7 +27,8 @@ export async function GET(request: Request) {
     return json({
       encdata: canonical,
       result_url: buildResultUrl(canonical),
-      created_at: new Date().toISOString(),
+      is_demo: isDemo,
+      ...(isDemo ? {} : { created_at: new Date().toISOString() }),
       answers: computed.answers,
       scaled_scores: computed.scaled_scores,
       scaled_systemic: computed.scaled_systemic,

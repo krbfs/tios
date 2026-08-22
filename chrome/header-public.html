@@ -3,13 +3,37 @@
     <a href="{{logoHref}}" class="site-header-logo">
       <img src="/tc-logo-full.svg" alt="TIOS" width="108" height="34" />
     </a>
-    <nav class="site-header-menu" aria-label="Основное меню">
-      <a href="/">Главная</a>
+    <nav class="site-header-menu site-header-menu--desktop" aria-label="Основное меню">
       <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест</a>
+      <a href="/results" data-ga-event="cta_header_demo_result">Пример результата</a>
       <a href="/about" data-ga-event="cta_header_about">О тесте</a>
       <a href="/author" data-ga-event="cta_header_author">Об авторе</a>
+      <a href="/contact" data-ga-event="cta_header_contact">Свяжитесь с нами</a>
     </nav>
     <span class="site-header-spacer"></span>
-    <a href="/login.html" class="btn btn-outline" {{loginAttrs}}>Войти</a>
+    <a href="/login.html" class="btn btn-outline site-header-login site-header-login--desktop" {{loginAttrs}}>Войти</a>
+    <button
+      type="button"
+      class="site-header-burger"
+      aria-expanded="false"
+      aria-controls="site-header-drawer"
+      aria-label="Открыть меню"
+    >
+      <span class="site-header-burger-bar" aria-hidden="true"></span>
+      <span class="site-header-burger-bar" aria-hidden="true"></span>
+      <span class="site-header-burger-bar" aria-hidden="true"></span>
+    </button>
+  </div>
+  <div id="site-header-drawer" class="site-header-drawer" hidden>
+    <div class="container">
+      <nav class="site-header-menu site-header-menu--drawer" aria-label="Основное меню">
+        <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест</a>
+        <a href="/results" data-ga-event="cta_header_demo_result">Пример результата</a>
+        <a href="/about" data-ga-event="cta_header_about">О тесте</a>
+        <a href="/author" data-ga-event="cta_header_author">Об авторе</a>
+        <a href="/contact" data-ga-event="cta_header_contact">Свяжитесь с нами</a>
+        <a href="/login.html" class="site-header-drawer-login site-header-login btn btn-outline" data-ga-event="cta_header_login">Войти</a>
+      </nav>
+    </div>
   </div>
 </header>

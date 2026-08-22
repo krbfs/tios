@@ -83,10 +83,15 @@ describe("GET /api/results/by-encdata", () => {
     );
 
     expect(response.status).toBe(200);
-    const payload = await readJson<{ warnings: string[]; psychotype_code: string }>(
-      response,
-    );
+    const payload = await readJson<{
+      warnings: string[];
+      psychotype_code: string;
+      is_demo: boolean;
+      created_at?: string;
+    }>(response);
     expect(payload.psychotype_code).toBe("influencer");
+    expect(payload.is_demo).toBe(true);
+    expect(payload.created_at).toBeUndefined();
     expect(payload.warnings.length).toBeGreaterThan(0);
     expect(
       payload.warnings.some((w) => w.includes("Вероятность достоверного прогноза")),

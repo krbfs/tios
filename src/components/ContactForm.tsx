@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type FormState = "idle" | "sending" | "success" | "error";
 
 export function ContactForm() {
   const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
   const [message, setMessage] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [errorText, setErrorText] = useState("");
@@ -19,7 +21,7 @@ export function ContactForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, message }),
+        body: JSON.stringify({ name, contact, message }),
       });
       const data = (await response.json().catch(() => ({}))) as { error?: string };
 
@@ -28,6 +30,7 @@ export function ContactForm() {
       }
 
       setName("");
+      setContact("");
       setMessage("");
       setState("success");
     } catch (err) {
@@ -49,6 +52,22 @@ export function ContactForm() {
           minLength={1}
           maxLength={120}
           autoComplete="name"
+          disabled={state === "sending"}
+        />
+      </label>
+
+      <label className="form-field">
+        <span className="form-field-label">Контакт</span>
+        <input
+          type="text"
+          name="contact"
+          value={contact}
+          onChange={(event) => setContact(event.target.value)}
+          required
+          minLength={1}
+          maxLength={200}
+          autoComplete="email"
+          placeholder="Email, телефон или Telegram"
           disabled={state === "sending"}
         />
       </label>
@@ -82,6 +101,14 @@ export function ContactForm() {
           {errorText}
         </p>
       ) : null}
+
+      <Link
+        href="/"
+        className="btn btn-outline contact-form-home"
+        data-ga-event="cta_contact_home"
+      >
+        На главную
+      </Link>
     </form>
   );
 }

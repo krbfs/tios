@@ -12,10 +12,6 @@ export default function ContactPage() {
         <div className="container-page mx-auto max-w-xl space-y-4">
           <RevealOnScroll>
             <h1 className="text-3xl leading-tight md:text-4xl">Свяжитесь с нами</h1>
-            <p className="text-muted md:text-lg">
-              Вопросы по тесту ТИОС, результатам или сотрудничеству — напишите нам.
-              Мы ответим в Telegram.
-            </p>
           </RevealOnScroll>
 
           <RevealOnScroll delay={80}>
