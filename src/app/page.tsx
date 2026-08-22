@@ -99,35 +99,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        id="heroBenefits"
-        className="container mx-auto px-4 pb-20 pt-3 md:pb-12 md:pt-8 lg:py-26"
-      >
-        <RevealOnScroll>
-          <h2 className="mb-6 text-center text-3xl leading-[1.1] sm:text-3xl md:text-4xl">
-            Почему стоит пройти тест ТИОС
-          </h2>
-        </RevealOnScroll>
-        <ul className="mx-auto max-w-2xl list-none p-0">
-          {reasons.map((item, index) => (
-            <RevealOnScroll key={index} delay={index * 60}>
-              <li className="relative mb-4 rounded-lg border border-solid border-border p-4 pl-14 backdrop-blur">
-                <span className="absolute left-4 top-7 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white">
-                  ✓
-                </span>
-                <h4 className="mb-1 font-semibold leading-tight">{item.title}</h4>
-                <p className="text-md text-muted">{item.text}</p>
-              </li>
-            </RevealOnScroll>
-          ))}
-        </ul>
-        <RevealOnScroll delay={120}>
-          <p className="mx-auto max-w-3xl text-muted sm:text-lg">
-          Тест ТИОС состоит из 75 пар утверждений. Для каждого выберите, какое
-          утверждение ближе и насколько вы с ним согласны. Отвечайте честно —
-          так вы получите наиболее точный психопрофиль.
-          </p>
-        </RevealOnScroll>
+      <section id="heroBenefits" className="benefits-section">
+        <div className="container-page">
+          <RevealOnScroll>
+            <div className="benefits-section__head">
+              <p className="benefits-section__eyebrow">Преимущества теста</p>
+              <h2 className="benefits-section__title">Почему стоит пройти тест ТИОС</h2>
+            </div>
+          </RevealOnScroll>
+          <ul className="benefits-list">
+            {reasons.map((item, index) => (
+              <RevealOnScroll key={item.title} delay={index * 90}>
+                <li className="benefit-card">
+                  <span className="benefit-card__index" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div className="benefit-card__body">
+                    <h3 className="benefit-card__title">{item.title}</h3>
+                    <p className="benefit-card__text">{item.text}</p>
+                  </div>
+                </li>
+              </RevealOnScroll>
+            ))}
+          </ul>
+          <RevealOnScroll delay={180}>
+            <p className="benefits-section__lead">
+              Тест ТИОС состоит из 75 пар утверждений. Для каждого выберите, какое
+              утверждение ближе и насколько вы с ним согласны. Отвечайте честно —
+              так вы получите наиболее точный психопрофиль.
+            </p>
+          </RevealOnScroll>
+        </div>
       </section>
 
       <section
@@ -227,10 +229,7 @@ export default function HomePage() {
       >
         <RevealOnScroll>
           <div className="mx-auto max-w-[58rem] rounded-lg border border-solid border-border bg-white p-8 text-center md:p-10">
-            <p className="text-sm font-semibold uppercase tracking-wide text-muted">
-              Партнер проекта
-            </p>
-            <h2 className="mt-2 text-2xl font-bold md:text-3xl">Insighter</h2>
+            <h2 className="text-2xl font-bold md:text-3xl">Insighter</h2>
             <p className="mx-auto mt-3 max-w-xl text-muted sm:text-lg sm:leading-7">
               Поведенческая аналитика, исследования аудитории и инструменты для
               развития команд и руководителей.
