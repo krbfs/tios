@@ -28,6 +28,17 @@ export function withBearer(token: string, request: Request): Request {
   } as RequestInit);
 }
 
+export function withTestToken(token: string, request: Request): Request {
+  const headers = new Headers(request.headers);
+  headers.set("X-Test-Token", token);
+  return new Request(request.url, {
+    method: request.method,
+    headers,
+    body: request.body,
+    duplex: "half",
+  } as RequestInit);
+}
+
 export function withSessionUuid(sessionUuid: string, request: Request): Request {
   const headers = new Headers(request.headers);
   headers.set("x-session-uuid", sessionUuid);

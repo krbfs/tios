@@ -238,6 +238,7 @@
         apiJson,
         getSessionUuid,
         markConsentGiven,
+        setTestToken,
       } from "/js/session.js";
 
       initSiteAnalytics();
@@ -265,6 +266,14 @@
               consent_text: CONSENT_TEXT,
             }),
           });
+          const start = await apiJson("/api/test/start", {
+            method: "POST",
+            body: JSON.stringify({ session_uuid: sessionUuid }),
+          });
+          if (!start?.test_token) {
+            throw new Error("Не удалось начать тест");
+          }
+          setTestToken(start.test_token);
           markConsentGiven();
           window.location.href = "/test/take.html";
         } catch (err) {

@@ -3,6 +3,7 @@ import { encodeAnswers } from "@/lib/encdata";
 import { getAuthUser } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { db } from "@/lib/db";
+import { requireTestAccess } from "@/lib/test-access";
 
 type SubmitBody = {
   session_uuid?: string;
@@ -11,6 +12,11 @@ type SubmitBody = {
 };
 
 export async function POST(request: Request) {
+  const denied = await requireTestAccess(request, "submit");
+  if (denied) {
+    return denied;
+  }
+
   const body = await parseJson<SubmitBody>(request);
   if (body instanceof Response) {
     return body;
@@ -88,14 +94,6 @@ export async function POST(request: Request) {
       result_id: result.id,
       encdata: encodeAnswers(answers),
       session_uuid: session.sessionUuid,
-      psychotype_code: result.psychotypeCode,
-      psychotype_secondary: result.psychotypeSecondary,
-      avg_intensity: result.avgIntensity,
-      scaled_scores: result.scaledScores,
-      scaled_systemic: result.scaledSystemic,
-      validation_warnings: result.validationWarnings,
-      warnings: computed.warnings,
-      mode: result.mode,
     },
     201,
   );

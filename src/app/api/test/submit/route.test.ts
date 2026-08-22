@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
 import { signAccessToken } from "@/lib/api/auth";
-import { apiRequest, readJson, withBearer } from "@/test/helpers/request";
+import { issueTestToken, resetTestAccessStateForTests } from "@/lib/test-access";
+import {
+  apiRequest,
+  readJson,
+  withBearer,
+  withTestToken,
+} from "@/test/helpers/request";
 
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -28,20 +34,36 @@ import { POST } from "./route";
 
 describe("POST /api/test/submit", () => {
   const answers = fillAnswers(0);
+  let testToken: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    resetTestAccessStateForTests();
+    testToken = await issueTestToken("22222222-2222-2222-2222-222222222222");
     mocks.findUnique.mockReset();
     mocks.create.mockReset();
     mocks.update.mockReset();
     mocks.resultCreate.mockReset();
   });
 
-  it("returns 400 when answers length is not 75", async () => {
+  it("returns 401 without test token", async () => {
     const response = await POST(
       apiRequest("/api/test/submit", {
         method: "POST",
-        json: { answers: [0, 1, 2] },
+        json: { answers },
       }),
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("returns 400 when answers length is not 75", async () => {
+    const response = await POST(
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: { answers: [0, 1, 2] },
+        }),
+      ),
     );
 
     expect(response.status).toBe(400);
@@ -50,7 +72,7 @@ describe("POST /api/test/submit", () => {
     });
   });
 
-  it("creates a new session and result", async () => {
+  it("creates a new session and result with minimal payload", async () => {
     mocks.findUnique.mockResolvedValue(null);
     mocks.create.mockResolvedValue({
       id: "session-1",
@@ -73,27 +95,27 @@ describe("POST /api/test/submit", () => {
     });
 
     const response = await POST(
-      apiRequest("/api/test/submit", {
-        method: "POST",
-        json: {
-          session_uuid: "22222222-2222-2222-2222-222222222222",
-          answers,
-        },
-      }),
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: {
+            session_uuid: "22222222-2222-2222-2222-222222222222",
+            answers,
+          },
+        }),
+      ),
     );
 
     expect(response.status).toBe(201);
-    const payload = await readJson<{
-      result_id: string;
-      encdata: string;
-      session_uuid: string;
-      psychotype_code: string;
-    }>(response);
+    const payload = await readJson<Record<string, unknown>>(response);
 
     expect(payload.result_id).toBe("result-1");
     expect(payload.session_uuid).toBe("22222222-2222-2222-2222-222222222222");
-    expect(payload.encdata.length).toBeGreaterThan(10);
-    expect(payload.psychotype_code).toBeTruthy();
+    expect(String(payload.encdata).length).toBeGreaterThan(10);
+    expect(payload.psychotype_code).toBeUndefined();
+    expect(payload.scaled_scores).toBeUndefined();
+    expect(payload.answers).toBeUndefined();
     expect(mocks.create).toHaveBeenCalledOnce();
     expect(mocks.resultCreate).toHaveBeenCalledOnce();
   });
@@ -126,13 +148,16 @@ describe("POST /api/test/submit", () => {
     });
 
     const response = await POST(
-      apiRequest("/api/test/submit", {
-        method: "POST",
-        json: {
-          session_uuid: "22222222-2222-2222-2222-222222222222",
-          answers,
-        },
-      }),
+      withTestToken(
+        testToken,
+        apiRequest("/api/test/submit", {
+          method: "POST",
+          json: {
+            session_uuid: "22222222-2222-2222-2222-222222222222",
+            answers,
+          },
+        }),
+      ),
     );
 
     expect(response.status).toBe(201);
@@ -174,18 +199,18 @@ describe("POST /api/test/submit", () => {
       },
     });
 
-    const response = await POST(
-      withBearer(
-        token,
-        apiRequest("/api/test/submit", {
-          method: "POST",
-          json: {
-            session_uuid: "33333333-3333-3333-3333-333333333333",
-            answers,
-          },
-        }),
-      ),
+    const withAuth = withBearer(
+      token,
+      apiRequest("/api/test/submit", {
+        method: "POST",
+        json: {
+          session_uuid: "33333333-3333-3333-3333-333333333333",
+          answers,
+        },
+      }),
     );
+
+    const response = await POST(withTestToken(testToken, withAuth));
 
     expect(response.status).toBe(201);
     expect(mocks.update).toHaveBeenCalledWith({

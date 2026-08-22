@@ -137,7 +137,9 @@
       import {
         apiJson,
         getSessionUuid,
+        getTestToken,
         hasConsent,
+        setTestToken,
       } from "/js/session.js";
       import { prefersReducedMotion } from "/js/motion.js";
 
@@ -644,8 +646,23 @@
         submitAnswers();
       });
 
+      async function ensureTestToken() {
+        if (getTestToken()) {
+          return;
+        }
+        const start = await apiJson("/api/test/start", {
+          method: "POST",
+          body: JSON.stringify({ session_uuid: getSessionUuid() }),
+        });
+        if (!start?.test_token) {
+          throw new Error("Не удалось начать тест");
+        }
+        setTestToken(start.test_token);
+      }
+
       async function init() {
         try {
+          await ensureTestToken();
           questions = await apiJson("/api/test/questions");
           if (!Array.isArray(questions) || questions.length !== TOTAL) {
             throw new Error(`Ожидалось ${TOTAL} вопросов`);

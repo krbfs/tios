@@ -29,7 +29,6 @@ export async function GET(request: Request) {
       result_url: buildResultUrl(canonical),
       is_demo: isDemo,
       ...(isDemo ? {} : { created_at: new Date().toISOString() }),
-      answers: computed.answers,
       scaled_scores: computed.scaled_scores,
       scaled_systemic: computed.scaled_systemic,
       sorted_personal_scales: computed.sorted_personal_scales,

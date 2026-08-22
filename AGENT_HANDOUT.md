@@ -183,26 +183,30 @@ npm run chrome:assemble
 
 1. Пользователь читает инструкцию
 2. Принимает согласие → `POST /api/consent` с `session_uuid`
-3. Переход на `/test/take.html`
+3. `POST /api/test/start` → короткоживущий `test_token` (sessionStorage)
+4. Переход на `/test/take.html`
 
 ### 5.2 Прохождение (`/test/take.html`)
 
-1. `GET /api/test/questions` — 75 пар из БД
-2. Ответы −2…+2, батчами по UI
-3. Тайминг каждого ответа (`time_per_question`)
-4. `POST /api/test/submit` → расчёт + запись в БД
-5. Редirect на `/quiz/result?encdata=…`
+1. При необходимости обновляет `test_token` через `/api/test/start` (refresh страницы)
+2. `GET /api/test/questions` с заголовком `X-Test-Token` — только `id`, `left_text`, `right_text` (без ключей шкал)
+3. Ответы −2…+2, батчами по UI
+4. Тайминг каждого ответа (`time_per_question`)
+5. `POST /api/test/submit` (тоже с `X-Test-Token`) → расчёт на сервере + запись в БД; ответ только `encdata` / `result_id` / `session_uuid`
+6. Редирект на `/quiz/result?encdata=…`
 
 **Модалка «слишком быстрые ответы»:** если >10% ответов <2 сек.
 
 ### 5.3 Результат (`/results.html` ← `/quiz/result`)
 
-Два источника данных:
+Два источника данных (оба **без входа в ЛК**):
 
 | Параметр URL | API | Когда |
 |--------------|-----|-------|
 | `?encdata=…` | `GET /api/results/by-encdata?encdata=` | анонимная ссылка, демо |
 | `?id=…` | `GET /api/results/{id}` | сохранённый результат (auth/session) |
+
+`by-encdata` **не** отдаёт сырые `answers` — только display-поля (шкалы, психотип, контент). Ссылка с `encdata` открывается без логина.
 
 Отображает:
 
@@ -412,9 +416,10 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 | Method | Path | Auth | Описание |
 |--------|------|------|----------|
 | POST | `/api/consent` | optional | Согласие GDPR |
-| GET | `/api/test/questions` | — | 75 вопросов |
-| POST | `/api/test/submit` | optional | Submit + расчёт + save |
-| GET | `/api/results/by-encdata` | — | Результат из encdata |
+| POST | `/api/test/start` | — | Выдаёт `test_token` (rate-limit) |
+| GET | `/api/test/questions` | `X-Test-Token` | 75 вопросов (только тексты) |
+| POST | `/api/test/submit` | `X-Test-Token` | Submit + расчёт; ответ: encdata + ids |
+| GET | `/api/results/by-encdata` | — | Результат из encdata (без raw answers) |
 | GET | `/api/results/{id}` | session/user/admin | Result by ID |
 | GET | `/api/results/history` | Bearer | Кабинет |
 | POST | `/api/auth/login` | — | JWT |
@@ -440,6 +445,14 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 Поля ответа результата (дополнительно к scores): `sorted_personal_scales`, `leader_scores`, `coaching_recommendations`, `warnings`, `validation_warnings`, `content_mode`, `mode_request_notice`.
 
 Ответы API: snake_case JSON. Ошибки через helpers `src/lib/api/http.ts`.
+
+### Защита методики (публичный контур)
+
+- Расчёт только в `src/lib/calculations.ts` (не в `public/js`).
+- `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`.
+- `/api/test/submit` — ответ без scores; нужен `X-Test-Token`.
+- `/api/results/by-encdata` — **публичный**, без логина; **без** raw `answers`. Ссылки `?encdata=` открываются анонимно.
+- Rate-limit in-memory на start/questions/submit по IP.
 
 ---
 

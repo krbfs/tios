@@ -62,6 +62,8 @@ describe("GET /api/results/by-encdata", () => {
       result_url: string;
       content_blocks: Array<{ block_key: string }>;
       admin_comment: null;
+      answers?: unknown;
+      scaled_scores: Record<string, number>;
     }>(response);
 
     expect(payload.encdata).toBe(encdata);
@@ -69,6 +71,8 @@ describe("GET /api/results/by-encdata", () => {
     expect(payload.result_url).toContain("/quiz/result?encdata=");
     expect(payload.admin_comment).toBeNull();
     expect(payload.content_blocks).toHaveLength(1);
+    expect(payload.answers).toBeUndefined();
+    expect(payload.scaled_scores).toBeTruthy();
     expect(mocks.loadVisibleContentBlocks).toHaveBeenCalledWith(
       payload.psychotype_code,
       "leader_resource",

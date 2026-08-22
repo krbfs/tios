@@ -1,5 +1,6 @@
 const SESSION_KEY = "tc26_session_uuid";
 const CONSENT_KEY = "tc26_consent_given";
+const TEST_TOKEN_KEY = "tc26_test_token";
 
 export const CONSENT_TEXT =
   "Я даю согласие на обработку моих персональных данных, включая результаты тестирования, в целях предоставления мне персонализированных рекомендаций, в соответствии с Политикой обработки персональных данных. Я понимаю, что результаты не являются медицинским диагнозом. Я могу отозвать согласие и удалить свои данные в любой момент в личном кабинете.";
@@ -28,6 +29,18 @@ export function markConsentGiven() {
   sessionStorage.setItem(CONSENT_KEY, "1");
 }
 
+export function getTestToken() {
+  return sessionStorage.getItem(TEST_TOKEN_KEY);
+}
+
+export function setTestToken(token) {
+  sessionStorage.setItem(TEST_TOKEN_KEY, token);
+}
+
+export function clearTestToken() {
+  sessionStorage.removeItem(TEST_TOKEN_KEY);
+}
+
 export async function apiJson(url, options = {}) {
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && options.body) {
@@ -40,6 +53,11 @@ export async function apiJson(url, options = {}) {
   const token = localStorage.getItem("tc26_access_token");
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const testToken = getTestToken();
+  if (testToken) {
+    headers.set("X-Test-Token", testToken);
   }
 
   const response = await fetch(url, { ...options, headers });
