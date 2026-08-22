@@ -9,6 +9,7 @@ import {
   buildResultUrl,
   buildEncdataUrl,
   DEMO_THRESHOLD_WARNINGS,
+  getDemoAnswers,
   getDemoEncdata,
   isDemoEncdata,
   isSignedEncdata,
@@ -47,6 +48,32 @@ describe("encdata", () => {
     expect(decodeAnswers(unsigned)).toEqual(answers);
     expect(isSignedEncdata(unsigned)).toBe(false);
     expect(() => assertPublicEncdata(unsigned)).toThrow(/unsigned/i);
+  });
+
+  it("allows unsigned encdata only for the fixed demo profile", () => {
+    const unsignedDemo = encodeAnswersUnsignedForTests(getDemoAnswers());
+    expect(() => assertPublicEncdata(unsignedDemo)).not.toThrow();
+    expect(isDemoEncdata(unsignedDemo)).toBe(true);
+  });
+
+  it("getDemoEncdata falls back without JWT_SECRET in production", () => {
+    const prevNode = process.env.NODE_ENV;
+    const prevSecret = process.env.JWT_SECRET;
+    process.env.NODE_ENV = "production";
+    delete process.env.JWT_SECRET;
+    try {
+      const encdata = getDemoEncdata();
+      expect(isSignedEncdata(encdata)).toBe(false);
+      expect(isDemoEncdata(encdata)).toBe(true);
+      expect(() => assertPublicEncdata(encdata)).not.toThrow();
+    } finally {
+      process.env.NODE_ENV = prevNode;
+      if (prevSecret === undefined) {
+        delete process.env.JWT_SECRET;
+      } else {
+        process.env.JWT_SECRET = prevSecret;
+      }
+    }
   });
 
   it("rejects tampered signed encdata", () => {

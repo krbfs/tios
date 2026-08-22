@@ -4,6 +4,7 @@ import { fillAnswers } from "@/lib/calculations";
 import {
   encodeAnswers,
   encodeAnswersUnsignedForTests,
+  getDemoAnswers,
   getDemoEncdata,
 } from "@/lib/encdata";
 import { resetTestAccessStateForTests } from "@/lib/test-access";
@@ -64,6 +65,17 @@ describe("GET /api/results/by-encdata", () => {
     expect(await readJson(response)).toMatchObject({
       error: expect.stringMatching(/unsigned|Invalid/i),
     });
+  });
+
+  it("accepts unsigned encdata for the fixed demo profile", async () => {
+    const encdata = encodeAnswersUnsignedForTests(getDemoAnswers());
+    const response = await GET(
+      apiRequest(`/api/results/by-encdata?encdata=${encodeURIComponent(encdata)}`),
+    );
+    expect(response.status).toBe(200);
+    const payload = await readJson<{ is_demo: boolean; psychotype_code: string }>(response);
+    expect(payload.is_demo).toBe(true);
+    expect(payload.psychotype_code).toBe("influencer");
   });
 
   it("returns computed result payload for valid encdata", async () => {

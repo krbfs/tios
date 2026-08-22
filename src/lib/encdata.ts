@@ -157,6 +157,12 @@ export function decodeAnswers(encdata: string): number[] {
   }
 }
 
+function answersEqual(left: readonly number[], right: readonly number[]): boolean {
+  return (
+    left.length === right.length && left.every((value, index) => value === right[index])
+  );
+}
+
 /** True when encdata carries a valid HMAC (public scoring allowed). */
 export function isSignedEncdata(encdata: string): boolean {
   try {
@@ -171,11 +177,22 @@ export function isSignedEncdata(encdata: string): boolean {
   }
 }
 
-/** Public by-encdata gate: unsigned / forged vectors are rejected. */
+/**
+ * Public by-encdata gate: require HMAC, except the fixed public demo profile
+ * (so SSG pages can embed demo without JWT_SECRET at Docker build time).
+ */
 export function assertPublicEncdata(encdata: string): void {
-  if (!isSignedEncdata(encdata)) {
-    throw new Error("Invalid or unsigned result link");
+  if (isSignedEncdata(encdata)) {
+    return;
   }
+  try {
+    if (answersEqual(decodeAnswers(encdata), getDemoAnswers())) {
+      return;
+    }
+  } catch {
+    // fall through
+  }
+  throw new Error("Invalid or unsigned result link");
 }
 
 const RESULT_PATH = "/quiz/result";
@@ -196,9 +213,17 @@ export function buildEncdataUrl(answers: readonly number[], baseUrl?: string): s
   return buildResultUrl(encodeAnswers(answers), baseUrl);
 }
 
-/** Re-encode to current signed format (also accepts legacy JSON / unsigned v1). */
+/** Re-encode to current signed format when JWT_SECRET is available. */
 export function canonicalizeEncdata(encdata: string): string {
-  return encodeAnswers(decodeAnswers(encdata));
+  const answers = decodeAnswers(encdata);
+  try {
+    return encodeAnswers(answers);
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("JWT_SECRET")) {
+      return packAnswersBinary(answers).toString("base64");
+    }
+    throw err;
+  }
 }
 
 /** Fixed threshold warnings on the public demo / «Пример результата». */
@@ -210,7 +235,7 @@ export const DEMO_THRESHOLD_WARNINGS = [
 
 export function isDemoEncdata(encdata: string): boolean {
   try {
-    return canonicalizeEncdata(encdata) === getDemoEncdata();
+    return answersEqual(decodeAnswers(encdata), getDemoAnswers());
   } catch {
     return false;
   }
@@ -251,8 +276,20 @@ export function getDemoAnswers(): number[] {
   return answers;
 }
 
+/**
+ * Demo encdata for marketing pages. Signed when JWT_SECRET is set;
+ * unsigned fallback for Docker/Next build (no secrets in builder).
+ * by-encdata accepts the demo profile by answer match either way.
+ */
 export function getDemoEncdata(): string {
-  return encodeAnswers(getDemoAnswers());
+  try {
+    return encodeAnswers(getDemoAnswers());
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("JWT_SECRET")) {
+      return packAnswersBinary(getDemoAnswers()).toString("base64");
+    }
+    throw err;
+  }
 }
 
 export function computeFromEncdata(encdata: string) {
