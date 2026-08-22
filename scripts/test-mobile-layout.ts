@@ -314,37 +314,62 @@ async function assertHeaderLayout(page: Page) {
   const header = headers.first();
   await header.waitFor({ state: "visible", timeout: 10_000 });
 
-  const login = page
-    .locator(
-      'header a.btn, header [data-ga-event="cta_header_login"], header #cabinet-link',
-    )
-    .first();
   const brand = page
     .locator(
       'header .site-header-logo, header .site-header-brand, header strong, header a[href="/"], header a[href="/test/start.html"]',
     )
     .first();
 
-  if ((await login.count()) === 0 || (await brand.count()) === 0) {
+  if ((await brand.count()) === 0) {
+    return;
+  }
+
+  const brandBox = await brand.boundingBox();
+  if (!brandBox) {
+    throw new Error("header brand bounding box missing");
+  }
+
+  const viewport = page.viewportSize();
+  const isMobile = viewport ? viewport.width < 768 : false;
+
+  if (isMobile) {
+    const burger = page.locator("header .site-header-burger").first();
+    if ((await burger.count()) === 0) {
+      return;
+    }
+    const burgerBox = await burger.boundingBox();
+    if (!burgerBox) {
+      throw new Error("header burger bounding box missing");
+    }
+    if (burgerBox.x < brandBox.x + brandBox.width - 4) {
+      throw new Error("header burger overlaps brand link");
+    }
+    if (viewport && burgerBox.x + burgerBox.width > viewport.width + 1) {
+      throw new Error("header burger clipped outside viewport");
+    }
+    return;
+  }
+
+  const login = page
+    .locator(
+      'header a.btn, header [data-ga-event="cta_header_login"], header #cabinet-link',
+    )
+    .first();
+
+  if ((await login.count()) === 0) {
     return;
   }
 
   const loginBox = await login.boundingBox();
-  const brandBox = await brand.boundingBox();
-  if (!loginBox || !brandBox) {
-    throw new Error("header brand/login bounding boxes missing");
+  if (!loginBox) {
+    throw new Error("header login bounding box missing");
   }
 
   if (loginBox.x < brandBox.x + brandBox.width - 4) {
     throw new Error("header login overlaps brand link");
   }
 
-  const viewport = page.viewportSize();
-  if (!viewport) {
-    return;
-  }
-
-  if (loginBox.x + loginBox.width > viewport.width + 1) {
+  if (viewport && loginBox.x + loginBox.width > viewport.width + 1) {
     throw new Error("header login button clipped outside viewport");
   }
 }
