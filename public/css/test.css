@@ -1113,6 +1113,16 @@ input[type="range"].answer-slider {
   color: var(--muted);
 }
 
+/* Honeypot: off-screen, not for humans */
+.hp-field {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .consent-box input {
   margin-top: 4px;
   width: 18px;

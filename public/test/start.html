@@ -177,6 +177,17 @@
           <label id="consent-text" class="consent-box-text" for="consent"></label>
         </div>
 
+        <div class="hp-field" aria-hidden="true">
+          <label for="website">Сайт компании</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            tabindex="-1"
+            autocomplete="off"
+          />
+        </div>
+
         <p class="muted">
           Регистрация не нужна: после прохождения теста ТИОС скопируйте ссылку с результатом.
           <a href="/login.html">Войдите</a>, чтобы хранить историю в личном кабинете.
@@ -238,7 +249,7 @@
         apiJson,
         getSessionUuid,
         markConsentGiven,
-        setTestToken,
+        startTestWithAntiBot,
       } from "/js/session.js";
 
       initSiteAnalytics();
@@ -246,11 +257,21 @@
       const startBtn = document.getElementById("start-btn");
       const errorEl = document.getElementById("error");
       const consentTextEl = document.getElementById("consent-text");
+      const honeypotEl = document.getElementById("website");
 
       if (consentTextEl) {
         consentTextEl.innerHTML = CONSENT_HTML;
       }
       window.syncStartButton?.();
+
+      let prefetchChallenge = null;
+      apiJson("/api/test/challenge")
+        .then((payload) => {
+          prefetchChallenge = payload;
+        })
+        .catch(() => {
+          prefetchChallenge = null;
+        });
 
       startBtn?.addEventListener("click", async () => {
         if (errorEl) errorEl.hidden = true;
@@ -266,14 +287,11 @@
               consent_text: CONSENT_TEXT,
             }),
           });
-          const start = await apiJson("/api/test/start", {
-            method: "POST",
-            body: JSON.stringify({ session_uuid: sessionUuid }),
+          await startTestWithAntiBot({
+            session_uuid: sessionUuid,
+            website: honeypotEl?.value || "",
+            challengePayload: prefetchChallenge || undefined,
           });
-          if (!start?.test_token) {
-            throw new Error("Не удалось начать тест");
-          }
-          setTestToken(start.test_token);
           markConsentGiven();
           window.location.href = "/test/take.html";
         } catch (err) {

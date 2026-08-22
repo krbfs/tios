@@ -41,6 +41,45 @@ export function clearTestToken() {
   sessionStorage.removeItem(TEST_TOKEN_KEY);
 }
 
+/**
+ * Issue a start challenge, wait until min dwell if needed, then redeem for test_token.
+ * @param {{ session_uuid?: string, website?: string, challengePayload?: object }} [antiBot]
+ */
+export async function startTestWithAntiBot(antiBot = {}) {
+  let challengePayload = antiBot.challengePayload;
+  if (!challengePayload?.challenge) {
+    challengePayload = await apiJson("/api/test/challenge");
+  }
+
+  const challenge = challengePayload?.challenge;
+  if (!challenge) {
+    throw new Error("Не удалось начать тест");
+  }
+
+  const minWait = Number(challengePayload.min_wait_ms) || 2000;
+  const issuedAt = Number(challengePayload.issued_at_ms) || Date.now();
+  const waitMs = Math.max(0, minWait - (Date.now() - issuedAt));
+  if (waitMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+
+  const start = await apiJson("/api/test/start", {
+    method: "POST",
+    body: JSON.stringify({
+      session_uuid: antiBot.session_uuid || getSessionUuid(),
+      challenge,
+      website: typeof antiBot.website === "string" ? antiBot.website : "",
+    }),
+  });
+
+  if (!start?.test_token || start.test_token === "invalid") {
+    throw new Error("Не удалось начать тест");
+  }
+
+  setTestToken(start.test_token);
+  return start;
+}
+
 export async function apiJson(url, options = {}) {
   const headers = new Headers(options.headers || {});
   if (!headers.has("Content-Type") && options.body) {

@@ -181,14 +181,14 @@ npm run chrome:assemble
 
 ### 5.1 Старт теста (`/test/start.html`)
 
-1. Пользователь читает инструкцию
+1. Пользователь читает инструкцию (страница заранее запрашивает `GET /api/test/challenge`)
 2. Принимает согласие → `POST /api/consent` с `session_uuid`
-3. `POST /api/test/start` → короткоживущий `test_token` (sessionStorage)
+3. `POST /api/test/start` с challenge + пустым honeypot → `test_token` (sessionStorage)
 4. Переход на `/test/take.html`
 
 ### 5.2 Прохождение (`/test/take.html`)
 
-1. При необходимости обновляет `test_token` через `/api/test/start` (refresh страницы)
+1. При необходимости обновляет `test_token` через challenge → `/api/test/start` (refresh страницы)
 2. `GET /api/test/questions` с заголовком `X-Test-Token` — только `id`, `left_text`, `right_text` (без ключей шкал)
 3. Ответы −2…+2, батчами по UI
 4. Тайминг каждого ответа (`time_per_question`)
@@ -416,7 +416,8 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 | Method | Path | Auth | Описание |
 |--------|------|------|----------|
 | POST | `/api/consent` | optional | Согласие GDPR |
-| POST | `/api/test/start` | — | Выдаёт `test_token` (rate-limit) |
+| POST | `/api/test/start` | — | Выдаёт `test_token` (challenge + honeypot + rate-limit) |
+| GET | `/api/test/challenge` | — | Выдаёт start-challenge JWT (dwell / one-time) |
 | GET | `/api/test/questions` | `X-Test-Token` | 75 вопросов (только тексты) |
 | POST | `/api/test/submit` | `X-Test-Token` | Submit + расчёт; ответ: encdata + ids |
 | GET | `/api/results/by-encdata` | — | Результат из encdata (без raw answers) |
@@ -452,7 +453,8 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 - `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`.
 - `/api/test/submit` — ответ без scores; нужен `X-Test-Token`.
 - `/api/results/by-encdata` — **публичный**, без логина; **без** raw `answers`. Ссылки `?encdata=` открываются анонимно.
-- Rate-limit in-memory на start/questions/submit по IP.
+- Rate-limit in-memory на challenge/start/questions/submit по IP.
+- Антибот на старте: `GET /api/test/challenge` → JWT challenge; `POST /api/test/start` требует challenge (min dwell ~2s, one-time), пустой honeypot `website`, в production — Origin/Referer с сайта.
 
 ---
 
