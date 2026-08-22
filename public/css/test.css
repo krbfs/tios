@@ -887,11 +887,15 @@ input[type="range"].answer-slider {
     line-height: 1.45;
   }
 
+  .scale-demo-desktop > .scale-demo-legend {
+    margin-top: 14px;
+  }
+
   .question-row-desktop {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     grid-template-rows: auto auto;
-    gap: 8px 20px;
+    gap: 14px 20px;
     align-items: center;
     padding: 18px 20px;
   }
