@@ -267,10 +267,24 @@
 
       const RADAR_TICK_AXIS_INDEX = RADAR_SCALE_ORDER.indexOf("anxiety");
       const RADAR_TICK_VALUES = [6, 12, 18, 24, 30];
+      const radarLabelsMq = window.matchMedia("(min-width: 768px)");
+      let radarLabelsListenerBound = false;
+
+      function showRadarAxisLabels() {
+        return radarLabelsMq.matches;
+      }
+
+      function syncRadarAxisLabels() {
+        if (!radarChart) return;
+        radarChart.options.scales.r.pointLabels.display = showRadarAxisLabels();
+        radarChart.update("none");
+      }
 
       const radialTicksPlugin = {
         id: "radarVerticalTicks",
         afterDraw(chart) {
+          if (!showRadarAxisLabels()) return;
+
           const scale = chart.scales.r;
           if (!scale || RADAR_TICK_AXIS_INDEX < 0) return;
 
@@ -417,7 +431,10 @@
                 min: 0,
                 max: 30,
                 ticks: { display: false, stepSize: 6 },
-                pointLabels: { font: { size: 12 } },
+                pointLabels: {
+                  display: showRadarAxisLabels(),
+                  font: { size: 12 },
+                },
               },
             },
             plugins: {
@@ -434,6 +451,15 @@
           },
           plugins: [zonePlugin, radialTicksPlugin],
         });
+
+        if (!radarLabelsListenerBound) {
+          radarLabelsListenerBound = true;
+          if (typeof radarLabelsMq.addEventListener === "function") {
+            radarLabelsMq.addEventListener("change", syncRadarAxisLabels);
+          } else {
+            radarLabelsMq.addListener(syncRadarAxisLabels);
+          }
+        }
       }
 
       const SCALE_KEYS = [
