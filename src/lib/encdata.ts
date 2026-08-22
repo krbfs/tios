@@ -1,9 +1,34 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 import { fillTimings, fillAnswers, calculate_result } from "@/lib/calculations";
 
 const QUESTION_COUNT = 75;
 const PACKED_VERSION = 1;
+const SIGNED_VERSION = 2;
 const BITS_PER_ANSWER = 3;
 const ANSWER_OFFSET = 2;
+const MAC_BYTES = 16;
+
+function packedByteLength(): number {
+  return 1 + Math.ceil((QUESTION_COUNT * BITS_PER_ANSWER) / 8);
+}
+
+function encdataSecret(): Buffer {
+  const value = process.env.JWT_SECRET;
+  if (!value && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET is not configured");
+  }
+  return createHmac("sha256", value ?? "dev-secret-change-me")
+    .update("tios-encdata-v2")
+    .digest();
+}
+
+function signPacked(packed: Buffer): Buffer {
+  return createHmac("sha256", encdataSecret())
+    .update(packed)
+    .digest()
+    .subarray(0, MAC_BYTES);
+}
 
 function decodeBase64Buffer(encdata: string): Buffer {
   const normalized = encdata.trim().replace(/-/g, "+").replace(/_/g, "/");
@@ -70,8 +95,42 @@ function unpackAnswersBinary(buffer: Buffer): number[] {
   return answers;
 }
 
-/** Compact base64: 75 answers (−2…+2), 3 bits each (~40 chars). Legacy JSON arrays still decode. */
+function verifyAndUnpackSigned(buffer: Buffer): number[] {
+  const packedLen = packedByteLength();
+  if (buffer.length !== packedLen + MAC_BYTES) {
+    throw new Error("Invalid encdata encoding");
+  }
+
+  const packed = Buffer.alloc(packedLen);
+  packed[0] = PACKED_VERSION;
+  buffer.copy(packed, 1, 1, packedLen);
+
+  const mac = buffer.subarray(packedLen);
+  const expected = signPacked(packed);
+  if (mac.length !== expected.length || !timingSafeEqual(mac, expected)) {
+    throw new Error("Invalid encdata signature");
+  }
+
+  return assertAnswers(unpackAnswersBinary(packed));
+}
+
+/**
+ * Compact signed base64: 75 answers (−2…+2) + HMAC.
+ * Public result links must use this format (oracle-resistant).
+ */
 export function encodeAnswers(answers: readonly number[]): string {
+  assertAnswers([...answers]);
+  const packed = packAnswersBinary(answers);
+  const mac = signPacked(packed);
+  const signed = Buffer.alloc(packedByteLength() + MAC_BYTES);
+  signed[0] = SIGNED_VERSION;
+  packed.copy(signed, 1, 1);
+  mac.copy(signed, packedByteLength());
+  return signed.toString("base64");
+}
+
+/** Unsigned v1 packing — only for tests / migration probes (rejected by by-encdata). */
+export function encodeAnswersUnsignedForTests(answers: readonly number[]): string {
   assertAnswers([...answers]);
   return packAnswersBinary(answers).toString("base64");
 }
@@ -83,6 +142,10 @@ export function decodeAnswers(encdata: string): number[] {
   }
 
   const buffer = decodeBase64Buffer(trimmed);
+  if (buffer.length > 0 && buffer[0] === SIGNED_VERSION) {
+    return verifyAndUnpackSigned(buffer);
+  }
+
   if (buffer.length > 0 && buffer[0] === PACKED_VERSION) {
     return assertAnswers(unpackAnswersBinary(buffer));
   }
@@ -91,6 +154,27 @@ export function decodeAnswers(encdata: string): number[] {
     return assertAnswers(JSON.parse(buffer.toString("utf8")));
   } catch {
     throw new Error("Invalid encdata encoding");
+  }
+}
+
+/** True when encdata carries a valid HMAC (public scoring allowed). */
+export function isSignedEncdata(encdata: string): boolean {
+  try {
+    const buffer = decodeBase64Buffer(encdata.trim());
+    if (buffer[0] !== SIGNED_VERSION) {
+      return false;
+    }
+    verifyAndUnpackSigned(buffer);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Public by-encdata gate: unsigned / forged vectors are rejected. */
+export function assertPublicEncdata(encdata: string): void {
+  if (!isSignedEncdata(encdata)) {
+    throw new Error("Invalid or unsigned result link");
   }
 }
 
@@ -112,7 +196,7 @@ export function buildEncdataUrl(answers: readonly number[], baseUrl?: string): s
   return buildResultUrl(encodeAnswers(answers), baseUrl);
 }
 
-/** Re-encode to current compact format (also accepts legacy JSON encdata). */
+/** Re-encode to current signed format (also accepts legacy JSON / unsigned v1). */
 export function canonicalizeEncdata(encdata: string): string {
   return encodeAnswers(decodeAnswers(encdata));
 }

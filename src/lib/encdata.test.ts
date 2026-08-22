@@ -5,11 +5,14 @@ import {
   computeFromEncdata,
   decodeAnswers,
   encodeAnswers,
+  encodeAnswersUnsignedForTests,
   buildResultUrl,
   buildEncdataUrl,
   DEMO_THRESHOLD_WARNINGS,
   getDemoEncdata,
   isDemoEncdata,
+  isSignedEncdata,
+  assertPublicEncdata,
 } from "@/lib/encdata";
 
 describe("encdata", () => {
@@ -22,10 +25,12 @@ describe("encdata", () => {
       /^https:\/\/example.com\/quiz\/result\?encdata=/,
     );
   });
-  it("uses compact binary packing (~40 base64 chars for neutral answers)", () => {
+
+  it("uses compact signed packing for neutral answers", () => {
     const answers = fillAnswers(0);
     const encoded = encodeAnswers(answers);
-    expect(encoded.length).toBeLessThan(60);
+    expect(encoded.length).toBeLessThan(90);
+    expect(isSignedEncdata(encoded)).toBe(true);
     expect(decodeAnswers(encoded)).toEqual(answers);
   });
 
@@ -33,9 +38,30 @@ describe("encdata", () => {
     const answers = fillAnswers(0);
     const legacy = Buffer.from(JSON.stringify(answers), "utf8").toString("base64");
     expect(decodeAnswers(legacy)).toEqual(answers);
+    expect(isSignedEncdata(legacy)).toBe(false);
   });
 
-  it("roundtrips varied answers through compact encoding", () => {
+  it("still decodes unsigned v1 packing", () => {
+    const answers = fillAnswers(0);
+    const unsigned = encodeAnswersUnsignedForTests(answers);
+    expect(decodeAnswers(unsigned)).toEqual(answers);
+    expect(isSignedEncdata(unsigned)).toBe(false);
+    expect(() => assertPublicEncdata(unsigned)).toThrow(/unsigned/i);
+  });
+
+  it("rejects tampered signed encdata", () => {
+    const encoded = encodeAnswers(fillAnswers(0));
+    const buf = Buffer.from(
+      encoded.replace(/-/g, "+").replace(/_/g, "/") + "==",
+      "base64",
+    );
+    buf[5] ^= 0xff;
+    const tampered = buf.toString("base64");
+    expect(isSignedEncdata(tampered)).toBe(false);
+    expect(() => decodeAnswers(tampered)).toThrow(/signature|encoding/i);
+  });
+
+  it("roundtrips varied answers through signed encoding", () => {
     const answers = fillAnswers(0);
     answers[0] = -2;
     answers[74] = 2;
@@ -56,6 +82,7 @@ describe("encdata", () => {
   it("demo encdata resolves to influencer with curated sample warnings", () => {
     const demo = getDemoEncdata();
     expect(isDemoEncdata(demo)).toBe(true);
+    expect(isSignedEncdata(demo)).toBe(true);
     const result = computeFromEncdata(demo);
     expect(result.psychotype_code).toBe("influencer");
     expect(result.warnings).toEqual([...DEMO_THRESHOLD_WARNINGS]);

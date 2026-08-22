@@ -348,13 +348,18 @@ avg_intensity = sum(8 scales) / 8
 
 Модуль: `src/lib/encdata.ts`
 
-- **Compact:** 75 ответов × 3 bit → base64 (~40 символов), version byte `1`
-- **Legacy:** JSON-массив в base64 (ещё декодируется)
-- Публичный URL: `/quiz/result?encdata=…` (rewrite на `results.html`)
+- **Signed compact:** 75 ответов × 3 bit + HMAC-SHA256 (16 bytes), version byte `2` → base64 (~60 символов)
+- Подпись ключом из `JWT_SECRET` — публичный scoring-oracle по произвольным векторам закрыт
+- **Legacy decode only:** unsigned v1 / JSON (не принимаются `by-encdata`)
+- Публичный URL: `/quiz/result?encdata=…` (rewrite на `results.html`) — UX без изменений
+- `encodeAnswers()` всегда signed (submit, кабинет, демо)
 - `computeFromEncdata()` — decode + `calculate_result()`
-- `getDemoEncdata()` — фиксированный профиль «Лидер мнений» для лендинга
+- `getDemoEncdata()` — фиксированный профиль «Лидер мнений» (signed)
+- `by-encdata`: только signed + rate-limit ≤60 / IP / час
 
-**Результат не требует БД** для отображения по encdata — расчёт на лету. БД нужна для истории, админки, consent.
+**Результат не требует БД** для отображения по signed encdata — расчёт на лету. БД нужна для истории, админки, consent.
+
+Старые unsigned ссылки на by-encdata перестанут открываться; новые после теста и демо с сайта — как раньше для пользователя.
 
 ---
 
@@ -452,7 +457,7 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 - Расчёт только в `src/lib/calculations.ts` (не в `public/js`).
 - `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`; `?page=0..14` по 5 шт., без прыжков вперёд.
 - `/api/test/submit` — ответ без scores; нужен `X-Test-Token`.
-- `/api/results/by-encdata` — **публичный**, без логина; **без** raw `answers`. Ссылки `?encdata=` открываются анонимно.
+- `/api/results/by-encdata` — **публичный**, без логина; **без** raw `answers`; только **HMAC-signed** encdata; rate-limit по IP. Ссылки `?encdata=` открываются анонимно.
 - Rate-limit in-memory на challenge/start/questions/submit по IP.
 - Антибот на старте: `GET /api/test/challenge` → JWT challenge; `POST /api/test/start` требует challenge (min dwell ~2s, one-time), пустой honeypot `website`, в production — Origin/Referer с сайта.
 - Submit: обязателен `time_per_question`; отказ 429 при сумме менее 120 с или подозрительно ровных/мгновенных таймингах.
@@ -549,7 +554,7 @@ cd tc_26 && npm run db:deploy && npm run db:import-all && npm run db:verify-cont
 |----------|------------|
 | `DATABASE_URL` | Neon pooled |
 | `DIRECT_URL` | Neon direct (миграции) |
-| `JWT_SECRET` | подпись токенов |
+| `JWT_SECRET` | подпись JWT и HMAC encdata |
 | `NEXT_PUBLIC_SITE_URL` | **baked in build** — canonical, encdata URLs |
 | `NEXT_PUBLIC_GA_*` | Analytics |
 

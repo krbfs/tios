@@ -1,13 +1,28 @@
 import { error, json } from "@/lib/api/http";
 import {
+  assertPublicEncdata,
   computeFromEncdata,
   buildResultUrl,
   canonicalizeEncdata,
   isDemoEncdata,
 } from "@/lib/encdata";
 import { loadVisibleContentBlocks } from "@/lib/api/results";
+import { clientIp, consumeRateLimit } from "@/lib/test-access";
+
+const BY_ENCDATA_LIMIT = 60;
+const WINDOW_MS = 60 * 60 * 1000;
 
 export async function GET(request: Request) {
+  const ip = clientIp(request);
+  const limited = consumeRateLimit(
+    `results:by-encdata:${ip}`,
+    BY_ENCDATA_LIMIT,
+    WINDOW_MS,
+  );
+  if (!limited.ok) {
+    return error("Too many requests. Try again later.", 429);
+  }
+
   const encdata = new URL(request.url).searchParams.get("encdata")?.trim();
 
   if (!encdata) {
@@ -15,6 +30,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    assertPublicEncdata(encdata);
     const computed = computeFromEncdata(encdata);
     const canonical = canonicalizeEncdata(encdata);
     const isDemo = isDemoEncdata(canonical);

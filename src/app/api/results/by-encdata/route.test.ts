@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
-import { encodeAnswers, getDemoEncdata } from "@/lib/encdata";
+import {
+  encodeAnswers,
+  encodeAnswersUnsignedForTests,
+  getDemoEncdata,
+} from "@/lib/encdata";
+import { resetTestAccessStateForTests } from "@/lib/test-access";
 import { apiRequest, readJson } from "@/test/helpers/request";
 
 const mocks = vi.hoisted(() => ({
@@ -20,6 +25,7 @@ import { GET } from "./route";
 
 describe("GET /api/results/by-encdata", () => {
   beforeEach(() => {
+    resetTestAccessStateForTests();
     mocks.loadVisibleContentBlocks.mockReset();
     mocks.loadVisibleContentBlocks.mockResolvedValue([
       {
@@ -47,6 +53,17 @@ describe("GET /api/results/by-encdata", () => {
     );
     expect(response.status).toBe(400);
     expect(await readJson(response)).toMatchObject({ error: expect.any(String) });
+  });
+
+  it("rejects unsigned encdata (oracle probe)", async () => {
+    const unsigned = encodeAnswersUnsignedForTests(fillAnswers(0));
+    const response = await GET(
+      apiRequest(`/api/results/by-encdata?encdata=${encodeURIComponent(unsigned)}`),
+    );
+    expect(response.status).toBe(400);
+    expect(await readJson(response)).toMatchObject({
+      error: expect.stringMatching(/unsigned|Invalid/i),
+    });
   });
 
   it("returns computed result payload for valid encdata", async () => {
