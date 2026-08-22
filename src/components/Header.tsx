@@ -108,7 +108,7 @@ export function Header() {
             {navLinks}
             <Link
               href={loginHref}
-              className="site-header-drawer-login btn btn-outline mt-3 w-full"
+              className="site-header-login text-[0.9375rem] font-normal text-foreground hover:text-primary"
               data-ga-event="cta_header_login"
               onClick={() => setOpen(false)}
             >

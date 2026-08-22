@@ -122,7 +122,7 @@ body {
 }
 
 .site-header-burger {
-  display: inline-flex;
+  display: none;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
@@ -186,16 +186,8 @@ body {
   text-decoration: none;
 }
 
-.site-header-drawer-login {
-  margin-top: 12px;
-  width: 100%;
-  justify-content: center;
-  border-bottom: none !important;
-  padding-top: 0 !important;
-}
-
-.site-header-login--desktop {
-  display: none;
+.site-header-nav .site-header-login--desktop {
+  display: none !important;
 }
 
 .site-header-menu a {
@@ -219,6 +211,10 @@ body {
   .site-header-nav .site-header-spacer {
     flex: 1;
   }
+
+  .site-header-burger {
+    display: inline-flex;
+  }
 }
 
 @media (min-width: 768px) {
@@ -227,7 +223,7 @@ body {
   }
 
   .site-header-login--desktop {
-    display: inline-flex;
+    display: inline-flex !important;
   }
 
   .site-header-burger,
@@ -268,12 +264,18 @@ body {
 .site-header a {
   color: var(--link);
   text-decoration: none;
-  font-weight: 600;
 }
 
 .site-header a:hover {
   color: var(--primary-dark);
   text-decoration: underline;
+}
+
+.site-header .site-header-menu a,
+.site-header .site-header-menu--drawer a,
+.site-header .site-header-login:not(.btn) {
+  font-weight: 400;
+  color: var(--foreground);
 }
 
 .site-footer a {
@@ -557,6 +559,16 @@ input[type="range"].answer-slider {
   transition: none;
 }
 
+.question-row-mobile .statement--left {
+  border-color: rgba(26, 84, 216, 0.22);
+  background: rgba(26, 84, 216, 0.05);
+}
+
+.question-row-mobile .statement--right {
+  border-color: rgba(234, 179, 8, 0.28);
+  background: rgba(255, 193, 7, 0.08);
+}
+
 .question-row-mobile .statement-label {
   margin-bottom: 4px;
   font-size: 0.6875rem;
@@ -665,7 +677,7 @@ input[type="range"].answer-slider {
 }
 
 .question-row-mobile .slider-value {
-  margin: 8px 0 10px;
+  margin: 0 0 10px;
   font-size: 0.875rem;
   text-align: center;
 }
@@ -785,7 +797,7 @@ input[type="range"].answer-slider {
 }
 
 .scale-demo-legend {
-  margin: 10px 0 0;
+  margin: 0 0 10px;
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.45;
@@ -799,16 +811,7 @@ input[type="range"].answer-slider {
     margin-top: 16px;
   }
 
-  .question-row-mobile .statements {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 360px) {
-  .question-row-mobile .statements {
-    grid-template-columns: 1fr;
-  }
-
+  .question-row-mobile .statements,
   .scale-demo .statements {
     grid-template-columns: 1fr;
   }

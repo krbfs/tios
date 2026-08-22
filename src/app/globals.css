@@ -472,7 +472,7 @@ details > p {
 }
 
 .site-header-burger {
-  display: inline-flex;
+  display: none;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
@@ -518,6 +518,7 @@ details > p {
   display: block;
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
+  font-weight: 400;
 }
 
 .site-header-menu--drawer a:last-of-type {
@@ -526,4 +527,25 @@ details > p {
 
 .site-header-drawer-login {
   margin-top: 12px;
+}
+
+.site-header-nav .site-header-login--desktop {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .site-header-burger {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-header-nav .site-header-login--desktop {
+    display: inline-flex !important;
+  }
+
+  .site-header-burger,
+  .site-header-drawer {
+    display: none !important;
+  }
 }

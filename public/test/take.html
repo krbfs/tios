@@ -61,7 +61,7 @@
         <a href="/about" data-ga-event="cta_header_about">О тесте</a>
         <a href="/author" data-ga-event="cta_header_author">Об авторе</a>
         <a href="/contact" data-ga-event="cta_header_contact">Свяжитесь с нами</a>
-        <a href="/login.html" class="site-header-drawer-login site-header-login btn btn-outline" data-ga-event="cta_header_login">Войти</a>
+        <a href="/login.html" class="site-header-login" data-ga-event="cta_header_login">Войти</a>
       </nav>
     </div>
   </div>
@@ -398,13 +398,13 @@
         statements.className = "statements";
 
         const leftStatement = document.createElement("div");
-        leftStatement.className = "statement statement--left";
+        leftStatement.className = "statement statement--left statement--intensity-0";
         leftStatement.innerHTML =
           '<div class="statement-label">А</div><p></p>';
         leftStatement.querySelector("p").textContent = question.left_text;
 
         const rightStatement = document.createElement("div");
-        rightStatement.className = "statement statement--right";
+        rightStatement.className = "statement statement--right statement--intensity-0";
         rightStatement.innerHTML =
           '<div class="statement-label">В</div><p></p>';
         rightStatement.querySelector("p").textContent = question.right_text;
@@ -463,15 +463,16 @@
         };
 
         slider.addEventListener("input", syncMobileRow);
+
+        sliderWrap.append(sliderControl, labels);
+        mobile.append(heading, statements, caption, sliderWrap);
+
         syncMobileRow();
 
         const resizeObserver = new ResizeObserver(() => {
           updateSliderHandle(slider, sliderHandle);
         });
         resizeObserver.observe(sliderTrack);
-
-        sliderWrap.append(sliderControl, labels);
-        mobile.append(heading, statements, caption, sliderWrap);
         return mobile;
       }
 
