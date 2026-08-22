@@ -95,7 +95,14 @@ function renderPartial(
 function formatAttrs(attrs: Record<string, string>): string {
   return Object.entries(attrs)
     .map(([key, value]) => {
-      if (value.includes(" ")) {
+      if (value.includes("'") && !value.includes('"')) {
+        return `${key}="${value}"`;
+      }
+      // Prefer single quotes when value contains double quotes (e.g. HTML attrs).
+      if (value.includes('"')) {
+        return `${key}='${value}'`;
+      }
+      if (!value || /[\s=]/.test(value)) {
         return `${key}="${value}"`;
       }
       return `${key}=${value}`;
