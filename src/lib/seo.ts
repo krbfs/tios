@@ -82,6 +82,12 @@ export const pages = {
     description:
       "Смагин Олег Анатольевич — автор методики TIOS / ТИОС, более 20 лет в поведенческой психологии. С 2025 — Chief Science Officer Insighter.",
   },
+  contact: {
+    path: "/contact",
+    title: "Свяжитесь с нами | TIOS",
+    description:
+      "Вопросы по тесту ТИОС, результатам и сотрудничеству. Напишите нам через форму на сайте — ответим в ближайшее время.",
+  },
   testTake: {
     path: "/test/take",
     title: "Пройти тест ТИОС — 75 вопросов | TIOS",

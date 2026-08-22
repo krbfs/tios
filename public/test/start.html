@@ -34,7 +34,7 @@
     </a>
     <nav class="site-header-menu" aria-label="Основное меню">
       <a href="/">Главная</a>
-      <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест ТИОС</a>
+      <a href="/test/start.html" data-ga-event="cta_header_start_test">Пройти тест</a>
       <a href="/about" data-ga-event="cta_header_about">О тесте</a>
       <a href="/author" data-ga-event="cta_header_author">Об авторе</a>
     </nav>
@@ -59,26 +59,107 @@
         </p>
 
         <h2>Как проходить?</h2>
-        <ul class="muted">
-          <li>−2 — полностью согласны с утверждением А (слева)</li>
-          <li>+2 — полностью согласны с утверждением В (справа)</li>
-          <li>0 — нейтральны между двумя утверждениями</li>
-        </ul>
+        <p class="muted scale-demo-intro scale-demo-intro--mobile">
+          Для каждого вопроса сдвиньте ползунок: синий блок&nbsp;А слева, жёлтый&nbsp;В справа.
+          Чем сильнее согласие — тем ярче соответствующий блок.
+        </p>
+        <p class="muted scale-demo-intro scale-demo-intro--desktop">
+          Для каждого вопроса выберите кружок по шкале: синий блок&nbsp;А слева, жёлтый&nbsp;В справа.
+          Чем сильнее согласие — тем ярче соответствующий блок.
+        </p>
 
-        <label class="consent-box">
-          <input id="consent" type="checkbox" />
-          <span id="consent-text"></span>
-        </label>
+        <article id="scale-demo" class="scale-demo" aria-label="Интерактивный пример шкалы ответов">
+          <div class="scale-demo-mobile question-row-mobile">
+          <div class="statements">
+            <div id="scale-demo-left" class="statement statement--left statement--intensity-0">
+              <div class="statement-label">Вопрос А</div>
+              <p>−2 — полностью согласны с утверждением А<br />−1 — скорее согласны с утверждением А</p>
+            </div>
+            <div id="scale-demo-right" class="statement statement--right statement--intensity-0">
+              <div class="statement-label">Вопрос В</div>
+              <p>+1 — скорее согласны с утверждением В<br />+2 — полностью согласны с утверждением В</p>
+            </div>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-control">
+              <div id="scale-demo-track" class="slider-track">
+                <div id="scale-demo-handle" class="slider-handle" aria-hidden="true">
+                  <span class="slider-handle-arrow slider-handle-arrow--left">&lt;&lt;</span>
+                  <span class="slider-handle-arrow slider-handle-arrow--right">&gt;&gt;</span>
+                </div>
+                <input
+                  id="scale-demo-slider"
+                  type="range"
+                  class="answer-slider"
+                  min="-2"
+                  max="2"
+                  step="1"
+                  value="0"
+                  aria-label="Пример шкалы от −2 до +2"
+                />
+              </div>
+            </div>
+            <div class="slider-labels">
+              <span>−2</span><span>−1</span><span>0</span><span>+1</span><span>+2</span>
+            </div>
+          </div>
+          <p id="scale-demo-legend" class="scale-demo-legend">
+            0 — не знаю, что выбрать / оба равноценны
+          </p>
+          </div>
+
+          <div class="scale-demo-desktop">
+            <div class="scale-demo-desktop-row">
+              <div id="scale-demo-desktop-left" class="statement statement--left statement--intensity-0">
+                <div class="statement-label">Вопрос А</div>
+                <p>−2 — полностью согласны с утверждением А<br />−1 — скорее согласны с утверждением А</p>
+              </div>
+              <div class="scale-demo-likert">
+                <div class="likert-radios" role="radiogroup" aria-label="Пример шкалы от −2 до +2">
+                  <label class="likert-radio likert-radio--left">
+                    <input type="radio" name="scale-demo" value="-2" aria-label="полностью согласен с А" />
+                  </label>
+                  <label class="likert-radio likert-radio--left">
+                    <input type="radio" name="scale-demo" value="-1" aria-label="скорее согласен с А" />
+                  </label>
+                  <label class="likert-radio likert-radio--neutral">
+                    <input type="radio" name="scale-demo" value="0" checked aria-label="не знаю, что выбрать / оба равноценны" />
+                  </label>
+                  <label class="likert-radio likert-radio--right">
+                    <input type="radio" name="scale-demo" value="1" aria-label="скорее согласен с В" />
+                  </label>
+                  <label class="likert-radio likert-radio--right">
+                    <input type="radio" name="scale-demo" value="2" aria-label="полностью согласен с В" />
+                  </label>
+                </div>
+                <div class="slider-labels">
+                  <span>−2</span><span>−1</span><span>0</span><span>+1</span><span>+2</span>
+                </div>
+              </div>
+              <div id="scale-demo-desktop-right" class="statement statement--right statement--intensity-0">
+                <div class="statement-label">Вопрос В</div>
+                <p>+1 — скорее согласны с утверждением В<br />+2 — полностью согласны с утверждением В</p>
+              </div>
+            </div>
+            <p id="scale-demo-desktop-legend" class="scale-demo-legend">
+              0 — не знаю, что выбрать / оба равноценны
+            </p>
+          </div>
+        </article>
 
         <p class="muted">
-          <a href="/privacy.html" target="_blank" rel="noopener"
-            >Политика обработки персональных данных</a
-          >
+          Отвечая на вопросы, старайтесь объективно оценивать себя и честно указывать,
+          как бы вы поступили в той или иной ситуации без чьей-либо помощи и подсказок.
         </p>
+
+        <div class="consent-box">
+          <input id="consent" type="checkbox" />
+          <label id="consent-text" class="consent-box-text" for="consent"></label>
+        </div>
 
         <p class="muted">
           Регистрация не нужна: после прохождения теста ТИОС скопируйте ссылку с результатом.
-          <a href="/login.html">Войти</a> — чтобы хранить историю в личном кабинете.
+          <a href="/login.html">Войдите</a>, чтобы хранить историю в личном кабинете.
         </p>
 
         <div class="actions">
@@ -91,12 +172,34 @@
           >
             Начать тест ТИОС
           </button>
-          <a class="btn btn-outline" href="/login.html" data-ga-event="cta_test_login_optional">Войти (необязательно)</a>
+          <a class="btn btn-outline" href="/login.html" data-ga-event="cta_test_login_optional">Войти</a>
         </div>
 
         <p id="error" class="error" hidden></p>
       </div>
     </main>
+
+    <script>
+      function syncStartButton() {
+        var cb = document.getElementById("consent");
+        var btn = document.getElementById("start-btn");
+        if (!cb || !btn) return;
+        btn.disabled = !cb.checked;
+        btn.classList.toggle("btn-ready", cb.checked);
+      }
+      window.syncStartButton = syncStartButton;
+
+      var consentInput = document.getElementById("consent");
+      if (consentInput) {
+        consentInput.addEventListener("change", syncStartButton);
+        consentInput.addEventListener("input", syncStartButton);
+        consentInput.addEventListener("click", syncStartButton);
+      }
+      window.addEventListener("pageshow", syncStartButton);
+      syncStartButton();
+      setTimeout(syncStartButton, 0);
+      requestAnimationFrame(syncStartButton);
+    </script>
 
     <!-- chrome:footer -->
 <footer class="site-footer">
@@ -112,7 +215,7 @@
       <a href="https://insighter.by/" rel="noopener noreferrer" target="_blank">Insighter</a>
     </div>
     <div class="site-footer-right">
-      <a href="mailto:support@tios-test.com">support@tios-test.com</a>
+      <a href="/contact">Свяжитесь с нами</a>
     </div>
   </div>
 </footer>
@@ -121,6 +224,7 @@
     <script type="module">
       import { initSiteAnalytics } from "/js/analytics.js";
       import {
+        CONSENT_HTML,
         CONSENT_TEXT,
         CONSENT_VERSION,
         apiJson,
@@ -130,19 +234,17 @@
 
       initSiteAnalytics();
 
-      const consentCheckbox = document.getElementById("consent");
       const startBtn = document.getElementById("start-btn");
       const errorEl = document.getElementById("error");
-      document.getElementById("consent-text").textContent = CONSENT_TEXT;
+      const consentTextEl = document.getElementById("consent-text");
 
-      consentCheckbox.addEventListener("change", () => {
-        const enabled = consentCheckbox.checked;
-        startBtn.disabled = !enabled;
-        startBtn.classList.toggle("btn-ready", enabled);
-      });
+      if (consentTextEl) {
+        consentTextEl.innerHTML = CONSENT_HTML;
+      }
+      window.syncStartButton?.();
 
-      startBtn.addEventListener("click", async () => {
-        errorEl.hidden = true;
+      startBtn?.addEventListener("click", async () => {
+        if (errorEl) errorEl.hidden = true;
         startBtn.disabled = true;
 
         try {
@@ -158,12 +260,103 @@
           markConsentGiven();
           window.location.href = "/test/take.html";
         } catch (err) {
-          errorEl.textContent =
-            err instanceof Error ? err.message : "Не удалось сохранить согласие";
-          errorEl.hidden = false;
-          startBtn.disabled = !consentCheckbox.checked;
+          if (errorEl) {
+            errorEl.textContent =
+              err instanceof Error ? err.message : "Не удалось сохранить согласие";
+            errorEl.hidden = false;
+          }
+          window.syncStartButton?.();
         }
       });
+
+      const SCALE_LEGEND = {
+        "-2": "−2 — полностью согласны с утверждением А",
+        "-1": "−1 — скорее согласны с утверждением А",
+        0: "0 — не знаю, что выбрать / оба равноценны",
+        1: "+1 — скорее согласны с утверждением В",
+        2: "+2 — полностью согласны с утверждением В",
+      };
+
+      const scaleDemoSlider = document.getElementById("scale-demo-slider");
+      const scaleDemoHandle = document.getElementById("scale-demo-handle");
+      const scaleDemoTrack = document.getElementById("scale-demo-track");
+      const scaleDemoLeft = document.getElementById("scale-demo-left");
+      const scaleDemoRight = document.getElementById("scale-demo-right");
+      const scaleDemoLegend = document.getElementById("scale-demo-legend");
+      const scaleDemoDesktopLeft = document.getElementById("scale-demo-desktop-left");
+      const scaleDemoDesktopRight = document.getElementById("scale-demo-desktop-right");
+      const scaleDemoDesktopLegend = document.getElementById("scale-demo-desktop-legend");
+      const scaleDemoRadios = document.querySelectorAll('input[name="scale-demo"]');
+
+      function updateScaleDemoHandle() {
+        if (!scaleDemoSlider || !scaleDemoHandle) return;
+        const min = Number(scaleDemoSlider.min);
+        const max = Number(scaleDemoSlider.max);
+        const value = Number(scaleDemoSlider.value);
+        const ratio = (value - min) / (max - min);
+        scaleDemoHandle.style.left = `calc((100% - 3.5rem) * ${ratio} + 1.75rem)`;
+      }
+
+      function applyScaleDemoStatements(leftIntensity, rightIntensity) {
+        for (const el of [
+          scaleDemoLeft,
+          scaleDemoRight,
+          scaleDemoDesktopLeft,
+          scaleDemoDesktopRight,
+        ]) {
+          if (!el) continue;
+          el.classList.remove(
+            "statement--intensity-0",
+            "statement--intensity-1",
+            "statement--intensity-2",
+          );
+        }
+
+        scaleDemoLeft?.classList.add(`statement--intensity-${leftIntensity}`);
+        scaleDemoRight?.classList.add(`statement--intensity-${rightIntensity}`);
+        scaleDemoDesktopLeft?.classList.add(`statement--intensity-${leftIntensity}`);
+        scaleDemoDesktopRight?.classList.add(`statement--intensity-${rightIntensity}`);
+      }
+
+      function setScaleDemoValue(value) {
+        const leftIntensity = value < 0 ? Math.abs(value) : 0;
+        const rightIntensity = value > 0 ? value : 0;
+        const legend = SCALE_LEGEND[value] ?? SCALE_LEGEND[0];
+
+        applyScaleDemoStatements(leftIntensity, rightIntensity);
+
+        if (scaleDemoLegend) scaleDemoLegend.textContent = legend;
+        if (scaleDemoDesktopLegend) scaleDemoDesktopLegend.textContent = legend;
+
+        if (scaleDemoSlider && Number(scaleDemoSlider.value) !== value) {
+          scaleDemoSlider.value = String(value);
+        }
+
+        for (const radio of scaleDemoRadios) {
+          radio.checked = Number(radio.value) === value;
+        }
+
+        updateScaleDemoHandle();
+      }
+
+      if (scaleDemoSlider) {
+        scaleDemoSlider.addEventListener("input", () => {
+          setScaleDemoValue(Number(scaleDemoSlider.value));
+        });
+        if (scaleDemoTrack) {
+          new ResizeObserver(updateScaleDemoHandle).observe(scaleDemoTrack);
+        }
+      }
+
+      for (const radio of scaleDemoRadios) {
+        radio.addEventListener("change", () => {
+          if (radio.checked) {
+            setScaleDemoValue(Number(radio.value));
+          }
+        });
+      }
+
+      setScaleDemoValue(0);
     </script>
   </body>
 </html>

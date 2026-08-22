@@ -5,7 +5,7 @@ import type { AnswerValue } from "@/lib/test-storage";
 const OPTIONS: { value: AnswerValue; title: string }[] = [
   { value: -2, title: "первое утверждение однозначно ближе" },
   { value: -1, title: "скорее ближе первое утверждение" },
-  { value: 0, title: "оба утверждения одинаково близко/далеко" },
+  { value: 0, title: "не знаю, что выбрать / оба равноценны" },
   { value: 1, title: "скорее ближе второе утверждение" },
   { value: 2, title: "второе утверждение однозначно ближе" },
 ];

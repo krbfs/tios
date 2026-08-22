@@ -223,30 +223,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        id="partners"
-        className="container mx-auto px-4 py-8 md:py-12 lg:py-24"
-      >
-        <RevealOnScroll>
-          <div className="mx-auto max-w-[58rem] rounded-lg border border-solid border-border bg-white p-8 text-center md:p-10">
-            <h2 className="text-2xl font-bold md:text-3xl">Insighter</h2>
-            <p className="mx-auto mt-3 max-w-xl text-muted sm:text-lg sm:leading-7">
-              Поведенческая аналитика, исследования аудитории и инструменты для
-              развития команд и руководителей.
-            </p>
-            <a
-              href="https://insighter.by/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary btn-lg mt-6 font-bold"
-              data-ga-event="cta_home_partner_insighter"
-            >
-              Перейти на insighter.by
-            </a>
-          </div>
-        </RevealOnScroll>
-      </section>
-
       <JsonLd
         data={[
           buildFaqJsonLd(),

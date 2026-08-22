@@ -39,6 +39,7 @@
 | `/` | yes |
 | `/about` | yes |
 | `/author` | yes |
+| `/contact` | yes |
 | `/test` | yes |
 | `/test/take` | yes (тест — целевая страница) |
 | `/results` | yes (демо-пример результата) |
@@ -57,7 +58,7 @@
 - регистрация: **не обязательна**
 - старт теста: `/test` → `/test/take`
 - пример результата: `/results`
-- контакт: `support@tios-test.com`
+- контакт: форма [/contact](/contact) (Telegram); резерв: support@tios-test.com
 - партнер: Insighter — https://insighter.by/
 
 ## Structured data (JSON-LD)

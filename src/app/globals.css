@@ -108,6 +108,53 @@ input {
   color: var(--primary);
 }
 
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--foreground);
+  resize: vertical;
+}
+
+.form-field input:focus-visible,
+.form-field textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.form-status {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.form-status--success {
+  color: #15803d;
+}
+
+.form-status--error {
+  color: #b91c1c;
+}
+
 .text-link {
   color: var(--link);
   font-weight: 600;
