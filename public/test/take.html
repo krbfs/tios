@@ -172,6 +172,15 @@
         }
       }
 
+      function updateSliderHandle(slider, handle) {
+        if (!slider || !handle) return;
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const value = Number(slider.value);
+        const ratio = (value - min) / (max - min);
+        handle.style.left = `calc((100% - 3.5rem) * ${ratio} + 1.75rem)`;
+      }
+
       function playStatementSnap(el, side) {
         if (!el || reducedMotion) return;
         const cls =
@@ -182,18 +191,19 @@
         window.setTimeout(() => el.classList.remove(cls), 260);
       }
 
-      function playSliderSnap(slider) {
-        if (!slider || reducedMotion) return;
-        slider.classList.remove("answer-slider--snap");
-        void slider.offsetWidth;
-        slider.classList.add("answer-slider--snap");
-        window.setTimeout(() => slider.classList.remove("answer-slider--snap"), 260);
+      function playSliderSnap(handle) {
+        if (!handle || reducedMotion) return;
+        handle.classList.remove("slider-handle--snap");
+        void handle.offsetWidth;
+        handle.classList.add("slider-handle--snap");
+        window.setTimeout(() => handle.classList.remove("slider-handle--snap"), 260);
       }
 
       function updateMobileStatementHighlight(row, value) {
         const left = row.querySelector(".statement--left");
         const right = row.querySelector(".statement--right");
         const slider = row.querySelector(".answer-slider");
+        const handle = row.querySelector(".slider-handle");
         const leftIntensity = value < 0 ? Math.abs(value) : 0;
         const rightIntensity = value > 0 ? value : 0;
         const prevValue = row.dataset.sliderValue;
@@ -216,16 +226,14 @@
           const prevRightIntensity = Number(row.dataset.rightIntensity ?? "0");
           if (leftIntensity !== prevLeftIntensity) playStatementSnap(left, "left");
           if (rightIntensity !== prevRightIntensity) playStatementSnap(right, "right");
-          playSliderSnap(slider);
+          playSliderSnap(handle);
         }
 
         row.dataset.leftIntensity = String(leftIntensity);
         row.dataset.rightIntensity = String(rightIntensity);
         row.dataset.sliderValue = String(value);
 
-        if (slider) {
-          slider.dataset.value = String(value);
-        }
+        updateSliderHandle(slider, handle);
       }
 
       function updateMobileSliderCaption(slider, caption) {
@@ -315,10 +323,14 @@
         const sliderControl = document.createElement("div");
         sliderControl.className = "slider-control";
 
-        const hintLeft = document.createElement("span");
-        hintLeft.className = "slider-hint slider-hint--left";
-        hintLeft.setAttribute("aria-hidden", "true");
-        hintLeft.textContent = "<<";
+        const sliderTrack = document.createElement("div");
+        sliderTrack.className = "slider-track";
+
+        const sliderHandle = document.createElement("div");
+        sliderHandle.className = "slider-handle";
+        sliderHandle.setAttribute("aria-hidden", "true");
+        sliderHandle.innerHTML =
+          '<span class="slider-handle-arrow slider-handle-arrow--left">&lt;&lt;</span><span class="slider-handle-arrow slider-handle-arrow--right">&gt;&gt;</span>';
 
         const slider = document.createElement("input");
         slider.type = "range";
@@ -329,12 +341,8 @@
         slider.className = "answer-slider";
         slider.setAttribute("aria-label", `Шкала для вопроса ${questionIndex + 1}`);
 
-        const hintRight = document.createElement("span");
-        hintRight.className = "slider-hint slider-hint--right";
-        hintRight.setAttribute("aria-hidden", "true");
-        hintRight.textContent = ">>";
-
-        sliderControl.append(hintLeft, slider, hintRight);
+        sliderTrack.append(sliderHandle, slider);
+        sliderControl.append(sliderTrack);
 
         const labels = document.createElement("div");
         labels.className = "slider-labels";
@@ -354,6 +362,11 @@
 
         slider.addEventListener("input", syncMobileRow);
         syncMobileRow();
+
+        const resizeObserver = new ResizeObserver(() => {
+          updateSliderHandle(slider, sliderHandle);
+        });
+        resizeObserver.observe(sliderTrack);
 
         sliderWrap.append(sliderControl, labels, caption);
         mobile.append(heading, statements, sliderWrap);
