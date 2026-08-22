@@ -454,6 +454,8 @@ Visibility: `is_visible_default` + per-result `visibilityOverrides` (JSON).
 
 ### Защита методики (публичный контур)
 
+Полный список мер: [`METHODOLOGY_PROTECTION.md`](./METHODOLOGY_PROTECTION.md).
+
 - Расчёт только в `src/lib/calculations.ts` (не в `public/js`).
 - `/api/test/questions` — без `factor_group` / `tendency_*`; нужен `X-Test-Token`; `?page=0..14` по 5 шт., без прыжков вперёд.
 - `/api/test/submit` — ответ без scores; нужен `X-Test-Token`.
