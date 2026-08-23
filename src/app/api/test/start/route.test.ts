@@ -32,12 +32,15 @@ describe("POST /api/test/start", () => {
     );
 
     expect(response.status).toBe(200);
-    const payload = await readJson<{ test_token: string; expires_in_hours: number }>(
-      response,
-    );
+    const payload = await readJson<{
+      test_token: string;
+      questions_key: string;
+      expires_in_hours: number;
+    }>(response);
     expect(payload.expires_in_hours).toBe(4);
     expect(payload.test_token.length).toBeGreaterThan(20);
     expect(payload.test_token).not.toBe("invalid");
+    expect(payload.questions_key.length).toBeGreaterThan(20);
     expect(await verifyTestToken(payload.test_token)).toBe(true);
   });
 

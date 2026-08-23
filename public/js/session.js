@@ -1,6 +1,9 @@
+import { decryptQuestionsPayload } from "/js/questions-payload.js";
+
 const SESSION_KEY = "tc26_session_uuid";
 const CONSENT_KEY = "tc26_consent_given";
 const TEST_TOKEN_KEY = "tc26_test_token";
+const QUESTIONS_KEY = "tc26_questions_key";
 
 export const CONSENT_TEXT =
   "Я даю согласие на обработку моих персональных данных, включая результаты тестирования, в целях предоставления мне персонализированных рекомендаций, в соответствии с Политикой обработки персональных данных. Я понимаю, что результаты не являются медицинским диагнозом. Я могу отозвать согласие и удалить свои данные в любой момент в личном кабинете.";
@@ -39,6 +42,15 @@ export function setTestToken(token) {
 
 export function clearTestToken() {
   sessionStorage.removeItem(TEST_TOKEN_KEY);
+  sessionStorage.removeItem(QUESTIONS_KEY);
+}
+
+export function getQuestionsKey() {
+  return sessionStorage.getItem(QUESTIONS_KEY);
+}
+
+export function setQuestionsKey(key) {
+  sessionStorage.setItem(QUESTIONS_KEY, key);
 }
 
 /**
@@ -77,6 +89,9 @@ export async function startTestWithAntiBot(antiBot = {}) {
   }
 
   setTestToken(start.test_token);
+  if (start.questions_key) {
+    setQuestionsKey(start.questions_key);
+  }
   return start;
 }
 
@@ -108,6 +123,19 @@ export async function apiJson(url, options = {}) {
   }
 
   return data;
+}
+
+/** Fetch and decrypt one page of test questions. */
+export async function fetchQuestionsPage(page) {
+  const data = await apiJson(`/api/test/questions?page=${page}`);
+  if (data?.v === 1 && typeof data.payload === "string") {
+    const key = getQuestionsKey();
+    if (!key) {
+      throw new Error("Не удалось загрузить вопросы");
+    }
+    return decryptQuestionsPayload(data.payload, key);
+  }
+  throw new Error("Не удалось загрузить вопросы");
 }
 
 export function formatDate(iso) {

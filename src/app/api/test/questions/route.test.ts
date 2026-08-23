@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { issueTestToken, resetTestAccessStateForTests } from "@/lib/test-access";
+import { decryptQuestionsPayload } from "@/lib/questions-payload";
 import { apiRequest, readJson, withTestToken } from "@/test/helpers/request";
 
 const mocks = vi.hoisted(() => ({
@@ -45,18 +46,21 @@ describe("GET /api/test/questions", () => {
     expect(response.status).toBe(400);
   });
 
-  it("returns one page of texts only", async () => {
+  it("returns one encrypted page of texts only", async () => {
     const response = await GET(
       withTestToken(testToken, apiRequest("/api/test/questions?page=0")),
     );
     expect(response.status).toBe(200);
-    const payload = await readJson<{
-      page: number;
-      page_size: number;
-      total: number;
-      total_pages: number;
-      questions: Array<Record<string, unknown>>;
+    const envelope = await readJson<{
+      v: number;
+      payload: string;
     }>(response);
+
+    expect(envelope.v).toBe(1);
+    expect(envelope.payload.length).toBeGreaterThan(20);
+    expect(envelope.payload).not.toContain("left_text");
+
+    const payload = decryptQuestionsPayload(testToken, envelope.payload);
 
     expect(payload.page).toBe(0);
     expect(payload.page_size).toBe(5);

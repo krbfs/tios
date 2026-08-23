@@ -26,14 +26,23 @@
 | Endpoint | Защита |
 |----------|--------|
 | `GET /api/test/challenge` | Выдаёт одноразовый JWT-challenge; rate-limit по IP |
-| `POST /api/test/start` | Challenge (dwell ≥2 с, one-time) + пустой honeypot `website` + Origin/Referer (prod) → `test_token` |
-| `GET /api/test/questions?page=0…14` | Нужен `X-Test-Token`; **только** `id`, `left_text`, `right_text`; по **5** вопросов; страницы **строго по порядку**; ≤45 page-запросов / IP / час |
+| `POST /api/test/start` | Challenge (dwell ≥2 с, one-time) + пустой honeypot `website` + Origin/Referer (prod) → `test_token` + `questions_key` |
+| `GET /api/test/questions?page=0…14` | Нужен `X-Test-Token`; ответ **зашифрован** (AES-256-GCM, ключ из `questions_key`); по **5** вопросов; страницы **строго по порядку**; ≤45 page-запросов / IP / час |
 | `POST /api/test/submit` | Нужен `X-Test-Token`; ответ только `result_id`, `encdata`, `session_uuid` (без scores); обязателен `time_per_question` |
 | `GET /api/results/by-encdata` | Публично, без логина; **без** raw `answers`; только **HMAC-signed** encdata; ≤60 / IP / час |
 
 Заголовок теста: **`X-Test-Token`** (не путать с `Authorization` — это JWT пользователя для ЛК).
 
-Расчёт только на сервере: `src/lib/calculations.ts`. В `public/js` формул/ключей нет.
+Расчёт только на сервере: `src/lib/calculations.ts`. В `public/js` формул/ключей шкал нет (только расшифровка текстов вопросов для UI).
+
+### Шифрование вопросов (детали)
+
+1. `POST /api/test/start` возвращает `questions_key` (base64, 32 байта) — производная от `JWT_SECRET` + `test_token`.
+2. `GET /api/test/questions` возвращает `{ v: 1, payload }` — AES-256-GCM над JSON `{ page, questions: [{ id, left_text, right_text }, …] }`.
+3. `fetchQuestionsPage()` в `session.js` расшифровывает через Web Crypto (`questions-payload.js`).
+4. На производительность не влияет заметно (несколько КБ на страницу).
+
+**Не обещает:** защиту от Playwright с вашим JS — тексты всё равно попадают в DOM. Цель — удорожить массовый scrape через `curl`/простые парсеры.
 
 ---
 
@@ -48,8 +57,9 @@
    - слишком много мгновенных ответов;
    - тайминги подозрительно ровные (одинаковые / низкая дисперсия).
 6. **Постраничные вопросы** — нельзя получить все 75 одним вызовом; нельзя прыгнуть на page=10 без 0…9.
+7. **Шифрование payload вопросов** — API отдаёт `{ v: 1, payload: "…" }`, не plain JSON с текстами; расшифровка только в браузере (`questions_key` с `/api/test/start`).
 
-Клиент: `public/js/session.js` (`startTestWithAntiBot`), honeypot на `start.html`, страницы на `take.html`.
+Клиент: `public/js/session.js` (`startTestWithAntiBot`, `fetchQuestionsPage`), `public/js/questions-payload.js`, honeypot на `start.html`, страницы на `take.html`.
 
 ---
 
@@ -60,6 +70,7 @@
 3. **Нет answers в by-encdata** — нельзя сопоставить ответы с вопросами из публичной ссылки.
 4. **HMAC на encdata** (`JWT_SECRET`) — нельзя подделать произвольный вектор ответов и крутить публичный scoring-oracle через `?encdata=`. Исключение: фиксированный демо-профиль (всегда unsigned в `getDemoEncdata`) принимается по совпадению ответов, чтобы лендинг и mobile-тесты не зависели от секрета окружения.
 5. **Математика только на сервере**.
+6. **Шифрованный dump вопросов** — `curl` без клиентского JS видит только base64-бlob; ключ сессии (`questions_key`) выдаётся вместе с `test_token` и хранится в `sessionStorage`. Модуль: `src/lib/questions-payload.ts`.
 
 ---
 

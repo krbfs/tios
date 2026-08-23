@@ -9,6 +9,7 @@ import {
   redeemStartChallenge,
 } from "@/lib/test-access";
 import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
+import { exportQuestionsKey } from "@/lib/questions-payload";
 
 type StartBody = {
   session_uuid?: string;
@@ -82,5 +83,9 @@ export async function POST(request: Request) {
   }
 
   const test_token = await issueTestToken(sessionUuid);
-  return json({ test_token, expires_in_hours: 4 });
+  return json({
+    test_token,
+    questions_key: exportQuestionsKey(test_token),
+    expires_in_hours: 4,
+  });
 }

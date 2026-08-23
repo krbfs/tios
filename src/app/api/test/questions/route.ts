@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { error, json } from "@/lib/api/http";
+import { encryptQuestionsPayload } from "@/lib/questions-payload";
 import {
   advanceQuestionPageAccess,
   assertQuestionPageAccess,
@@ -51,15 +52,17 @@ export async function GET(request: Request) {
 
   advanceQuestionPageAccess(token, page);
 
-  return json({
-    page,
-    page_size: QUESTION_PAGE_SIZE,
-    total: QUESTION_TOTAL,
-    total_pages: QUESTION_TOTAL_PAGES,
-    questions: rows.map((question) => ({
-      id: question.id,
-      left_text: question.leftText,
-      right_text: question.rightText,
-    })),
-  });
+  return json(
+    encryptQuestionsPayload(token, {
+      page,
+      page_size: QUESTION_PAGE_SIZE,
+      total: QUESTION_TOTAL,
+      total_pages: QUESTION_TOTAL_PAGES,
+      questions: rows.map((question) => ({
+        id: question.id,
+        left_text: question.leftText,
+        right_text: question.rightText,
+      })),
+    }),
+  );
 }

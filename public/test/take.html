@@ -136,6 +136,8 @@
       import { SLIDER_LABELS } from "/js/psychotypes.js";
       import {
         apiJson,
+        fetchQuestionsPage,
+        getQuestionsKey,
         getSessionUuid,
         getTestToken,
         hasConsent,
@@ -180,7 +182,7 @@
         if (questions[start]) {
           return;
         }
-        const data = await apiJson(`/api/test/questions?page=${page}`);
+        const data = await fetchQuestionsPage(page);
         const batch = data?.questions;
         if (!Array.isArray(batch) || batch.length === 0) {
           throw new Error("Не удалось загрузить вопросы");
@@ -677,7 +679,7 @@
       });
 
       async function ensureTestToken() {
-        if (getTestToken()) {
+        if (getTestToken() && getQuestionsKey()) {
           return;
         }
         await startTestWithAntiBot({ session_uuid: getSessionUuid() });
