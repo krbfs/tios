@@ -7,12 +7,17 @@ import {
   isDemoEncdata,
 } from "@/lib/encdata";
 import { loadVisibleContentBlocks } from "@/lib/api/results";
+import { logAntibotEvent } from "@/lib/antibot-log";
+import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
 import { clientIp, consumeRateLimit } from "@/lib/test-access";
 
 const BY_ENCDATA_LIMIT = 60;
 const WINDOW_MS = 60 * 60 * 1000;
 
 export async function GET(request: Request) {
+  const blocked = await rejectIfBlockedIp(request);
+  if (blocked) return blocked;
+
   const ip = clientIp(request);
   const limited = consumeRateLimit(
     `results:by-encdata:${ip}`,
@@ -20,7 +25,15 @@ export async function GET(request: Request) {
     WINDOW_MS,
   );
   if (!limited.ok) {
-    return error("Too many requests. Try again later.", 429);
+    const response = error("Too many requests. Try again later.", 429);
+    logAntibotEvent(request, {
+      event: "rate_limit",
+      status: 429,
+      reason: "Too many requests",
+      kind: "by-encdata",
+      retry_after_sec: limited.retryAfterSec,
+    });
+    return response;
   }
 
   const encdata = new URL(request.url).searchParams.get("encdata")?.trim();
@@ -61,6 +74,15 @@ export async function GET(request: Request) {
       content_blocks: blocks,
     });
   } catch (err) {
-    return error(err instanceof Error ? err.message : "Invalid encdata", 400);
+    const message = err instanceof Error ? err.message : "Invalid encdata";
+    if (/unsigned|Invalid or unsigned/i.test(message)) {
+      logAntibotEvent(request, {
+        event: "unsigned_encdata",
+        status: 400,
+        reason: message,
+        kind: "by-encdata",
+      });
+    }
+    return error(message, 400);
   }
 }

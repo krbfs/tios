@@ -268,3 +268,17 @@ model UserConsent {
   @@index([sessionUuid])
   @@map("user_consents")
 }
+
+/// Antibot: blocked client IPs (populated by scripts/antibot-logs.py --block-auto).
+model BlockedIp {
+  id        String    @id @default(cuid())
+  ip        String    @unique @db.VarChar(45)
+  reason    String
+  score     Int?
+  source    String    @default("manual")
+  blockedAt DateTime  @default(now()) @map("blocked_at")
+  expiresAt DateTime? @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("blocked_ips")
+}

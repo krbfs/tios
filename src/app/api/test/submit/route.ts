@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   const timePerQuestion = body.time_per_question;
-  const timingDenied = assertHumanLikeTimings(timePerQuestion);
+  const timingDenied = assertHumanLikeTimings(request, timePerQuestion);
   if (timingDenied) {
     return timingDenied;
   }

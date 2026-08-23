@@ -1,4 +1,5 @@
 import { error, json } from "@/lib/api/http";
+import { logAntibotEvent } from "@/lib/antibot-log";
 import {
   assertBrowserOrigin,
   clientIp,
@@ -7,6 +8,7 @@ import {
   issueTestToken,
   redeemStartChallenge,
 } from "@/lib/test-access";
+import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
 
 type StartBody = {
   session_uuid?: string;
@@ -16,13 +18,24 @@ type StartBody = {
 };
 
 export async function POST(request: Request) {
+  const blocked = await rejectIfBlockedIp(request);
+  if (blocked) return blocked;
+
   const originError = assertBrowserOrigin(request);
   if (originError) return originError;
 
   const ip = clientIp(request);
   const limited = consumeRateLimit(`test:start:${ip}`, 40);
   if (!limited.ok) {
-    return error("Too many requests. Try again later.", 429);
+    const response = error("Too many requests. Try again later.", 429);
+    logAntibotEvent(request, {
+      event: "rate_limit",
+      status: 429,
+      reason: "Too many requests",
+      kind: "start",
+      retry_after_sec: limited.retryAfterSec,
+    });
+    return response;
   }
 
   let body: StartBody = {};
@@ -33,17 +46,29 @@ export async function POST(request: Request) {
   }
 
   if (isHoneypotFilled(body.website)) {
-    // Soft-fail: look like success to bots, do not issue a usable token.
+    logAntibotEvent(request, {
+      event: "honeypot",
+      status: 200,
+      reason: "Honeypot field filled",
+      kind: "start",
+    });
     return json({ test_token: "invalid", expires_in_hours: 4 });
   }
 
   const challenge =
     typeof body.challenge === "string" ? body.challenge.trim() : "";
   if (!challenge) {
-    return error("Start challenge required", 401);
+    const response = error("Start challenge required", 401);
+    logAntibotEvent(request, {
+      event: "challenge_missing",
+      status: 401,
+      reason: "Start challenge required",
+      kind: "start",
+    });
+    return response;
   }
 
-  const challengeError = await redeemStartChallenge(challenge);
+  const challengeError = await redeemStartChallenge(challenge, request);
   if (challengeError) return challengeError;
 
   let sessionUuid: string | undefined;

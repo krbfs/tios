@@ -107,7 +107,50 @@
 
 ---
 
-## 9. Быстрая проверка
+## 9. Structured antibot logs
+
+При срабатывании защиты пишется JSON в stdout (`severity=WARNING`, `message=tios_antibot`):
+
+- модуль: `src/lib/antibot-log.ts`
+- события: `rate_limit`, `invalid_origin`, `honeypot`, `challenge_*`, `test_token_*`, `page_skip`, `timing_*`, `unsigned_encdata`, `ip_blocked`
+
+Просмотр в проде:
+
+```bash
+npm run logs:antibot
+npm run logs:antibot -- --hours 48 --event rate_limit
+python3 scripts/antibot-logs.py --json --limit 50
+```
+
+GCP filter: `jsonPayload.message="tios_antibot"`.
+
+---
+
+## 10. IP blocklist (авто-блок «хитрых» ботов)
+
+Заблокированные IP хранятся в таблице `blocked_ips` (Prisma). Проверка на каждом запросе к `/api/test/*` и `/api/results/by-encdata` — ответ **403 Access denied**, соединение обрывается на уровне API.
+
+Модули:
+
+- `src/lib/ip-blocklist.ts` — кэш 60 с, `rejectIfBlockedIp()`
+- `scripts/block-ips.ts` — ручное управление списком
+- `scripts/antibot-logs.py` — скoring по логам + авто-блок
+
+**Авто-блок по логам** (honeypot, высокий score, серии `unsigned_encdata` / `page_skip`):
+
+```bash
+npm run logs:antibot -- --block-auto --hours 24 --limit 500
+npm run logs:antibot -- --block-auto --dry-run   # только показать кандидатов
+python3 scripts/antibot-logs.py --block 203.0.113.10 --reason "manual"
+python3 scripts/block-ips.ts list
+python3 scripts/block-ips.ts remove --ip 203.0.113.10
+```
+
+После деплоя миграции: `npm run db:deploy`.
+
+---
+
+## 11. Быстрая проверка
 
 ```bash
 cd tc_26

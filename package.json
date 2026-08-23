@@ -33,6 +33,9 @@
     "db:verify-content": "tsx scripts/verify_content_modes.ts",
     "verify:demo": "tsx scripts/verify_demo_encdata.ts",
     "validate:seo-a2a": "tsx scripts/validate_seo_a2a.ts",
+    "logs:antibot": "python3 scripts/antibot-logs.py",
+    "logs:antibot:block": "python3 scripts/antibot-logs.py --block-auto",
+    "ips:block": "tsx scripts/block-ips.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts",
     "chrome:assemble": "tsx scripts/assemble-chrome.ts"

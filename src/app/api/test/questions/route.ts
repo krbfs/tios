@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     return error("Test session required. Start the test from /test.", 401);
   }
 
-  const pageDenied = assertQuestionPageAccess(token, page);
+  const pageDenied = assertQuestionPageAccess(request, token, page);
   if (pageDenied) {
     return pageDenied;
   }

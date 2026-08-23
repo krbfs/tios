@@ -1,6 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 
+import { logAntibotEvent } from "@/lib/antibot-log";
 import { error } from "@/lib/api/http";
+import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
 
 const JWT_ALG = "HS256";
 const TEST_TOKEN_TYP = "tios_test";
@@ -136,7 +138,13 @@ export function assertBrowserOrigin(request: Request): Response | null {
   const refererHost = hostFromUrl(request.headers.get("referer"));
   const host = originHost || refererHost;
   if (!host || !allowedHosts().has(host)) {
-    return error("Invalid request origin", 403);
+    const response = error("Invalid request origin", 403);
+    logAntibotEvent(request, {
+      event: "invalid_origin",
+      status: 403,
+      reason: "Invalid request origin",
+    });
+    return response;
   }
   return null;
 }
@@ -166,36 +174,72 @@ export async function issueStartChallenge(options?: {
 
 export async function redeemStartChallenge(
   challenge: string,
+  request?: Request,
 ): Promise<Response | null> {
+  const log = (payload: Parameters<typeof logAntibotEvent>[1]) => {
+    if (request) logAntibotEvent(request, payload);
+  };
+
   let payload;
   try {
     ({ payload } = await jwtVerify(challenge, jwtSecret()));
   } catch {
+    log({
+      event: "challenge_invalid",
+      status: 401,
+      reason: "Invalid or expired start challenge",
+    });
     return error("Invalid or expired start challenge", 401);
   }
 
   if (payload.typ !== CHALLENGE_TYP) {
+    log({
+      event: "challenge_invalid",
+      status: 401,
+      reason: "Invalid challenge type",
+    });
     return error("Invalid or expired start challenge", 401);
   }
 
   const iat = typeof payload.iat === "number" ? payload.iat : null;
   if (iat == null) {
+    log({
+      event: "challenge_invalid",
+      status: 401,
+      reason: "Missing challenge iat",
+    });
     return error("Invalid or expired start challenge", 401);
   }
 
   const ageMs = Date.now() - iat * 1000;
   if (ageMs < START_MIN_DWELL_MS) {
+    log({
+      event: "challenge_dwell",
+      status: 429,
+      reason: "Challenge redeemed too early",
+      dwell_ms: ageMs,
+    });
     return error("Please wait a moment before starting the test", 429);
   }
 
   const jti = typeof payload.jti === "string" ? payload.jti : null;
   if (!jti) {
+    log({
+      event: "challenge_invalid",
+      status: 401,
+      reason: "Missing challenge jti",
+    });
     return error("Invalid or expired start challenge", 401);
   }
 
   const now = Date.now();
   pruneUsedChallenges(now);
   if (usedChallenges.has(jti)) {
+    log({
+      event: "challenge_reused",
+      status: 401,
+      reason: "Start challenge already used",
+    });
     return error("Start challenge already used", 401);
   }
   usedChallenges.set(jti, now + USED_CHALLENGE_TTL_MS);
@@ -212,6 +256,7 @@ export function isHoneypotFilled(value: unknown): boolean {
  * `time_per_question` is in seconds (same as calculations / take.html).
  */
 export function assertHumanLikeTimings(
+  request: Request,
   timePerQuestion: readonly number[],
 ): Response | null {
   if (timePerQuestion.length !== 75) {
@@ -226,20 +271,37 @@ export function assertHumanLikeTimings(
 
   const totalSeconds = timePerQuestion.reduce((sum, value) => sum + value, 0);
   if (totalSeconds < MIN_TEST_SECONDS) {
-    return error(
+    const response = error(
       "Test completed too quickly. Please take the test more carefully.",
       429,
     );
+    logAntibotEvent(request, {
+      event: "timing_too_fast",
+      status: 429,
+      reason: "Total duration below minimum",
+      total_seconds: totalSeconds,
+      min_seconds: MIN_TEST_SECONDS,
+      kind: "submit",
+    });
+    return response;
   }
 
   const fastShare =
     timePerQuestion.filter((seconds) => seconds < 0.5).length /
     timePerQuestion.length;
   if (fastShare > FAST_SHARE_LIMIT) {
-    return error(
+    const response = error(
       "Suspicious answer timing detected. Please take the test more carefully.",
       429,
     );
+    logAntibotEvent(request, {
+      event: "timing_suspicious",
+      status: 429,
+      reason: "Too many sub-0.5s answers",
+      fast_share: fastShare,
+      kind: "submit",
+    });
+    return response;
   }
 
   const buckets = new Map<number, number>();
@@ -249,10 +311,18 @@ export function assertHumanLikeTimings(
   }
   const maxSame = Math.max(...buckets.values());
   if (maxSame >= UNIFORM_TIMING_COUNT) {
-    return error(
+    const response = error(
       "Suspicious answer timing detected. Please take the test more carefully.",
       429,
     );
+    logAntibotEvent(request, {
+      event: "timing_suspicious",
+      status: 429,
+      reason: "Uniform answer timings",
+      max_same_bucket: maxSame,
+      kind: "submit",
+    });
+    return response;
   }
 
   const mean = totalSeconds / timePerQuestion.length;
@@ -261,10 +331,18 @@ export function assertHumanLikeTimings(
     timePerQuestion.length;
   const std = Math.sqrt(variance);
   if (mean > 0 && mean < 8 && std / mean < 0.08) {
-    return error(
+    const response = error(
       "Suspicious answer timing detected. Please take the test more carefully.",
       429,
     );
+    logAntibotEvent(request, {
+      event: "timing_suspicious",
+      status: 429,
+      reason: "Low timing variance",
+      timing_cv: std / mean,
+      kind: "submit",
+    });
+    return response;
   }
 
   return null;
@@ -302,31 +380,67 @@ export async function requireTestAccess(
   request: Request,
   kind: "questions" | "submit",
 ): Promise<Response | null> {
+  const blocked = await rejectIfBlockedIp(request);
+  if (blocked) return blocked;
+
   const ip = clientIp(request);
   const limit = kind === "questions" ? QUESTIONS_LIMIT : SUBMIT_LIMIT;
   const limited = consumeRateLimit(`test:${kind}:${ip}`, limit);
   if (!limited.ok) {
-    return error("Too many requests. Try again later.", 429);
+    const response = error("Too many requests. Try again later.", 429);
+    logAntibotEvent(request, {
+      event: "rate_limit",
+      status: 429,
+      reason: "Too many requests",
+      kind,
+      retry_after_sec: limited.retryAfterSec,
+    });
+    return response;
   }
 
   const token = extractTestToken(request);
   if (!token) {
-    return error("Test session required. Start the test from /test.", 401);
+    const response = error("Test session required. Start the test from /test.", 401);
+    logAntibotEvent(request, {
+      event: "test_token_missing",
+      status: 401,
+      reason: "Missing X-Test-Token",
+      kind,
+    });
+    return response;
   }
 
   const valid = await verifyTestToken(token);
   if (!valid) {
-    return error("Invalid or expired test session", 401);
+    const response = error("Invalid or expired test session", 401);
+    logAntibotEvent(request, {
+      event: "test_token_invalid",
+      status: 401,
+      reason: "Invalid or expired test session",
+      kind,
+    });
+    return response;
   }
 
   return null;
 }
 
-export function requireChallengeRateLimit(request: Request): Response | null {
+export async function requireChallengeRateLimit(request: Request): Promise<Response | null> {
+  const blocked = await rejectIfBlockedIp(request);
+  if (blocked) return blocked;
+
   const ip = clientIp(request);
   const limited = consumeRateLimit(`test:challenge:${ip}`, CHALLENGE_LIMIT);
   if (!limited.ok) {
-    return error("Too many requests. Try again later.", 429);
+    const response = error("Too many requests. Try again later.", 429);
+    logAntibotEvent(request, {
+      event: "rate_limit",
+      status: 429,
+      reason: "Too many requests",
+      kind: "challenge",
+      retry_after_sec: limited.retryAfterSec,
+    });
+    return response;
   }
   return null;
 }
@@ -335,12 +449,22 @@ export function requireChallengeRateLimit(request: Request): Response | null {
  * Pages must be fetched in order (0, then 1, …). Re-fetching earlier pages is OK.
  */
 export function assertQuestionPageAccess(
+  request: Request,
   token: string,
   page: number,
 ): Response | null {
   const unlocked = questionPageUnlocked.get(token) ?? -1;
   if (page > unlocked + 1) {
-    return error("Complete previous question pages first", 403);
+    const response = error("Complete previous question pages first", 403);
+    logAntibotEvent(request, {
+      event: "page_skip",
+      status: 403,
+      reason: "Question page fetched out of order",
+      page,
+      unlocked_page: unlocked,
+      kind: "questions",
+    });
+    return response;
   }
   return null;
 }
