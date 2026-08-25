@@ -335,6 +335,21 @@ h2 {
   text-decoration: none;
 }
 
+.btn-warning {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: #1a1a1a;
+}
+
+.btn-warning:not(:disabled):hover {
+  background: var(--warning-hover);
+  border-color: var(--warning-hover);
+  color: #1a1a1a;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(227, 184, 84, 0.35);
+}
+
 .progress-wrap {
   margin-bottom: 24px;
 }
@@ -1837,7 +1852,17 @@ input[type="range"].answer-slider {
   border-radius: var(--radius);
   background: #fff;
   padding: 20px;
-  transition: border-color 0.35s ease, background-color 0.35s ease;
+  transition:
+    border-color 0.35s ease,
+    background-color 0.35s ease,
+    transform 0.25s var(--motion-ease),
+    box-shadow 0.25s var(--motion-ease);
+}
+
+.result-promo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(26, 84, 216, 0.16);
+  border-color: var(--primary-light);
 }
 
 .result-promo-banner-head {
@@ -1879,14 +1904,6 @@ input[type="range"].answer-slider {
   padding: 20px;
   text-align: center;
   transition: border-color 0.35s ease, background-color 0.35s ease;
-}
-
-.result-promo-company-name {
-  margin: 0 0 8px;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--foreground);
 }
 
 .result-promo-company-text {

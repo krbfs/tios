@@ -38,7 +38,6 @@ export function mountResultPromo(parent) {
     </article>
 
     <article class="result-promo-company">
-      <h3 class="result-promo-company-name">ООО Бизнес Инсайтер</h3>
       <p class="result-promo-company-text">
         Психология для B2B — доступ к скрытым драйверам поведения клиентов и сотрудников
         для более точных управленческих решений.
@@ -56,7 +55,7 @@ export function mountResultPromo(parent) {
           class="btn btn-promo"
           href="${INSIGHTER}/audience-research/"
           data-ga-event="${PROMO_EVENTS.audienceResearch}"
-        >Перейти</a>
+        >Подробнее</a>
       </article>
 
       <article class="result-promo-card">
@@ -70,7 +69,7 @@ export function mountResultPromo(parent) {
           class="btn btn-promo"
           href="${INSIGHTER}/effective-team"
           data-ga-event="${PROMO_EVENTS.effectiveTeam}"
-        >Перейти</a>
+        >Подробнее</a>
       </article>
 
       <article class="result-promo-card">
@@ -83,7 +82,7 @@ export function mountResultPromo(parent) {
           class="btn btn-promo"
           href="${INSIGHTER}/leader-resource/"
           data-ga-event="${PROMO_EVENTS.leaderResource}"
-        >Перейти</a>
+        >Подробнее</a>
       </article>
     </div>
   `;
