@@ -119,9 +119,11 @@ python3 scripts/deploy.py --deploy
 - https://tios-test.com/sitemap.xml
 - view-source: canonical и `og:url` указывают на `tios-test.com`
 
-## 6. Google Analytics
+## 6. Google Analytics / Яндекс Метрика
 
 В GA4 → Admin → Data streams → добавить/обновить stream URL на `https://tios-test.com`.
+
+Счётчик Яндекс.Метрики (`111930448`) вшит в сборку (`NEXT_PUBLIC_YANDEX_METRIKA_ID`). После деплоя проверить hit в кабинете Метрики.
 
 ## 7. Чеклист
 

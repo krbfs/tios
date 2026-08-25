@@ -16,6 +16,8 @@ substitutions:
   _SITE_URL: https://tios-test.com
   _GA_MEASUREMENT_ID: G-TYYGE7DS6E
   _GA_ENABLED: "true"
+  _YANDEX_METRIKA_ID: "111930448"
+  _YANDEX_METRIKA_ENABLED: "true"
 
 options:
   machineType: E2_HIGHCPU_8
@@ -31,6 +33,10 @@ steps:
       - NEXT_PUBLIC_GA_MEASUREMENT_ID=${_GA_MEASUREMENT_ID}
       - --build-arg
       - NEXT_PUBLIC_GA_ENABLED=${_GA_ENABLED}
+      - --build-arg
+      - NEXT_PUBLIC_YANDEX_METRIKA_ID=${_YANDEX_METRIKA_ID}
+      - --build-arg
+      - NEXT_PUBLIC_YANDEX_METRIKA_ENABLED=${_YANDEX_METRIKA_ENABLED}
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}
       - -t
@@ -67,7 +73,7 @@ steps:
       - --max-instances=10
       - --concurrency=80
       - --timeout=300
-      - --update-env-vars=NODE_ENV=production,NEXT_PUBLIC_SITE_URL=${_SITE_URL},NEXT_PUBLIC_GA_MEASUREMENT_ID=${_GA_MEASUREMENT_ID},NEXT_PUBLIC_GA_ENABLED=${_GA_ENABLED}
+      - --update-env-vars=NODE_ENV=production,NEXT_PUBLIC_SITE_URL=${_SITE_URL},NEXT_PUBLIC_GA_MEASUREMENT_ID=${_GA_MEASUREMENT_ID},NEXT_PUBLIC_GA_ENABLED=${_GA_ENABLED},NEXT_PUBLIC_YANDEX_METRIKA_ID=${_YANDEX_METRIKA_ID},NEXT_PUBLIC_YANDEX_METRIKA_ENABLED=${_YANDEX_METRIKA_ENABLED}
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:${_TAG}

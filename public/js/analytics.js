@@ -1,11 +1,18 @@
-/** Google Analytics 4 — init and event helpers. */
+/** Google Analytics 4 + Yandex.Metrika — init and event helpers. */
 
 const DEFAULT_MEASUREMENT_ID = "G-TYYGE7DS6E";
+const DEFAULT_METRIKA_ID = "111930448";
 
-let initialized = false;
+let gaInitialized = false;
+let metrikaInitialized = false;
 
 function readMetaMeasurementId() {
   const meta = document.querySelector('meta[name="ga-measurement-id"]');
+  return meta?.getAttribute("content")?.trim() || "";
+}
+
+function readMetaMetrikaId() {
+  const meta = document.querySelector('meta[name="yandex-metrika-id"]');
   return meta?.getAttribute("content")?.trim() || "";
 }
 
@@ -20,7 +27,7 @@ async function loadPublicGaConfig() {
 }
 
 export function initGoogleAnalytics(measurementId) {
-  if (initialized || !measurementId || typeof window === "undefined") {
+  if (gaInitialized || !measurementId || typeof window === "undefined") {
     return;
   }
 
@@ -39,7 +46,54 @@ export function initGoogleAnalytics(measurementId) {
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
   document.head.appendChild(script);
 
-  initialized = true;
+  gaInitialized = true;
+}
+
+export function initYandexMetrika(counterId) {
+  if (metrikaInitialized || !counterId || typeof window === "undefined") {
+    return;
+  }
+
+  const scriptUrl = `https://mc.yandex.ru/metrika/tag.js?id=${encodeURIComponent(counterId)}`;
+
+  (function (m, e, t, r, i, k, a) {
+    m[i] =
+      m[i] ||
+      function () {
+        (m[i].a = m[i].a || []).push(arguments);
+      };
+    m[i].l = 1 * new Date();
+    for (let j = 0; j < document.scripts.length; j++) {
+      if (document.scripts[j].src === r) {
+        return;
+      }
+    }
+    k = e.createElement(t);
+    a = e.getElementsByTagName(t)[0];
+    k.async = 1;
+    k.src = r;
+    a.parentNode.insertBefore(k, a);
+  })(window, document, "script", scriptUrl, "ym");
+
+  window.ym(counterId, "init", {
+    ssr: true,
+    webvisor: true,
+    clickmap: true,
+    ecommerce: "dataLayer",
+    referrer: document.referrer,
+    url: location.href,
+    accurateTrackBounce: true,
+    trackLinks: true,
+  });
+
+  if (!document.getElementById("yandex-metrika-noscript")) {
+    const noscript = document.createElement("noscript");
+    noscript.id = "yandex-metrika-noscript";
+    noscript.innerHTML = `<div><img src="https://mc.yandex.ru/watch/${counterId}" style="position:absolute; left:-9999px;" alt="" /></div>`;
+    document.body.appendChild(noscript);
+  }
+
+  metrikaInitialized = true;
 }
 
 export function trackGaEvent(eventName, params = {}) {
@@ -77,16 +131,22 @@ export function bindGaClickTracking(root = document) {
 
 export async function initSiteAnalytics() {
   const config = await loadPublicGaConfig();
-  if (config?.gaEnabled === false) {
-    return;
+  if (config?.gaEnabled !== false) {
+    const measurementId =
+      config?.gaMeasurementId ||
+      readMetaMeasurementId() ||
+      DEFAULT_MEASUREMENT_ID;
+    initGoogleAnalytics(measurementId);
   }
 
-  const measurementId =
-    config?.gaMeasurementId ||
-    readMetaMeasurementId() ||
-    DEFAULT_MEASUREMENT_ID;
+  if (config?.metrikaEnabled !== false) {
+    const counterId =
+      config?.metrikaCounterId ||
+      readMetaMetrikaId() ||
+      DEFAULT_METRIKA_ID;
+    initYandexMetrika(counterId);
+  }
 
-  initGoogleAnalytics(measurementId);
   bindGaClickTracking();
   initSiteHeader();
 }

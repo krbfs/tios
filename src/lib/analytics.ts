@@ -1,9 +1,14 @@
 import { gaConfig } from "./ga-config";
+import { metrikaConfig } from "./metrika-config";
 
 export { gaConfig, getPublicGaConfig, isGaDataApiConfigured } from "./ga-config";
+export { metrikaConfig, getPublicMetrikaConfig } from "./metrika-config";
 
 export const GA_MEASUREMENT_ID = gaConfig.measurementId;
 export const GA_ENABLED = gaConfig.enabled;
+
+export const METRIKA_COUNTER_ID = metrikaConfig.counterId;
+export const METRIKA_ENABLED = metrikaConfig.enabled;
 
 declare global {
   interface Window {

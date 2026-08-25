@@ -36,6 +36,8 @@ DEFAULTS = {
     "NEXT_PUBLIC_SITE_URL": "https://tios-test.com",
     "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-TYYGE7DS6E",
     "NEXT_PUBLIC_GA_ENABLED": "true",
+    "NEXT_PUBLIC_YANDEX_METRIKA_ID": "111930448",
+    "NEXT_PUBLIC_YANDEX_METRIKA_ENABLED": "true",
 }
 
 RUNTIME_ENV_KEYS = (
@@ -45,6 +47,8 @@ RUNTIME_ENV_KEYS = (
     "JWT_EXPIRES_IN",
     "NEXT_PUBLIC_GA_MEASUREMENT_ID",
     "NEXT_PUBLIC_GA_ENABLED",
+    "NEXT_PUBLIC_YANDEX_METRIKA_ID",
+    "NEXT_PUBLIC_YANDEX_METRIKA_ENABLED",
     "GA4_PROPERTY_ID",
     "GA4_SERVICE_ACCOUNT_JSON",
     "TELEGRAM_BOT_TOKEN",
@@ -412,6 +416,11 @@ def deploy(cfg: dict[str, str]) -> None:
     warn_if_run_app_url(canonical)
     ga_id = cfg.get("NEXT_PUBLIC_GA_MEASUREMENT_ID") or DEFAULTS["NEXT_PUBLIC_GA_MEASUREMENT_ID"]
     ga_enabled = cfg.get("NEXT_PUBLIC_GA_ENABLED") or DEFAULTS["NEXT_PUBLIC_GA_ENABLED"]
+    metrika_id = cfg.get("NEXT_PUBLIC_YANDEX_METRIKA_ID") or DEFAULTS["NEXT_PUBLIC_YANDEX_METRIKA_ID"]
+    metrika_enabled = (
+        cfg.get("NEXT_PUBLIC_YANDEX_METRIKA_ENABLED")
+        or DEFAULTS["NEXT_PUBLIC_YANDEX_METRIKA_ENABLED"]
+    )
     subs = (
         f"_REGION={cfg['REGION']},"
         f"_SERVICE={cfg['SERVICE']},"
@@ -420,7 +429,9 @@ def deploy(cfg: dict[str, str]) -> None:
         f"_TAG={tag},"
         f"_SITE_URL={canonical},"
         f"_GA_MEASUREMENT_ID={ga_id},"
-        f"_GA_ENABLED={ga_enabled}"
+        f"_GA_ENABLED={ga_enabled},"
+        f"_YANDEX_METRIKA_ID={metrika_id},"
+        f"_YANDEX_METRIKA_ENABLED={metrika_enabled}"
     )
     print(f"Deploy tag={tag} canonical={canonical}", flush=True)
     run(

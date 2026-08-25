@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
+import { YandexMetrika } from "@/components/YandexMetrika";
 import {
   absoluteUrl,
   buildOrganizationJsonLd,
@@ -93,6 +94,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className={`${openSans.variable} antialiased`}>
         <GoogleAnalytics />
+        <YandexMetrika />
         <JsonLd
           data={[
             buildWebsiteJsonLd(),
