@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { pages, siteConfig } from "@/lib/seo";
+import { pages, siteConfig, type PageSeo } from "@/lib/seo";
 
 /** Indexable public URLs beyond `pages` (static HTML with index,follow). */
 const EXTRA_INDEXABLE: Array<{
@@ -33,7 +33,7 @@ const PAGE_META: Record<
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const fromPages = Object.values(pages)
+  const fromPages = (Object.values(pages) as PageSeo[])
     .filter((page) => page.robots?.index !== false)
     .map((page) => {
       const meta = PAGE_META[page.path] ?? {
