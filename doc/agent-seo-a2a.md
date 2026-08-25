@@ -59,7 +59,8 @@ Next.js page (App Router) или static public/*.html
 | `src/lib/seo.ts` | title, description, keywords, JSON-LD, A2A, llms helpers |
 | `buildPageMetadata(page)` | Metadata для App Router |
 | `staticHtmlHeadTags(page)` | OG/Twitter для `public/*.html` |
-| `src/app/opengraph-image.tsx` | OG 1200×630 |
+| `public/og.png` | OG 1200×630 (канон для превью) |
+| `src/app/opengraph-image.tsx` | генератор OG (запасной) |
 | `src/app/twitter-image.tsx` | re-export OG |
 
 ### 2.4 JSON-LD
@@ -72,7 +73,7 @@ Next.js page (App Router) или static public/*.html
 
 ### 2.5 Sitemap / robots
 
-- `src/app/sitemap.ts` — `/`, `/about`, `/author`, `/contact`, `/test`, `/test/take`, `/results`
+- `src/app/sitemap.ts` — `/`, `/about`, `/author`, `/contact`, `/test`, `/test/take`, `/results`, `/privacy.html`
 - `src/app/robots.ts` — allow AI-ботов (GPTBot, ClaudeBot, PerplexityBot, …), disallow `/login`, `/admin`
 
 ---

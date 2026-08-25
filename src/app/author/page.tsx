@@ -16,22 +16,30 @@ export default function AuthorPage() {
               <figure className="mx-auto w-full max-w-[240px] text-center md:mx-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/author-portrait-placeholder.svg"
+                  src={authorInfo.portraitSrc}
                   alt={authorInfo.portraitAlt}
                   width={240}
-                  height={300}
-                  className="block w-full rounded-2xl border border-solid border-border bg-surface-alt"
+                  height={313}
+                  className="block aspect-[720/940] w-full rounded-2xl border border-solid border-border object-cover object-top"
                 />
-                <figcaption className="mt-2 text-xs text-muted">Фото скоро</figcaption>
               </figure>
 
               <div className="space-y-4">
                 <p className="text-sm font-semibold uppercase tracking-wide text-primary">
                   {authorInfo.roleRu}
                 </p>
-                <p className="text-sm text-muted">{authorInfo.currentRoleRu}</p>
+                <p className="text-sm text-muted">
+                  Chief Science Officer,{" "}
+                  <a
+                    href={siteConfig.partner.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-link hover:underline"
+                  >
+                    Insighter
+                  </a>
+                </p>
                 <h1 className="text-3xl leading-tight md:text-4xl">{authorInfo.fullName}</h1>
-                <p className="text-lg text-muted">{authorInfo.nameEn}</p>
                 <p className="text-base leading-relaxed text-muted md:text-lg">{authorInfo.intro}</p>
               </div>
             </div>
@@ -59,7 +67,24 @@ export default function AuthorPage() {
             <RevealOnScroll key={item.period} delay={index * 50}>
               <article className="rounded-xl border border-solid border-border p-6">
                 <p className="mb-2 text-sm font-semibold text-primary">{item.period}</p>
-                <p className="leading-relaxed text-muted">{item.text}</p>
+                <p className="leading-relaxed text-muted">
+                  {item.period === "с 2025" ? (
+                    <>
+                      Chief Science Officer компании{" "}
+                      <a
+                        href={siteConfig.partner.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-link hover:underline"
+                      >
+                        Insighter
+                      </a>
+                      .
+                    </>
+                  ) : (
+                    item.text
+                  )}
+                </p>
               </article>
             </RevealOnScroll>
           ))}
@@ -75,43 +100,11 @@ export default function AuthorPage() {
 
       <section className="container-page mx-auto max-w-4xl pb-16 md:pb-20">
         <RevealOnScroll>
-          <div className="rounded-2xl border border-solid border-border bg-white p-8 text-center">
-            <h2 className="text-2xl font-bold">Узнать больше</h2>
-            <p className="mx-auto mt-3 max-w-lg text-muted">
-              Подробнее о методике, шкалах и результатах — на странице о тесте. По вопросам
-              сотрудничества и разбору результатов — через Insighter или email поддержки.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link
-                href="/about"
-                className="btn btn-primary btn-lg font-bold"
-                data-ga-event="cta_author_about_test"
-              >
-                О тесте ТИОС
-              </Link>
-              <Link
-                href="/test"
-                className="btn btn-outline btn-lg font-bold"
-                data-ga-event="cta_author_start_test"
-              >
-                Пройти тест
-              </Link>
-            </div>
-            <p className="mt-6 text-sm text-muted">
-              <a
-                href={siteConfig.partner.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-link hover:underline"
-              >
-                {siteConfig.partner.name}
-              </a>
-              {" · "}
-              <a href={`mailto:${siteConfig.email}`} className="font-semibold text-link hover:underline">
-                {siteConfig.email}
-              </a>
-            </p>
-          </div>
+          <p className="text-center">
+            <Link href="/" className="font-semibold text-link hover:underline">
+              На главную
+            </Link>
+          </p>
         </RevealOnScroll>
       </section>
 
@@ -125,10 +118,10 @@ export default function AuthorPage() {
             "@context": "https://schema.org",
             "@type": "Person",
             name: authorInfo.fullName,
-            alternateName: authorInfo.nameEn,
             jobTitle: authorInfo.roleEn,
             description: authorInfo.currentRoleEn,
             url: `${siteConfig.url}${pages.author.path}`,
+            image: `${siteConfig.url}${authorInfo.portraitSrc}`,
             worksFor: {
               "@type": "Organization",
               name: siteConfig.partner.name,

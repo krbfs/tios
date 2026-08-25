@@ -2,12 +2,14 @@
 
 export const authorInfo = {
   fullName: "Смагин Олег Анатольевич",
-  nameEn: "Oleg Smagin",
   roleRu: "Автор методики TIOS / ТИОС",
-  currentRoleRu: "Chief Science Officer, Insighter (с 2025)",
+  currentRoleRu: "Chief Science Officer, Insighter",
   roleEn: "Author of the TIOS methodology",
-  currentRoleEn: "Chief Science Officer, Insighter (since 2025)",
+  currentRoleEn: "Chief Science Officer, Insighter",
   portraitAlt: "Смагин Олег Анатольевич",
+  portraitSrc: "/author-portrait.webp",
+  portraitWidth: 720,
+  portraitHeight: 940,
   intro:
     "Ведущий специалист в области поведенческой психологии с более чем 20-ю годами опыта в области стресса, ментального здоровья, командного взаимодействия и анализа поведения целевой аудитории.",
   labPeriod:

@@ -20,10 +20,11 @@ export const siteConfig = {
   },
   questionsCount: 75,
   durationMinutes: 10,
-  /** Canonical Open Graph image (1200×630), served by Next opengraph-image. */
-  ogImagePath: "/opengraph-image",
+  /** Canonical Open Graph image (1200×630) — static PNG for Telegram/WhatsApp. */
+  ogImagePath: "/og.png",
   ogImageWidth: 1200,
   ogImageHeight: 630,
+  ogImageType: "image/png",
 };
 
 export const defaultKeywords = [
@@ -118,6 +119,7 @@ export function ogImageMeta() {
     url: absoluteUrl(siteConfig.ogImagePath),
     width: siteConfig.ogImageWidth,
     height: siteConfig.ogImageHeight,
+    type: siteConfig.ogImageType,
     alt: "TIOS — тест ТИОС, управленческий психотип за 10 минут",
   };
 }
@@ -572,8 +574,10 @@ export function staticHtmlHeadTags(page: PageSeo): string {
     `<meta property="og:description" content="${escapeAttr(page.description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
     `<meta property="og:image" content="${image}" />`,
+    `<meta property="og:image:type" content="${siteConfig.ogImageType}" />`,
     `<meta property="og:image:width" content="${siteConfig.ogImageWidth}" />`,
     `<meta property="og:image:height" content="${siteConfig.ogImageHeight}" />`,
+    `<meta property="og:image:alt" content="TIOS — тест ТИОС, управленческий психотип за 10 минут" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeAttr(page.title)}" />`,
     `<meta name="twitter:description" content="${escapeAttr(page.description)}" />`,

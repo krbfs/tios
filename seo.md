@@ -14,7 +14,8 @@
 |---|---|
 | `src/lib/seo.ts` | Единый словарь title/description/keywords/JSON-LD/A2A |
 | `src/app/layout.tsx` | metadataBase, OG, Twitter, robots, canonical |
-| `src/app/opengraph-image.tsx` | OG 1200×630 |
+| `src/app/opengraph-image.tsx` | генератор OG (опционально) |
+| `public/og.png` | канонический OG PNG 1200×630 (Telegram/WhatsApp) |
 | `src/app/sitemap.ts` | sitemap.xml |
 | `src/app/robots.ts` | robots.txt + AI-боты |
 | `src/app/.well-known/agent-card.json/route.ts` | A2A Agent Card |
@@ -43,6 +44,7 @@
 | `/test` | yes |
 | `/test/take` | yes (тест — целевая страница) |
 | `/results` | yes (демо-пример результата) |
+| `/privacy.html` | yes (политика ПДн) |
 | `/login` | **noindex** |
 
 `robots.txt` разрешает основных AI-ботов: GPTBot, ChatGPT-User, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended, Bytespider, CCBot — если политика продукта не запрещает иначе.
@@ -77,7 +79,8 @@
 - `og:type=website` на лендинге
 - `og:locale=ru_RU`
 - `og:site_name=TIOS`
-- Картинка: динамическая `/opengraph-image` (1200×630) через `src/app/opengraph-image.tsx`
+- Картинка: статический `/og.png` (1200×630, `image/png`) — путь из `siteConfig.ogImagePath`
+  (динамический `/opengraph-image` оставляем как запасной генератор)
 - Twitter: `summary_large_image` (`src/app/twitter-image.tsx`)
 - Все строки и `buildPageMetadata()` — только из `src/lib/seo.ts`
 - Статические `public/*.html` дублируют те же OG-теги вручную (держать в синхроне с `pages.*`)
@@ -167,7 +170,7 @@
 - [ ] `/login` = noindex
 - [ ] sitemap отдает 200
 - [ ] robots ссылается на sitemap; AI-боты allow
-- [ ] `/opengraph-image` отдаёт PNG 1200×630
+- [ ] `/og.png` отдаёт PNG 1200×630
 - [ ] `/.well-known/agent-card.json` валиден (skills + contentRules + offers)
 - [ ] `npm run validate:seo-a2a` проходит
 - [ ] JSON-LD валиден (без хвостов trailing comma)

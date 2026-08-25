@@ -79,7 +79,7 @@
 - /.well-known/agent-card.json — A2A Agent Card (discovery + sales skills)
 - /.well-known/ai-plugin.json — plugin-manifest для агентов
 - /.well-known/openapi-public.json — минимальный OpenAPI discovery
-- /opengraph-image — OG-картинка 1200×630
+- /og.png — OG-картинка 1200×630
 - /sitemap.xml — карта сайта
 - /robots.txt — правила роботов
 

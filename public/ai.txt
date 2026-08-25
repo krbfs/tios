@@ -25,5 +25,5 @@ Contact: support@tios-test.com
 Canonical-Description: /llms.txt
 Full-Description: /llms-full.txt
 Agent-Card: /.well-known/agent-card.json
-OpenGraph-Image: /opengraph-image
+OpenGraph-Image: /og.png
 Sitemap: /sitemap.xml
