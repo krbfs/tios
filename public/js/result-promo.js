@@ -37,6 +37,14 @@ export function mountResultPromo(parent) {
       </ul>
     </article>
 
+    <article class="result-promo-company">
+      <h3 class="result-promo-company-name">ООО Бизнес Инсайтер</h3>
+      <p class="result-promo-company-text">
+        Психология для B2B — доступ к скрытым драйверам поведения клиентов и сотрудников
+        для более точных управленческих решений.
+      </p>
+    </article>
+
     <div class="result-promo-grid">
       <article class="result-promo-card">
         <h3 class="result-promo-card-title">Получить Исследование ЦА</h3>

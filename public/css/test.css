@@ -1820,15 +1820,15 @@ input[type="range"].answer-slider {
 .result-promo-banner {
   border: none;
   border-radius: var(--radius);
-  background: linear-gradient(to right, var(--primary-dark), var(--primary-light));
+  background: linear-gradient(to right, #5b8df7, #c5d9ff);
   padding: 20px;
-  color: #fff;
+  color: var(--primary-dark);
 }
 
 .result-promo-banner .result-promo-banner-title,
 .result-promo-banner .result-promo-lead,
 .result-promo-banner .result-promo-list {
-  color: #fff;
+  color: var(--primary-dark);
 }
 
 .result-promo-card {
@@ -1869,6 +1869,31 @@ input[type="range"].answer-slider {
 
 .result-promo-list li {
   margin-bottom: 4px;
+}
+
+.result-promo-company {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.35s ease, background-color 0.35s ease;
+}
+
+.result-promo-company-name {
+  margin: 0 0 8px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
+.result-promo-company-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #374151;
 }
 
 .result-promo-grid {
@@ -1926,11 +1951,13 @@ input[type="range"].answer-slider {
 .result-promo-banner .btn-promo {
   background: #fff;
   color: var(--primary);
+  border-color: #fff;
 }
 
 .result-promo-banner .btn-promo:hover {
   background: var(--surface-alt);
   color: var(--primary-dark);
+  border-color: var(--surface-alt);
 }
 
 @media (min-width: 900px) {
@@ -2223,6 +2250,12 @@ input[type="range"].answer-slider {
 
 .result-promo.motion-reveal.is-visible .result-promo-banner {
   animation: tc-fade-up 0.5s var(--motion-ease) both;
+}
+
+.result-promo.motion-reveal.is-visible .result-promo-company {
+  animation:
+    tc-fade-up 0.45s var(--motion-ease) 80ms both,
+    promo-card-colors 7s ease-in-out 1s infinite;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-card {
