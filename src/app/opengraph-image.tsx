@@ -64,7 +64,8 @@ export default function OpenGraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            gap: 48,
             padding: "56px 64px",
             width: "100%",
             position: "relative",
@@ -110,18 +111,6 @@ export default function OpenGraphImage() {
             <div style={{ display: "flex", fontSize: 30, opacity: 0.92, maxWidth: 900 }}>
               75 вопросов · бесплатно · без обязательной регистрации
             </div>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: 24,
-              opacity: 0.9,
-            }}
-          >
-            <span>tios-test.com/test</span>
-            <span>Insighter partner</span>
           </div>
         </div>
       </div>
