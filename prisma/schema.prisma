@@ -122,10 +122,13 @@ model ContentBlock {
   isVisibleDefault Boolean  @default(true) @map("is_visible_default")
   version          Int      @default(1)
   isActive         Boolean  @default(true) @map("is_active")
+  /// V1: NULL = base block; `left`/`right` = triad addition for that variant.
+  triadVariant     String?  @map("triad_variant") @db.VarChar(10)
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  @@unique([psychotypeCode, mode, blockKey, version])
+  @@unique([psychotypeCode, mode, blockKey, triadVariant, version])
   @@index([mode, psychotypeCode, isActive])
+  @@index([psychotypeCode, mode, triadVariant])
   @@map("content_blocks")
 }
 
