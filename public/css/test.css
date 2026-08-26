@@ -1322,6 +1322,13 @@ input[type="range"].answer-slider {
   font-size: 1.05rem;
 }
 
+.content-block--complex .content-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
 .content-block--triad {
   border-style: dashed;
   border-color: #94a3b8;

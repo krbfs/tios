@@ -578,6 +578,21 @@
         body.appendChild(renderBlockBody(block));
 
         wrapper.appendChild(body);
+
+        if (block.block_key === COMPLEX_BLOCK_KEY) {
+          const actions = document.createElement("div");
+          actions.className = "content-block-actions";
+          const contact = document.createElement("a");
+          contact.className = "btn btn-primary";
+          contact.href = "https://insighter.by/contacts/";
+          contact.target = "_blank";
+          contact.rel = "noopener noreferrer";
+          contact.dataset.gaEvent = "result_complex_contact";
+          contact.textContent = "Контакт";
+          actions.appendChild(contact);
+          wrapper.appendChild(actions);
+        }
+
         return wrapper;
       }
 
