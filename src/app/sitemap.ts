@@ -8,7 +8,7 @@ const EXTRA_INDEXABLE: Array<{
   priority: number;
 }> = [
   {
-    path: "/privacy",
+    path: "/privacy.html",
     changeFrequency: "yearly",
     priority: 0.3,
   },

@@ -507,7 +507,7 @@ export function buildAiPluginManifest() {
     },
     logo_url: absoluteUrl("/favicon.svg"),
     contact_email: siteConfig.email,
-    legal_info_url: absoluteUrl("/privacy"),
+    legal_info_url: absoluteUrl("/privacy.html"),
   };
 }
 
