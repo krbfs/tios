@@ -66,14 +66,27 @@ export type PsychotypeCode =
 
 export type TriadVariant = "left" | "right";
 
-
 export type PsychotypeResult = {
   psychotype_code: PsychotypeCode;
   secondary: PsychotypeCode | null;
   is_dyad: boolean;
+  /** V1: left/right relative to the pure-type pair on the circle; null if absent. */
+  triad_variant: TriadVariant | null;
   avg_intensity: number;
   warnings: string[];
 };
+
+/** Empath sub-indices (NAVIGATOR 10.0 §4.6): sensitivity-side points on SS subsets. */
+export type EmpathSubIndices = {
+  sub_index_s: number;
+  sub_index_n: number;
+};
+
+/** When true: unresolved top-3 → `complex`; triad_variant is computed. Default off (MVP). */
+export function isV1ProfilesEnabled(): boolean {
+  const value = process.env.TIOS_V1_PROFILES;
+  return value === "true" || value === "1";
+}
 
 const BLOCK_EI = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71];
 const BLOCK_TA = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72];
@@ -176,6 +189,12 @@ const QUICK_TEST_SECONDS = 60;
 const TENSION_THRESHOLD = 10;
 
 const MIXED_PSYCHOTYPE_LABEL = "mixed";
+const COMPLEX_PSYCHOTYPE_LABEL = "complex";
+
+/** Empath S — sensitivity-side points (0..12). */
+const EMPATH_S_QUESTIONS = [33, 38, 43, 63, 68, 73] as const;
+/** Empath N — sensitivity-side points on normative facet items (0..18). */
+const EMPATH_N_QUESTIONS = [3, 8, 13, 18, 23, 28, 48, 53, 58] as const;
 
 function assertAnswers(answers: readonly number[]): void {
   if (answers.length !== QUESTION_COUNT) {
@@ -407,6 +426,76 @@ function psychotypeForPair(a: ScaleKey, b: ScaleKey): PsychotypeCode | null {
   return match?.code ?? null;
 }
 
+/** Order an adjacent pair clockwise on the tendency circle: [left, right]. */
+function orderPairClockwise(a: ScaleKey, b: ScaleKey): [ScaleKey, ScaleKey] {
+  const indexA = TENDENCY_CIRCLE.indexOf(a);
+  const indexB = TENDENCY_CIRCLE.indexOf(b);
+  const n = TENDENCY_CIRCLE.length;
+  if ((indexA + 1) % n === indexB) {
+    return [a, b];
+  }
+  return [b, a];
+}
+
+function neighborCounterClockwise(key: ScaleKey): ScaleKey {
+  const index = TENDENCY_CIRCLE.indexOf(key);
+  const n = TENDENCY_CIRCLE.length;
+  return TENDENCY_CIRCLE[(index - 1 + n) % n];
+}
+
+function neighborClockwise(key: ScaleKey): ScaleKey {
+  const index = TENDENCY_CIRCLE.indexOf(key);
+  return TENDENCY_CIRCLE[(index + 1) % TENDENCY_CIRCLE.length];
+}
+
+/**
+ * NAVIGATOR §4.7.1: third tendency relative to the pure-type pair on the circle.
+ * left = neighbor before the clockwise-first member; right = after the second.
+ */
+export function determine_triad_variant(
+  pairA: ScaleKey,
+  pairB: ScaleKey,
+  third: ScaleKey,
+): TriadVariant | null {
+  if (!areScalesAdjacent(pairA, pairB)) {
+    return null;
+  }
+  const [left, right] = orderPairClockwise(pairA, pairB);
+  if (third === neighborCounterClockwise(left)) {
+    return "left";
+  }
+  if (third === neighborClockwise(right)) {
+    return "right";
+  }
+  return null;
+}
+
+function leftSidePoints(val: number): number {
+  return val < 0 ? Math.abs(val) : 0;
+}
+
+/** Empath S/N — always computed (MVP metrics; V1 subtypes later). */
+export function calculate_empath_sub_indices(
+  answers: readonly number[],
+): EmpathSubIndices {
+  assertAnswers(answers);
+  let sub_index_s = 0;
+  let sub_index_n = 0;
+  for (const questionId of EMPATH_S_QUESTIONS) {
+    sub_index_s += leftSidePoints(answers[questionId - 1]);
+  }
+  for (const questionId of EMPATH_N_QUESTIONS) {
+    sub_index_n += leftSidePoints(answers[questionId - 1]);
+  }
+  return { sub_index_s, sub_index_n };
+}
+
+function unresolvedPsychotypeCode(): PsychotypeCode {
+  return isV1ProfilesEnabled()
+    ? COMPLEX_PSYCHOTYPE_LABEL
+    : MIXED_PSYCHOTYPE_LABEL;
+}
+
 
 function hasNonAdjacentHighPair(scores: ScaledScores, mean: number): boolean {
   const threshold = mean * 1.3;
@@ -523,22 +612,30 @@ export function determine_psychotype(
   const top2 = ranked[1]?.key;
   const top3 = ranked[2]?.key;
   const avg_intensity = calculate_avg_intensity(scaled_scores);
+  const warnings = buildThresholdWarnings(scaled_scores, avg_intensity, systemic);
+  const v1 = isV1ProfilesEnabled();
 
   if (!top1 || !top2 || !top3) {
     return {
-      psychotype_code: MIXED_PSYCHOTYPE_LABEL,
+      psychotype_code: unresolvedPsychotypeCode(),
       secondary: null,
       is_dyad: false,
+      triad_variant: null,
       avg_intensity,
-      warnings: buildThresholdWarnings(scaled_scores, avg_intensity, systemic),
+      warnings,
     };
   }
 
-  let psychotype_code: PsychotypeCode = MIXED_PSYCHOTYPE_LABEL;
+  let psychotype_code: PsychotypeCode = unresolvedPsychotypeCode();
+  let pair: [ScaleKey, ScaleKey] | null = null;
 
-  // NAVIGATOR §4.6 / опросник §5.3: сначала top1+top2, иначе fallback top1+top3 / top2+top3.
+  // NAVIGATOR §4.7: сначала top1+top2, иначе fallback top1+top3 / top2+top3.
   if (areScalesAdjacent(top1, top2)) {
-    psychotype_code = psychotypeForPair(top1, top2) ?? MIXED_PSYCHOTYPE_LABEL;
+    const code = psychotypeForPair(top1, top2);
+    if (code) {
+      psychotype_code = code;
+      pair = [top1, top2];
+    }
   } else {
     const fallbackPairs: [ScaleKey, ScaleKey][] = [
       [top1, top3],
@@ -549,12 +646,32 @@ export function determine_psychotype(
       .map(([a, b]) => ({
         sum: scaled_scores[a] + scaled_scores[b],
         code: psychotypeForPair(a, b),
+        pair: [a, b] as [ScaleKey, ScaleKey],
       }))
-      .filter((item): item is { sum: number; code: PsychotypeCode } => item.code !== null)
+      .filter(
+        (item): item is { sum: number; code: PsychotypeCode; pair: [ScaleKey, ScaleKey] } =>
+          item.code !== null,
+      )
       .sort((left, right) => right.sum - left.sum)[0];
 
     if (bestFallback) {
       psychotype_code = bestFallback.code;
+      pair = bestFallback.pair;
+    }
+  }
+
+  let triad_variant: TriadVariant | null = null;
+  if (
+    v1 &&
+    pair &&
+    psychotype_code !== MIXED_PSYCHOTYPE_LABEL &&
+    psychotype_code !== COMPLEX_PSYCHOTYPE_LABEL
+  ) {
+    const third = [top1, top2, top3].find(
+      (key) => key !== pair[0] && key !== pair[1],
+    );
+    if (third) {
+      triad_variant = determine_triad_variant(pair[0], pair[1], third);
     }
   }
 
@@ -562,8 +679,9 @@ export function determine_psychotype(
     psychotype_code,
     secondary: null,
     is_dyad: false,
+    triad_variant,
     avg_intensity,
-    warnings: buildThresholdWarnings(scaled_scores, avg_intensity, systemic),
+    warnings,
   };
 }
 
@@ -730,6 +848,7 @@ export function calculate_result(answers: readonly number[], time_per_question: 
   const scaled_scores = calculate_scaled_scores(answers);
   const scaled_systemic = calculate_systemic_scores(answers);
   const psychotype = determine_psychotype(scaled_scores, scaled_systemic);
+  const empath_sub_indices = calculate_empath_sub_indices(answers);
   const validation_warnings = validate_answers(answers, time_per_question);
 
   if (psychotype.psychotype_code === MIXED_PSYCHOTYPE_LABEL) {
@@ -741,6 +860,9 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     scaled_systemic,
     psychotype_code: psychotype.psychotype_code,
     psychotype_secondary: psychotype.secondary,
+    triad_variant: psychotype.triad_variant,
+    sub_index_s: empath_sub_indices.sub_index_s,
+    sub_index_n: empath_sub_indices.sub_index_n,
     avg_intensity: psychotype.avg_intensity,
     warnings: psychotype.warnings,
     validation_warnings: [...new Set(validation_warnings)],

@@ -1,15 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   buildSortedPersonalScales,
   calculate_avg_intensity,
   calculate_dominant_intensity,
+  calculate_empath_sub_indices,
   calculate_result,
   calculate_scaled_scores,
   calculate_systemic_scores,
   buildCoachingRecommendations,
   computeLeaderScores,
   determine_psychotype,
+  determine_triad_variant,
   fillAnswers,
   fillTimings,
   LEADER_SCORE_THRESHOLD,
@@ -35,6 +37,10 @@ const RIGHT_POLES = [
 
 const BLOCK_TA = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72];
 const BLOCK_SS = [3, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73];
+
+afterEach(() => {
+  delete process.env.TIOS_V1_PROFILES;
+});
 
 describe("calculate_scaled_scores", () => {
   it("all answers -2 → left poles 30, right poles 0", () => {
@@ -409,5 +415,135 @@ describe("calculate_result extras", () => {
     expect(result.sorted_personal_scales).toHaveLength(8);
     expect(result.leader_scores).toHaveLength(4);
     expect(Array.isArray(result.coaching_recommendations)).toBe(true);
+  });
+
+  it("always returns empath sub-indices (S/N)", () => {
+    const result = calculate_result(fillAnswers(-2), fillTimings(5));
+    expect(result.sub_index_s).toBe(12);
+    expect(result.sub_index_n).toBe(18);
+    expect(result.triad_variant).toBeNull();
+  });
+});
+
+describe("determine_triad_variant", () => {
+  it("maps circle neighbors for individualist AGG+SPO", () => {
+    expect(determine_triad_variant("aggression", "spontaneity", "rigidity")).toBe(
+      "left",
+    );
+    expect(
+      determine_triad_variant("aggression", "spontaneity", "extraversion"),
+    ).toBe("right");
+    expect(
+      determine_triad_variant("aggression", "spontaneity", "anxiety"),
+    ).toBeNull();
+  });
+
+  it("is order-independent for the pair members", () => {
+    expect(determine_triad_variant("spontaneity", "aggression", "rigidity")).toBe(
+      "left",
+    );
+  });
+});
+
+describe("calculate_empath_sub_indices", () => {
+  it("S+N sensitivity points equal total sensitivity when all left", () => {
+    const answers = fillAnswers(-2);
+    const indices = calculate_empath_sub_indices(answers);
+    expect(indices.sub_index_s).toBe(12);
+    expect(indices.sub_index_n).toBe(18);
+    expect(indices.sub_index_s + indices.sub_index_n).toBe(
+      calculate_scaled_scores(answers).sensitivity,
+    );
+  });
+
+  it("ignores right-pole answers on SS items", () => {
+    const answers = fillAnswers(2);
+    expect(calculate_empath_sub_indices(answers)).toEqual({
+      sub_index_s: 0,
+      sub_index_n: 0,
+    });
+  });
+});
+
+describe("V1 profiles (TIOS_V1_PROFILES)", () => {
+  it("MVP default: unresolved → mixed, triad null", () => {
+    const result = determine_psychotype({
+      extraversion: 20,
+      introversion: 18,
+      anxiety: 16,
+      aggression: 0,
+      sensitivity: 0,
+      spontaneity: 0,
+      lability: 0,
+      rigidity: 0,
+    });
+    // EXT+INT opposite; with ANX — no adjacent pair among top-3
+    expect(result.psychotype_code).toBe("mixed");
+    expect(result.triad_variant).toBeNull();
+  });
+
+  it("V1: unresolved → complex", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = determine_psychotype({
+      extraversion: 20,
+      introversion: 18,
+      anxiety: 16,
+      aggression: 0,
+      sensitivity: 0,
+      spontaneity: 0,
+      lability: 0,
+      rigidity: 0,
+    });
+    expect(result.psychotype_code).toBe("complex");
+    expect(result.triad_variant).toBeNull();
+  });
+
+  it("V1: triad left for individualist + RIG", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = determine_psychotype({
+      extraversion: 5,
+      introversion: 0,
+      anxiety: 0,
+      aggression: 28,
+      sensitivity: 0,
+      spontaneity: 26,
+      lability: 0,
+      rigidity: 20,
+    });
+    expect(result.psychotype_code).toBe("individualist");
+    expect(result.triad_variant).toBe("left");
+  });
+
+  it("V1: triad right for individualist + EXT", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = determine_psychotype({
+      extraversion: 22,
+      introversion: 0,
+      anxiety: 0,
+      aggression: 28,
+      sensitivity: 0,
+      spontaneity: 26,
+      lability: 0,
+      rigidity: 0,
+    });
+    expect(result.psychotype_code).toBe("individualist");
+    expect(result.triad_variant).toBe("right");
+  });
+
+  it("V1: triad from fallback pair uses leftover as third", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    // top1=SPO(30), top2=LAB(20), top3=EXT(18) → innovator via (SPO,EXT); third=LAB → right
+    const result = determine_psychotype({
+      extraversion: 18,
+      introversion: 0,
+      anxiety: 0,
+      aggression: 0,
+      sensitivity: 0,
+      spontaneity: 30,
+      lability: 20,
+      rigidity: 0,
+    });
+    expect(result.psychotype_code).toBe("innovator");
+    expect(result.triad_variant).toBe("right");
   });
 });
