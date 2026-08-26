@@ -1964,55 +1964,9 @@ input[type="range"].answer-slider {
 }
 
 .result-promo-list {
-  position: relative;
   margin: 0;
   padding-left: 1.5rem;
   list-style: none;
-}
-
-/* Running accent line along the list */
-.result-promo-list::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  border-radius: 2px;
-  background: rgba(26, 84, 216, 0.12);
-}
-
-.result-promo-list::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 2px;
-  height: 26%;
-  border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--primary) 30%,
-    var(--primary) 70%,
-    transparent
-  );
-  animation: promo-list-scan 7s ease-in-out infinite;
-}
-
-@keyframes promo-list-scan {
-  0% {
-    top: 0;
-    opacity: 0.45;
-  }
-  50% {
-    top: 74%;
-    opacity: 1;
-  }
-  100% {
-    top: 0;
-    opacity: 0.45;
-  }
 }
 
 .result-promo-list li {
@@ -2029,7 +1983,7 @@ input[type="range"].answer-slider {
   margin-bottom: 0;
 }
 
-/* Soft accent bullets */
+/* Soft accent bullets — pulse runs top→bottom→top */
 .result-promo-list li::before {
   content: "";
   position: absolute;
@@ -2038,36 +1992,122 @@ input[type="range"].answer-slider {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 0 0 rgba(26, 84, 216, 0.35);
-  animation: promo-bullet-glow 4.5s ease-in-out infinite;
+  background: #93b4f5;
+  box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+  transform: scale(1);
+  animation-duration: 5.6s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.result-promo-list li:nth-child(1)::before {
+  animation-name: promo-bullet-wave-1;
 }
 
 .result-promo-list li:nth-child(2)::before {
-  animation-delay: 0.7s;
+  animation-name: promo-bullet-wave-2;
 }
 
 .result-promo-list li:nth-child(3)::before {
-  animation-delay: 1.4s;
+  animation-name: promo-bullet-wave-3;
 }
 
 .result-promo-list li:nth-child(4)::before {
-  animation-delay: 2.1s;
+  animation-name: promo-bullet-wave-4;
 }
 
 .result-promo-list li:nth-child(5)::before {
-  animation-delay: 2.8s;
+  animation-name: promo-bullet-wave-5;
 }
 
-@keyframes promo-bullet-glow {
+@keyframes promo-bullet-wave-1 {
   0%,
+  3%,
+  69%,
+  75%,
   100% {
-    background: #6b9cff;
-    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0.2);
+    background: #93b4f5;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+    transform: scale(1);
   }
-  50% {
+  1.5%,
+  72% {
     background: var(--primary);
-    box-shadow: 0 0 0 4px rgba(26, 84, 216, 0.12);
+    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
+    transform: scale(1.35);
+  }
+}
+
+@keyframes promo-bullet-wave-2 {
+  0%,
+  10%,
+  16%,
+  60%,
+  66%,
+  100% {
+    background: #93b4f5;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+    transform: scale(1);
+  }
+  13%,
+  63% {
+    background: var(--primary);
+    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
+    transform: scale(1.35);
+  }
+}
+
+@keyframes promo-bullet-wave-3 {
+  0%,
+  21%,
+  27%,
+  51%,
+  57%,
+  100% {
+    background: #93b4f5;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+    transform: scale(1);
+  }
+  24%,
+  54% {
+    background: var(--primary);
+    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
+    transform: scale(1.35);
+  }
+}
+
+@keyframes promo-bullet-wave-4 {
+  0%,
+  32%,
+  38%,
+  42%,
+  48%,
+  100% {
+    background: #93b4f5;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+    transform: scale(1);
+  }
+  35%,
+  45% {
+    background: var(--primary);
+    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
+    transform: scale(1.35);
+  }
+}
+
+@keyframes promo-bullet-wave-5 {
+  0%,
+  39%,
+  45%,
+  100% {
+    background: #93b4f5;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
+    transform: scale(1);
+  }
+  42% {
+    background: var(--primary);
+    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
+    transform: scale(1.35);
   }
 }
 
@@ -2077,14 +2117,11 @@ input[type="range"].answer-slider {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .result-promo-list::after,
   .result-promo-list li::before {
     animation: none;
-  }
-
-  .result-promo-list li::before {
     background: var(--primary);
     box-shadow: none;
+    transform: none;
   }
 
   .result-promo-list li {
