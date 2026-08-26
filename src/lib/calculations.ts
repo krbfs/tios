@@ -82,7 +82,7 @@ export type EmpathSubIndices = {
   sub_index_n: number;
 };
 
-/** When true: unresolved top-3 → `complex`; triad_variant is computed. Default off (MVP). */
+/** When true: unresolved top-3 → `complex`; triad_variant is computed. Set via TIOS_V1_PROFILES. */
 export function isV1ProfilesEnabled(): boolean {
   const value = process.env.TIOS_V1_PROFILES;
   return value === "true" || value === "1";

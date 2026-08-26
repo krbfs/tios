@@ -299,8 +299,8 @@ npm run chrome:assemble
 3. Иначе fallback (top1,top3) / (top2,top3) — max сумма среди соседних  
 4. Иначе в **MVP** — `mixed`; в **V1** — `psychotype_code = complex`  
 
-MVP: **без диад и без triad_variant** (`secondary` всегда null; флаг `TIOS_V1_PROFILES` выкл.).  
-V1 (флаг `TIOS_V1_PROFILES=true`): `triad_variant` left/right; `complex` вместо `mixed`; суб-индексы Эмпата S/N всегда в `calculate_result`.
+MVP: **без диад**; при `TIOS_V1_PROFILES` выкл. — без triad_variant, unresolved → `mixed`.  
+V1 (`TIOS_V1_PROFILES=true`, по умолчанию в `.env.example`): `triad_variant` left/right; `complex` вместо `mixed`; суб-индексы Эмпата S/N всегда в `calculate_result`.
 
 | code | Пара | RU |
 |------|------|-----|
