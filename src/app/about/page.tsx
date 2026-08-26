@@ -93,39 +93,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="container-page mx-auto max-w-3xl px-0 pb-12 md:pb-16">
-        <RevealOnScroll>
-          <div className="rounded-2xl border border-solid border-border bg-surface-alt p-6 md:p-8">
-            <h2 className="mb-4 text-2xl font-bold">Что означает название</h2>
-            <div className="space-y-3 text-lg leading-relaxed">
-              <p className="font-semibold text-primary">{tiosAcronymTitle}</p>
-              <div className="rounded-xl border border-solid border-border bg-white px-5 py-4 text-[0.9375rem] leading-7 md:text-base">
-                <p>
-                  Тест Индивидуальных Операционных Сценариев
-                  <br />
-                  <span className="text-muted">
-                    (Тест Индивидуальных Операционных Стратегий (или Стилей)
-                  </span>
-                </p>
-                <p className="mt-3">— {tiosAcronymLines[2]}</p>
-                <p className="mt-3">
-                  —{" "}
-                  <Link href="/author" className="font-semibold text-link hover:underline">
-                    {tiosAcronymLines[3]}
-                  </Link>
-                </p>
-                <p className="mt-3">
-                  —{" "}
-                  <Link href="/author" className="font-semibold text-link hover:underline">
-                    {tiosAcronymLines[4]}
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </div>
-        </RevealOnScroll>
-      </section>
-
       <section className="container-page mx-auto max-w-3xl space-y-6 pt-12 pb-12 md:pt-16 md:pb-16">
         <RevealOnScroll>
           <h2 className="text-center text-2xl font-bold md:text-3xl">Для чего нужен тест</h2>
@@ -239,7 +206,7 @@ export default function AboutPage() {
         </RevealOnScroll>
       </section>
 
-      <section className="container-page mx-auto max-w-3xl pb-16 md:pb-20">
+      <section className="container-page mx-auto max-w-3xl pb-12 md:pb-16">
         <RevealOnScroll>
           <div className="rounded-2xl border border-solid border-border bg-white p-8 text-center">
             <h2 className="text-2xl font-bold">Готовы узнать свой профиль?</h2>
@@ -262,6 +229,39 @@ export default function AboutPage() {
               >
                 Посмотреть демо
               </Link>
+            </div>
+          </div>
+        </RevealOnScroll>
+      </section>
+
+      <section className="container-page mx-auto max-w-3xl px-0 pb-16 md:pb-20">
+        <RevealOnScroll>
+          <div className="rounded-2xl border border-solid border-border bg-surface-alt p-6 md:p-8">
+            <h2 className="mb-4 text-2xl font-bold">Что означает название</h2>
+            <div className="space-y-3 text-lg leading-relaxed">
+              <p className="font-semibold text-primary">{tiosAcronymTitle}</p>
+              <div className="rounded-xl border border-solid border-border bg-white px-5 py-4 text-[0.9375rem] leading-7 md:text-base">
+                <p>
+                  Тест Индивидуальных Операционных Сценариев
+                  <br />
+                  <span className="text-muted">
+                    (Тест Индивидуальных Операционных Стратегий (или Стилей)
+                  </span>
+                </p>
+                <p className="mt-3">— {tiosAcronymLines[2]}</p>
+                <p className="mt-3">
+                  —{" "}
+                  <Link href="/author" className="font-semibold text-link hover:underline">
+                    {tiosAcronymLines[3]}
+                  </Link>
+                </p>
+                <p className="mt-3">
+                  —{" "}
+                  <Link href="/author" className="font-semibold text-link hover:underline">
+                    {tiosAcronymLines[4]}
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </RevealOnScroll>
