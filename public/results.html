@@ -76,6 +76,7 @@
       <div id="result-card" class="card">
         <h1 id="result-title">Загрузка результата…</h1>
         <p id="psychotype-title" class="muted"></p>
+        <p id="v1-profile-meta" class="muted v1-profile-meta" hidden></p>
         <p id="sorted-scales-summary" class="muted sorted-scales-summary" hidden></p>
         <aside id="validation-warnings" class="validation-warnings" hidden aria-label="Предупреждения валидации">
           <ul id="validation-warnings-list" class="validation-warnings__list"></ul>
@@ -93,6 +94,23 @@
             </table>
           </div>
         </div>
+
+        <section id="empath-subindices" class="empath-subindices" hidden aria-label="Суб-индексы Эмпата">
+          <h2>Уточнение профиля Эмпата</h2>
+          <p class="muted" style="margin: 0 0 12px">
+            Дополнительные индексы по блоку сензитивности (NAVIGATOR §4.6).
+          </p>
+          <dl class="empath-subindices-grid">
+            <div>
+              <dt>S — сензитивность</dt>
+              <dd><span id="sub-index-s">—</span> <span class="muted">/ 12</span></dd>
+            </div>
+            <div>
+              <dt>N — нормативность</dt>
+              <dd><span id="sub-index-n">—</span> <span class="muted">/ 18</span></dd>
+            </div>
+          </dl>
+        </section>
 
         <section id="mode-request-section" class="card mode-request-card" hidden>
           <h2>Дополнительные режимы</h2>
@@ -199,9 +217,13 @@
 
       const resultTitle = document.getElementById("result-title");
       const psychotypeTitle = document.getElementById("psychotype-title");
+      const v1ProfileMeta = document.getElementById("v1-profile-meta");
       const sortedScalesSummary = document.getElementById("sorted-scales-summary");
       const validationWarningsEl = document.getElementById("validation-warnings");
       const validationWarningsList = document.getElementById("validation-warnings-list");
+      const empathSubindices = document.getElementById("empath-subindices");
+      const subIndexSEl = document.getElementById("sub-index-s");
+      const subIndexNEl = document.getElementById("sub-index-n");
 
       const VALIDATION_LABELS = {
         falsy_answers: "Все ответы одинаковые — достоверность результата снижена.",
@@ -210,6 +232,11 @@
         incompletely_answered_block: "Один из блоков вопросов заполнен неполно или без выраженных предпочтений.",
         irregular_psycho_type: "Смешанный тип — требуется углублённый анализ специалистом.",
       };
+      const TRIAD_BLOCK_KEYS = new Set([
+        "triad_addition_left",
+        "triad_addition_right",
+      ]);
+      const COMPLEX_BLOCK_KEY = "complex_profile_message";
       const radarAverageEl = document.getElementById("radar-average");
       const scaleTableBody = document.getElementById("scale-table-body");
       const contentBlocksEl = document.getElementById("content-blocks");
@@ -529,6 +556,18 @@
       function renderBlock(block) {
         const wrapper = document.createElement("article");
         wrapper.className = "content-block";
+        if (block.block_key === COMPLEX_BLOCK_KEY) {
+          wrapper.classList.add("content-block--complex");
+        } else if (
+          TRIAD_BLOCK_KEYS.has(block.block_key) ||
+          block.triad_variant === "left" ||
+          block.triad_variant === "right"
+        ) {
+          wrapper.classList.add("content-block--triad");
+          if (block.triad_variant) {
+            wrapper.dataset.triadVariant = block.triad_variant;
+          }
+        }
 
         if (block.title) {
           const title = document.createElement("div");
@@ -543,6 +582,50 @@
 
         wrapper.appendChild(body);
         return wrapper;
+      }
+
+      function renderV1ProfileMeta(result) {
+        const parts = [];
+        if (result.psychotype_code === "complex") {
+          parts.push("Сложный профиль: стандартный портрет заменён плашкой ниже");
+        }
+        if (result.triad_variant === "left") {
+          parts.push("Уточнение триады: левая");
+        } else if (result.triad_variant === "right") {
+          parts.push("Уточнение триады: правая");
+        }
+        if (parts.length === 0) {
+          v1ProfileMeta.hidden = true;
+          v1ProfileMeta.textContent = "";
+          return;
+        }
+        v1ProfileMeta.textContent = parts.join(" · ");
+        v1ProfileMeta.hidden = false;
+      }
+
+      function renderEmpathSubindices(result) {
+        const show =
+          result.psychotype_code === "empath" &&
+          typeof result.sub_index_s === "number" &&
+          typeof result.sub_index_n === "number";
+        if (!show) {
+          empathSubindices.hidden = true;
+          return;
+        }
+        subIndexSEl.textContent = String(result.sub_index_s);
+        subIndexNEl.textContent = String(result.sub_index_n);
+        empathSubindices.hidden = false;
+      }
+
+      function orderContentBlocks(blocks) {
+        const list = [...(blocks || [])];
+        const isTriad = (block) =>
+          TRIAD_BLOCK_KEYS.has(block.block_key) ||
+          block.triad_variant === "left" ||
+          block.triad_variant === "right";
+        const base = list.filter((block) => !isTriad(block));
+        const triad = list.filter(isTriad);
+        return [...base, ...triad];
       }
 
       function updateResultLink(result) {
@@ -625,8 +708,14 @@
         resultData = result;
         resultTitle.textContent = formatResultTitle(result);
         psychotypeTitle.textContent = formatPsychotypeTitle(result.psychotype_code);
+        resultCard.classList.toggle(
+          "result-card--complex",
+          result.psychotype_code === "complex",
+        );
+        renderV1ProfileMeta(result);
         renderSortedScales(result.sorted_personal_scales);
         renderValidationWarnings(result.validation_warnings);
+        renderEmpathSubindices(result);
 
         const scores = result.scaled_scores || {};
 
@@ -635,7 +724,7 @@
         updateDisclaimerHighlight(scores);
 
         contentBlocksEl.replaceChildren();
-        (result.content_blocks || []).forEach((block, index) => {
+        orderContentBlocks(result.content_blocks).forEach((block, index) => {
           const element = renderBlock(block);
           element.classList.add("content-block--reveal");
           element.style.animationDelay = `${index * 60}ms`;

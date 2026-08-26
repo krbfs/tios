@@ -227,10 +227,21 @@
       }
 
       function renderMeta(result) {
+        const triad =
+          result.triad_variant === "left" || result.triad_variant === "right"
+            ? result.triad_variant
+            : "—";
+        const subS =
+          typeof result.sub_index_s === "number" ? String(result.sub_index_s) : "—";
+        const subN =
+          typeof result.sub_index_n === "number" ? String(result.sub_index_n) : "—";
         resultMeta.innerHTML = `
           <dt>ID</dt><dd>${result.id}</dd>
           <dt>Дата</dt><dd>${formatDate(result.created_at)}</dd>
           <dt>Психотип</dt><dd>${formatPsychotypeSummary(result.psychotype_code)}</dd>
+          <dt>triad_variant</dt><dd>${triad}</dd>
+          <dt>sub_index_s</dt><dd>${subS}</dd>
+          <dt>sub_index_n</dt><dd>${subN}</dd>
           <dt>Режим</dt><dd>${modeLabel(result.mode)}</dd>
           <dt>Интенсивность</dt><dd>${result.avg_intensity ?? "—"}</dd>
         `;
@@ -282,6 +293,15 @@
         for (const block of visibleBlocks) {
           const wrapper = document.createElement("article");
           wrapper.className = "content-block";
+          if (block.block_key === "complex_profile_message") {
+            wrapper.classList.add("content-block--complex");
+          } else if (
+            block.block_key === "triad_addition_left" ||
+            block.block_key === "triad_addition_right" ||
+            block.triad_variant
+          ) {
+            wrapper.classList.add("content-block--triad");
+          }
           wrapper.innerHTML = `<div class="content-block-title">${block.title || block.block_key}</div>`;
           const body = document.createElement("div");
           body.className = "content-block-body";
