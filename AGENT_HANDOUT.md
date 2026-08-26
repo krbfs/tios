@@ -38,13 +38,15 @@
 
 При конфликте:
 
-1. **NAVIGATOR** (`source_current/NAVIGATOR финал.docx` v9.0 / правила в `.cursor/rules/navigator-domain.mdc`)
-2. **ТЗ** (`source_current/ФИНАЛЬНОЕ_РАЗВЁРНУТОЕ_ТЕХНИЧЕСКОЕ_ЗАДАНИЕ (2).docx` v4.0) — архитектура, БД, API
-3. **Вопросник и математика** (`source_current/Текст_опросника_и_математика_финал.docx` v3.0)
+1. **NAVIGATOR** (`source_current/NAVIGATOR финал.docx` v10.0 / правила в `.cursor/rules/navigator-domain.mdc`)
+2. **ТЗ** (`source_current/ФИНАЛЬНОЕ_РАЗВЁРНУТОЕ_ТЕХНИЧЕСКОЕ_ЗАДАНИЕ (2).docx` v5.0) — архитектура, БД, API
+3. **Вопросник и математика** (`source_current/Текст_опросника_и_математика_финал.docx` — окончательно)
 4. **Файлы контента** в `source_current/` — тексты режимов
 
 **NAVIGATOR побеждает ТЗ.**  
 **При любом сомнении — спросить пользователя**, не выбирать формулу/текст самостоятельно.
+
+**Roadmap (NAVIGATOR 10.0):** MVP = 8 чистых типов. V1 = `triad_variant` + `complex` + суб-индексы Эмпата S/N + `insighter_you` (не 8 диад-кодов). V2 опц. = полные триады.
 
 Дополнительно в репозитории:
 
@@ -288,16 +290,17 @@ npm run chrome:assemble
 
 Зона напряжения: |Δ| > 10. Типология в `classifyCorrespondence()`.
 
-### 6.5 Психотип (NAVIGATOR §4.6)
+### 6.5 Психотип (NAVIGATOR §4.7 / ранее §4.6)
 
 Круг: **AGG → SPO → EXT → LAB → ANX → SEN → INT → RIG**.
 
 1. Сортировка 8 тенденций по убыванию  
 2. top1 + top2 соседние → психотип пары  
 3. Иначе fallback (top1,top3) / (top2,top3) — max сумма среди соседних  
-4. Иначе `mixed`  
+4. Иначе в **MVP** — `mixed`; в **V1** — `psychotype_code = complex`  
 
-MVP: **без диад** (`secondary` всегда null).
+MVP: **без диад и без triad_variant** (`secondary` всегда null).  
+V1 (ещё не в коде): `triad_variant` left/right; суб-индексы Эмпата S/N.
 
 | code | Пара | RU |
 |------|------|-----|
@@ -340,7 +343,7 @@ avg_intensity = sum(8 scales) / 8
 - `too_many_fast_answers` — >10% ответов <2 сек
 - `incompletely_answered_block` — блок с ≥3 пропусками без сильных ответов
 - `irregular_psycho_type` — психотип `mixed` («нет описаний для такого сочетания»)
-- ~~`impossible_tendencies`~~ — **не применяется** при раздельном подсчёте NAVIGATOR v9 (EXT и INT независимы)
+- ~~`impossible_tendencies`~~ — **не применяется** при раздельном подсчёте NAVIGATOR v10 (EXT и INT независимы)
 
 ---
 
