@@ -1948,12 +1948,13 @@ input[type="range"].answer-slider {
   font-weight: 700;
   line-height: 1.35;
   flex: 1 1 240px;
-  transition: font-size 0.22s var(--motion-ease), letter-spacing 0.22s var(--motion-ease);
+  transform-origin: left center;
+  transition: transform 2s ease-in-out, letter-spacing 2s ease-in-out;
 }
 
 .result-promo-banner-title:hover {
-  font-size: 1.28rem;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  animation: promo-text-breathe 5.5s ease-in-out infinite;
 }
 
 .result-promo-banner-actions {
@@ -1967,11 +1968,13 @@ input[type="range"].answer-slider {
   margin: 0 0 8px;
   font-weight: 600;
   font-size: 1rem;
-  transition: font-size 0.22s var(--motion-ease);
+  display: inline-block;
+  transform-origin: left center;
+  transition: transform 2s ease-in-out;
 }
 
 .result-promo-lead:hover {
-  font-size: 1.15rem;
+  animation: promo-text-breathe 5.5s ease-in-out infinite;
 }
 
 .result-promo-list {
@@ -1982,12 +1985,22 @@ input[type="range"].answer-slider {
 .result-promo-list li {
   margin-bottom: 4px;
   font-size: 1rem;
-  transition: font-size 0.22s var(--motion-ease), transform 0.22s var(--motion-ease);
   transform-origin: left center;
+  transition: transform 2s ease-in-out;
 }
 
 .result-promo-list li:hover {
-  font-size: 1.12rem;
+  animation: promo-text-breathe 5.5s ease-in-out infinite;
+}
+
+@keyframes promo-text-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.055);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1995,16 +2008,11 @@ input[type="range"].answer-slider {
   .result-promo-lead,
   .result-promo-list li {
     transition: none;
+    animation: none !important;
   }
 
   .result-promo-banner-title:hover {
-    font-size: 1.125rem;
     letter-spacing: normal;
-  }
-
-  .result-promo-lead:hover,
-  .result-promo-list li:hover {
-    font-size: 1rem;
   }
 }
 
