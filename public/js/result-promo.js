@@ -40,7 +40,7 @@ export function mountResultPromo(parent) {
     <article class="result-promo-company">
       <p class="result-promo-company-text">
         Психология для B2B — доступ к скрытым драйверам поведения клиентов и сотрудников
-        для более точных управленческих решений.
+        для более точных управленческих решений:
       </p>
     </article>
 
