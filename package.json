@@ -30,6 +30,7 @@
     "db:import-stressless": "tsx scripts/import_stressless.ts",
     "db:import-hr-table": "tsx scripts/import_hr_table.ts",
     "db:import-all": "tsx scripts/import_all.ts",
+    "db:seed-complex": "tsx scripts/seed_complex_psychotype.ts",
     "db:verify-content": "tsx scripts/verify_content_modes.ts",
     "verify:demo": "tsx scripts/verify_demo_encdata.ts",
     "validate:seo-a2a": "tsx scripts/validate_seo_a2a.ts",

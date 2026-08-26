@@ -99,12 +99,20 @@ export const PSYCHOTYPE_META: Record<PsychotypeCode, PsychotypeMeta> = {
     tendency1: "—",
     tendency2: "—",
   },
+  complex: {
+    name: "Сложный профиль",
+    tendency1: "—",
+    tendency2: "—",
+  },
 };
 
 export function formatPsychotypeSummary(code: string): string {
   const meta = PSYCHOTYPE_META[code as PsychotypeCode];
   if (!meta) {
     return code;
+  }
+  if (code === "complex" || code === "mixed") {
+    return meta.name.toLowerCase();
   }
   return `${meta.name.toLowerCase()} (${meta.tendency1} + ${meta.tendency2})`;
 }

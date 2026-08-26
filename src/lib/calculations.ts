@@ -60,7 +60,12 @@ export type PsychotypeCode =
   | "empath"
   | "analyst"
   | "pragmatist"
-  | "mixed";
+  | "mixed"
+  /** V1: no adjacent pair in top-3 (NAVIGATOR 10.0). */
+  | "complex";
+
+export type TriadVariant = "left" | "right";
+
 
 export type PsychotypeResult = {
   psychotype_code: PsychotypeCode;
