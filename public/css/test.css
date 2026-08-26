@@ -1182,27 +1182,31 @@ input[type="range"].answer-slider {
   font-size: 0.8125rem;
   line-height: 1.55;
   color: var(--foreground);
+  font-weight: 400;
 }
 
-.card.legal-doc h1 {
-  font-size: 1.5rem;
-  margin-bottom: 12px;
+.card.legal-doc h1,
+.card.legal-doc h2,
+.card.legal-doc h3,
+.card.legal-doc h4,
+.card.legal-doc strong,
+.card.legal-doc b {
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  margin: 0 0 0.75rem;
 }
 
-.card.legal-doc h2 {
-  font-size: 1.0625rem;
-  margin: 1.5rem 0 0.625rem;
-}
-
-.card.legal-doc h3 {
-  font-size: 0.9375rem;
-  margin: 1rem 0 0.5rem;
-  font-weight: 600;
+.card.legal-doc h2,
+.card.legal-doc h3,
+.card.legal-doc h4 {
+  margin-top: 1rem;
 }
 
 .card.legal-doc p,
 .card.legal-doc li {
   font-size: inherit;
+  font-weight: inherit;
   line-height: inherit;
 }
 
@@ -1221,18 +1225,21 @@ input[type="range"].answer-slider {
 }
 
 .card.legal-doc .muted {
-  font-size: 0.75rem;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--foreground);
 }
 
 .card.legal-doc a {
   color: var(--link);
   text-decoration: underline;
   text-underline-offset: 2px;
+  font-weight: inherit;
 }
 
 .card.legal-doc .legal-back {
   margin-top: 1.5rem;
-  font-size: 0.8125rem;
+  font-size: inherit;
 }
 
 .actions {
