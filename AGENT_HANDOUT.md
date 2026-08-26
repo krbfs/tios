@@ -551,7 +551,7 @@ cd tc_26 && npm run db:deploy && npm run db:import-all && npm run db:verify-cont
 | `db:verify-content` | JSON-реестры; `-- --db` — проверка Neon |
 | `verify:demo` | демо encdata + threshold warnings |
 | `chrome:assemble` | header/footer в static HTML |
-| `test:e2e-quiz` / `test:e2e-quiz:dev` / `test:e2e-quiz:all` | Playwright: полный проход теста → проверка психотипа ([E2E_QUIZ_TESTS.md](E2E_QUIZ_TESTS.md)) |
+| `test:e2e-quiz` / `test:e2e-quiz:dev` / `test:e2e-quiz:all` | Playwright: полный проход теста → проверка психотипа ([E2E_QUIZ_TESTS.md](E2E_QUIZ_TESTS.md)). **Только вручную, не в deploy** |
 
 
 ### Критичные env

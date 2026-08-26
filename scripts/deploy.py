@@ -362,7 +362,11 @@ def validate_ai_agent_files(root: Path | None = None) -> None:
 
 
 def run_unit_tests() -> None:
-    """Mandatory pre-deploy gate. Do not bypass."""
+    """Mandatory pre-deploy gate. Do not bypass.
+
+    Intentionally excludes Playwright e2e quiz (`npm run test:e2e-quiz*`) —
+    those are manual/local only (see E2E_QUIZ_TESTS.md).
+    """
     validate_ai_agent_files()
     print("==> vitest: calculations, encdata, API routes", flush=True)
     run(["npm", "test"])

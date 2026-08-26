@@ -1,5 +1,7 @@
 # E2E quiz (браузер): каталог сценариев
 
+**Не входит в деплой.** `deploy.py` гоняет только `npm test` (vitest) и mobile layout; `test:e2e-quiz*` запускаются вручную локально.
+
 Playwright открывает Chromium, проходит `/test/start` → 75 ответов на `/test/take` → страница `/quiz/result`, и сверяет психотип (UI + `by-encdata`).
 
 ## Запуск
