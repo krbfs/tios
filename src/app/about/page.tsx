@@ -14,7 +14,7 @@ import {
   pages,
   siteConfig,
 } from "@/lib/seo";
-import { tiosAcronymLines, tiosAcronymNote, tiosAcronymTitle } from "@/lib/tios-acronym";
+import { tiosAcronymLines, tiosAcronymTitle } from "@/lib/tios-acronym";
 
 export const metadata = buildPageMetadata(pages.about);
 
@@ -121,12 +121,6 @@ export default function AboutPage() {
                   </Link>
                 </p>
               </div>
-              <p className="text-muted">
-                {tiosAcronymNote}{" "}
-                <Link href="/author" className="font-semibold text-link hover:underline">
-                  Об авторе
-                </Link>
-              </p>
             </div>
           </div>
         </RevealOnScroll>

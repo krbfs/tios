@@ -1,9 +1,6 @@
-/** Каноническая расшифровка TIOS / ТИОС — аббревиатура в обоих языках. */
+/** Каноническая расшифровка TIOS / ТИОС. */
 
 export const tiosAcronymTitle = "ТИОС — TIOS";
-
-export const tiosAcronymNote =
-  "На русском и на английском сохраняется аббревиатура.";
 
 /** Как в исходной формулировке автора. */
 export const tiosAcronymLines = [
