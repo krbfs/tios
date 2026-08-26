@@ -214,7 +214,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="container-page mx-auto max-w-3xl space-y-6 py-12 md:py-16">
+      <section className="container-page mx-auto max-w-3xl space-y-6 pt-16 pb-12 md:pt-20 md:pb-16">
         <RevealOnScroll>
           <h2 className="text-center text-2xl font-bold md:text-3xl">Что вы получите</h2>
         </RevealOnScroll>
