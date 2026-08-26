@@ -583,14 +583,10 @@
       }
 
       function renderV1ProfileMeta(result) {
+        // Triad left/right label is admin-only; public users see triad via content blocks.
         const parts = [];
         if (result.psychotype_code === "complex") {
           parts.push("Сложный профиль: стандартный портрет заменён плашкой ниже");
-        }
-        if (result.triad_variant === "left") {
-          parts.push("Уточнение триады: левая");
-        } else if (result.triad_variant === "right") {
-          parts.push("Уточнение триады: правая");
         }
         if (parts.length === 0) {
           v1ProfileMeta.hidden = true;
