@@ -1975,15 +1975,15 @@ input[type="range"].answer-slider {
   font-size: 1rem;
   padding-left: 0.15rem;
   transition:
-    transform 0.35s var(--motion-ease),
-    color 0.35s ease;
+    transform 0.45s var(--motion-ease),
+    color 0.45s ease;
 }
 
 .result-promo-list li:last-child {
   margin-bottom: 0;
 }
 
-/* Soft accent bullets — pulse runs top→bottom→top */
+/* Soft accent bullets — slow smooth wave top→bottom→top */
 .result-promo-list li::before {
   content: "";
   position: absolute;
@@ -1992,10 +1992,10 @@ input[type="range"].answer-slider {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #93b4f5;
+  background: #b7cef9;
   box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
   transform: scale(1);
-  animation-duration: 5.6s;
+  animation-duration: 10s;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
@@ -2022,92 +2022,91 @@ input[type="range"].answer-slider {
 
 @keyframes promo-bullet-wave-1 {
   0%,
-  3%,
-  69%,
-  75%,
+  12%,
+  78%,
   100% {
-    background: #93b4f5;
+    background: #b7cef9;
     box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
     transform: scale(1);
   }
-  1.5%,
-  72% {
+  6%,
+  86% {
     background: var(--primary);
-    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
-    transform: scale(1.35);
+    box-shadow: 0 0 0 7px rgba(26, 84, 216, 0.12);
+    transform: scale(1.18);
   }
 }
 
 @keyframes promo-bullet-wave-2 {
   0%,
   10%,
-  16%,
-  60%,
-  66%,
+  28%,
+  68%,
+  86%,
   100% {
-    background: #93b4f5;
+    background: #b7cef9;
     box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
     transform: scale(1);
   }
-  13%,
-  63% {
+  19%,
+  77% {
     background: var(--primary);
-    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
-    transform: scale(1.35);
+    box-shadow: 0 0 0 7px rgba(26, 84, 216, 0.12);
+    transform: scale(1.18);
   }
 }
 
 @keyframes promo-bullet-wave-3 {
   0%,
-  21%,
-  27%,
-  51%,
-  57%,
+  22%,
+  40%,
+  58%,
+  76%,
   100% {
-    background: #93b4f5;
+    background: #b7cef9;
     box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
     transform: scale(1);
   }
-  24%,
-  54% {
+  31%,
+  67% {
     background: var(--primary);
-    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
-    transform: scale(1.35);
+    box-shadow: 0 0 0 7px rgba(26, 84, 216, 0.12);
+    transform: scale(1.18);
   }
 }
 
 @keyframes promo-bullet-wave-4 {
   0%,
-  32%,
-  38%,
-  42%,
-  48%,
+  34%,
+  52%,
+  56%,
+  74%,
   100% {
-    background: #93b4f5;
+    background: #b7cef9;
     box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
     transform: scale(1);
   }
-  35%,
-  45% {
+  43%,
+  65% {
     background: var(--primary);
-    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
-    transform: scale(1.35);
+    box-shadow: 0 0 0 7px rgba(26, 84, 216, 0.12);
+    transform: scale(1.18);
   }
 }
 
 @keyframes promo-bullet-wave-5 {
   0%,
-  39%,
-  45%,
+  46%,
+  64%,
   100% {
-    background: #93b4f5;
+    background: #b7cef9;
     box-shadow: 0 0 0 0 rgba(26, 84, 216, 0);
     transform: scale(1);
   }
-  42% {
+  55% {
     background: var(--primary);
-    box-shadow: 0 0 0 5px rgba(26, 84, 216, 0.18);
-    transform: scale(1.35);
+    box-shadow: 0 0 0 7px rgba(26, 84, 216, 0.12);
+    transform: scale(1.18);
   }
 }
 
