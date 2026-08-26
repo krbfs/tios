@@ -44,7 +44,7 @@
 | `/test` | yes |
 | `/test/take` | yes (тест — целевая страница) |
 | `/results` | yes (демо-пример результата) |
-| `/privacy.html` | yes (политика ПДн) |
+| `/privacy` | yes (политика ПДн; редирект на `/privacy.html`) |
 | `/login` | **noindex** |
 | 404 (`not-found`) | **noindex** |
 
