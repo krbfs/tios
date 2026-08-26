@@ -581,19 +581,10 @@
         return wrapper;
       }
 
-      function renderV1ProfileMeta(result) {
+      function renderV1ProfileMeta() {
         // Triad left/right label is admin-only; public users see triad via content blocks.
-        const parts = [];
-        if (result.psychotype_code === "complex") {
-          parts.push("Сложный профиль: стандартный портрет заменён плашкой ниже");
-        }
-        if (parts.length === 0) {
-          v1ProfileMeta.hidden = true;
-          v1ProfileMeta.textContent = "";
-          return;
-        }
-        v1ProfileMeta.textContent = parts.join(" · ");
-        v1ProfileMeta.hidden = false;
+        v1ProfileMeta.hidden = true;
+        v1ProfileMeta.textContent = "";
       }
 
       function renderEmpathSubindices(result) {
