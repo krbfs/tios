@@ -1964,13 +1964,136 @@ input[type="range"].answer-slider {
 }
 
 .result-promo-list {
+  position: relative;
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+/* Running accent line along the list */
+.result-promo-list::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(26, 84, 216, 0.12);
+}
+
+.result-promo-list::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 26%;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--primary) 30%,
+    var(--primary) 70%,
+    transparent
+  );
+  animation: promo-list-scan 7s ease-in-out infinite;
+}
+
+@keyframes promo-list-scan {
+  0% {
+    top: 0;
+    opacity: 0.45;
+  }
+  50% {
+    top: 74%;
+    opacity: 1;
+  }
+  100% {
+    top: 0;
+    opacity: 0.45;
+  }
 }
 
 .result-promo-list li {
-  margin-bottom: 4px;
+  position: relative;
+  margin-bottom: 6px;
   font-size: 1rem;
+  padding-left: 0.15rem;
+  transition:
+    transform 0.35s var(--motion-ease),
+    color 0.35s ease;
+}
+
+.result-promo-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Soft accent bullets */
+.result-promo-list li::before {
+  content: "";
+  position: absolute;
+  left: -1.15rem;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 0 rgba(26, 84, 216, 0.35);
+  animation: promo-bullet-glow 4.5s ease-in-out infinite;
+}
+
+.result-promo-list li:nth-child(2)::before {
+  animation-delay: 0.7s;
+}
+
+.result-promo-list li:nth-child(3)::before {
+  animation-delay: 1.4s;
+}
+
+.result-promo-list li:nth-child(4)::before {
+  animation-delay: 2.1s;
+}
+
+.result-promo-list li:nth-child(5)::before {
+  animation-delay: 2.8s;
+}
+
+@keyframes promo-bullet-glow {
+  0%,
+  100% {
+    background: #6b9cff;
+    box-shadow: 0 0 0 0 rgba(26, 84, 216, 0.2);
+  }
+  50% {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px rgba(26, 84, 216, 0.12);
+  }
+}
+
+.result-promo-list li:hover {
+  transform: translateX(6px);
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-promo-list::after,
+  .result-promo-list li::before {
+    animation: none;
+  }
+
+  .result-promo-list li::before {
+    background: var(--primary);
+    box-shadow: none;
+  }
+
+  .result-promo-list li {
+    transition: none;
+  }
+
+  .result-promo-list li:hover {
+    transform: none;
+  }
 }
 
 .result-promo-company {
