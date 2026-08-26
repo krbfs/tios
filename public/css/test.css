@@ -1948,6 +1948,12 @@ input[type="range"].answer-slider {
   font-weight: 700;
   line-height: 1.35;
   flex: 1 1 240px;
+  transition: font-size 0.22s var(--motion-ease), letter-spacing 0.22s var(--motion-ease);
+}
+
+.result-promo-banner-title:hover {
+  font-size: 1.28rem;
+  letter-spacing: 0.01em;
 }
 
 .result-promo-banner-actions {
@@ -1960,6 +1966,12 @@ input[type="range"].answer-slider {
 .result-promo-lead {
   margin: 0 0 8px;
   font-weight: 600;
+  font-size: 1rem;
+  transition: font-size 0.22s var(--motion-ease);
+}
+
+.result-promo-lead:hover {
+  font-size: 1.15rem;
 }
 
 .result-promo-list {
@@ -1969,6 +1981,31 @@ input[type="range"].answer-slider {
 
 .result-promo-list li {
   margin-bottom: 4px;
+  font-size: 1rem;
+  transition: font-size 0.22s var(--motion-ease), transform 0.22s var(--motion-ease);
+  transform-origin: left center;
+}
+
+.result-promo-list li:hover {
+  font-size: 1.12rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-promo-banner-title,
+  .result-promo-lead,
+  .result-promo-list li {
+    transition: none;
+  }
+
+  .result-promo-banner-title:hover {
+    font-size: 1.125rem;
+    letter-spacing: normal;
+  }
+
+  .result-promo-lead:hover,
+  .result-promo-list li:hover {
+    font-size: 1rem;
+  }
 }
 
 .result-promo-company {
