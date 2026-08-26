@@ -1966,29 +1966,11 @@ input[type="range"].answer-slider {
 .result-promo-list {
   margin: 0;
   padding-left: 1.25rem;
-  transform-origin: left center;
-  animation: promo-text-breathe 5.5s ease-in-out infinite;
 }
 
 .result-promo-list li {
   margin-bottom: 4px;
   font-size: 1rem;
-}
-
-@keyframes promo-text-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.035);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .result-promo-list {
-    animation: none;
-  }
 }
 
 .result-promo-company {
