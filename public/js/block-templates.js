@@ -31,9 +31,9 @@ export function createEfficiencyCardBlock(contentText) {
   const grid = document.createElement("div");
   grid.className = "efficiency-cards";
 
-  grid.appendChild(createEfficiencyCard("peak", "Пик эффективности", peak));
+  grid.appendChild(createEfficiencyCard("peak", "пик эффективности", peak));
   grid.appendChild(
-    createEfficiencyCard("failure", "Зона провала", failure || "—"),
+    createEfficiencyCard("failure", "зона провала", failure || "—"),
   );
 
   return grid;
