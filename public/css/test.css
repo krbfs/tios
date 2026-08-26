@@ -1901,9 +1901,9 @@ input[type="range"].answer-slider {
 }
 
 .result-promo-banner {
-  border: none;
+  border: 1px solid #d6e4ff;
   border-radius: var(--radius);
-  background: linear-gradient(to right, #5b8df7, #c5d9ff);
+  background: linear-gradient(to right, #eaf1ff, #f7faff);
   padding: 20px;
   color: var(--primary-dark);
 }
