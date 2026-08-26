@@ -6,6 +6,7 @@ const INSIGHTER = "https://insighter.by";
 
 const PROMO_EVENTS = {
   contact: "result_promo_premium_contact",
+  reportExample: "result_promo_premium_report_example",
   audienceResearch: "result_promo_audience_research",
   effectiveTeam: "result_promo_effective_team",
   leaderResource: "result_promo_leader_resource",
@@ -21,11 +22,20 @@ export function mountResultPromo(parent) {
         <h2 class="result-promo-banner-title">
           Для получения более точного и полного премиум-отчета свяжитесь с нами
         </h2>
-        <a
-          class="btn btn-promo"
-          href="${INSIGHTER}/contacts/"
-          data-ga-event="${PROMO_EVENTS.contact}"
-        >Контакт</a>
+        <div class="result-promo-banner-actions">
+          <a
+            class="btn btn-promo"
+            href="${INSIGHTER}/contacts/"
+            data-ga-event="${PROMO_EVENTS.contact}"
+          >Контакт</a>
+          <a
+            class="btn btn-promo"
+            href="${INSIGHTER}/leader-report-example"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-ga-event="${PROMO_EVENTS.reportExample}"
+          >Пример отчета</a>
+        </div>
       </div>
       <p class="result-promo-lead">В премиум-версию входит:</p>
       <ul class="result-promo-list">
