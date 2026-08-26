@@ -2147,14 +2147,14 @@ input[type="range"].answer-slider {
 }
 
 .result-promo-company {
-  border: 1px solid #f0d66a;
+  border: 1px solid #f7e7a0;
   border-radius: var(--radius);
   background: linear-gradient(
     120deg,
-    #fff4b8 0%,
-    #ffe98a 40%,
-    #fff1a0 70%,
-    #fff4b8 100%
+    #fffce8 0%,
+    #fff8d0 40%,
+    #fffbe0 70%,
+    #fffce8 100%
   );
   background-size: 220% 220%;
   padding: 20px;
@@ -2175,7 +2175,7 @@ input[type="range"].answer-slider {
 @media (prefers-reduced-motion: reduce) {
   .result-promo-company {
     animation: none;
-    background: #fff4b8;
+    background: #fffce8;
     background-size: auto;
   }
 }
