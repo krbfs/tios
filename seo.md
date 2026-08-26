@@ -46,6 +46,7 @@
 | `/results` | yes (демо-пример результата) |
 | `/privacy.html` | yes (политика ПДн) |
 | `/login` | **noindex** |
+| 404 (`not-found`) | **noindex** |
 
 `robots.txt` разрешает основных AI-ботов: GPTBot, ChatGPT-User, ClaudeBot, anthropic-ai, PerplexityBot, Google-Extended, Bytespider, CCBot — если политика продукта не запрещает иначе.
 
