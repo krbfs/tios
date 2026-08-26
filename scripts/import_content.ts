@@ -6,7 +6,7 @@
  * Usage:
  *   npm run db:import-content
  *   npm run db:import-content -- data/content_registry.json
- *   npm run db:import-content -- --file data/content_registry.json
+ *   npm run db:import-v1-content
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -24,6 +24,7 @@ type ImportBlock = {
   is_visible_default?: boolean;
   version?: number;
   is_active?: boolean;
+  triad_variant?: string | null;
 };
 
 type RegistryFile = {
@@ -66,8 +67,16 @@ function loadBlocks(filePath: string): ImportBlock[] {
   return raw.blocks;
 }
 
+function normalizeTriadVariant(value: string | null | undefined): string | null {
+  if (value === "left" || value === "right") {
+    return value;
+  }
+  return null;
+}
+
 function blockIdentity(block: ImportBlock): string {
-  return `${block.psychotype_code ?? "?"}/${block.mode ?? "?"}/${block.block_key ?? "?"}`;
+  const triad = normalizeTriadVariant(block.triad_variant) ?? "∅";
+  return `${block.psychotype_code ?? "?"}/${block.mode ?? "?"}/${block.block_key ?? "?"}/${triad}`;
 }
 
 async function main() {
@@ -103,54 +112,50 @@ async function main() {
       }
 
       const version = block.version ?? 1;
+      const triadVariant = normalizeTriadVariant(block.triad_variant);
       modes.add(block.mode);
 
-      const existing = await db.contentBlock.findUnique({
+      const existing = await db.contentBlock.findFirst({
         where: {
-          psychotypeCode_mode_blockKey_version: {
-            psychotypeCode: block.psychotype_code,
-            mode: block.mode,
-            blockKey: block.block_key,
-            version,
-          },
+          psychotypeCode: block.psychotype_code,
+          mode: block.mode as never,
+          blockKey: block.block_key,
+          version,
+          triadVariant,
         },
         select: { id: true },
       });
 
-      await db.contentBlock.upsert({
-        where: {
-          psychotypeCode_mode_blockKey_version: {
-            psychotypeCode: block.psychotype_code,
-            mode: block.mode,
-            blockKey: block.block_key,
-            version,
-          },
-        },
-        create: {
-          psychotypeCode: block.psychotype_code,
-          mode: block.mode,
-          blockKey: block.block_key,
-          blockTemplate: block.block_template,
-          title: block.title ?? null,
-          contentText,
-          sortOrder: block.sort_order ?? 0,
-          isVisibleDefault: block.is_visible_default ?? true,
-          version,
-          isActive: block.is_active ?? true,
-        },
-        update: {
-          blockTemplate: block.block_template,
-          title: block.title ?? null,
-          contentText,
-          sortOrder: block.sort_order ?? 0,
-          isVisibleDefault: block.is_visible_default ?? true,
-          isActive: block.is_active ?? true,
-        },
-      });
+      const data = {
+        psychotypeCode: block.psychotype_code,
+        mode: block.mode as never,
+        blockKey: block.block_key,
+        blockTemplate: block.block_template,
+        title: block.title ?? null,
+        contentText,
+        sortOrder: block.sort_order ?? 0,
+        isVisibleDefault: block.is_visible_default ?? true,
+        version,
+        isActive: block.is_active ?? true,
+        triadVariant,
+      };
 
       if (existing) {
+        await db.contentBlock.update({
+          where: { id: existing.id },
+          data: {
+            blockTemplate: data.blockTemplate,
+            title: data.title,
+            contentText: data.contentText,
+            sortOrder: data.sortOrder,
+            isVisibleDefault: data.isVisibleDefault,
+            isActive: data.isActive,
+            triadVariant: data.triadVariant,
+          },
+        });
         updated += 1;
       } else {
+        await db.contentBlock.create({ data });
         created += 1;
       }
     }
@@ -162,7 +167,7 @@ async function main() {
 
     for (const mode of [...modes].sort()) {
       const total = await db.contentBlock.count({
-        where: { mode, isActive: true },
+        where: { mode: mode as never, isActive: true },
       });
       console.log(`Total active content_blocks for mode='${mode}': ${total}`);
     }

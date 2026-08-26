@@ -23,7 +23,26 @@ export type ContentBlockDto = {
   content_text: string;
   sort_order: number;
   is_visible: boolean;
+  triad_variant: string | null;
 };
+
+export const COMPLEX_PROFILE_BLOCK_KEY = "complex_profile_message";
+export const TRIAD_ADDITION_LEFT_KEY = "triad_addition_left";
+export const TRIAD_ADDITION_RIGHT_KEY = "triad_addition_right";
+
+/**
+ * NAVIGATOR §5.1 display rules for V1 content.
+ * complex → only complex_profile_message; otherwise keep loaded set (base ± triad).
+ */
+export function applyV1ContentDisplayRules<
+  T extends { block_key: string },
+>(psychotypeCode: string, blocks: T[]): T[] {
+  if (psychotypeCode === "complex") {
+    return blocks.filter((block) => block.block_key === COMPLEX_PROFILE_BLOCK_KEY);
+  }
+  return blocks;
+}
+
 
 export function parseVisibilityOverrides(
   value: unknown,
@@ -65,6 +84,7 @@ function mapContentBlockDto(
     content_text: block.contentText,
     sort_order: block.sortOrder,
     is_visible: isVisible,
+    triad_variant: block.triadVariant,
   };
 }
 
@@ -85,20 +105,33 @@ export async function loadContentBlocks(
       ? options.triadVariant
       : null;
 
+  const where =
+    psychotypeCode === "complex"
+      ? {
+          psychotypeCode,
+          mode,
+          isActive: true,
+          blockKey: COMPLEX_PROFILE_BLOCK_KEY,
+        }
+      : {
+          psychotypeCode,
+          mode,
+          isActive: true,
+          OR: triadVariant
+            ? [{ triadVariant: null }, { triadVariant }]
+            : [{ triadVariant: null }],
+        };
+
   const blocks = await db.contentBlock.findMany({
-    where: {
-      psychotypeCode,
-      mode,
-      isActive: true,
-      OR: triadVariant
-        ? [{ triadVariant: null }, { triadVariant }]
-        : [{ triadVariant: null }],
-    },
+    where,
     orderBy: [{ sortOrder: "asc" }, { blockKey: "asc" }],
   });
 
-  const mapped = latestBlocksByKey(blocks).map((block) =>
-    mapContentBlockDto(block, visibilityOverrides),
+  const mapped = applyV1ContentDisplayRules(
+    psychotypeCode,
+    latestBlocksByKey(blocks).map((block) =>
+      mapContentBlockDto(block, visibilityOverrides),
+    ),
   );
 
   if (options?.includeHidden) {

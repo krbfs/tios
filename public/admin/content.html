@@ -59,6 +59,9 @@
         <h2>Импорт из JSON</h2>
         <p class="muted">
           Загрузите файл в формате <code>content_registry.json</code> (поле <code>blocks</code>).
+          Для V1-блоков триад/complex поддерживается поле <code>triad_variant</code>
+          (<code>null</code> / <code>left</code> / <code>right</code>), см.
+          <code>data/v1_leader_resource_blocks.json</code>.
         </p>
         <label class="admin-field">
           JSON-файл
@@ -129,6 +132,12 @@
         return params.toString();
       }
 
+      function triadLabel(value) {
+        if (value === "left") return "триада: left";
+        if (value === "right") return "триада: right";
+        return "база";
+      }
+
       function renderBlockEditor(block) {
         const wrapper = document.createElement("article");
         wrapper.className = "content-editor";
@@ -140,6 +149,8 @@
             <span>${modeLabel(block.mode)}</span>
             <span>${block.block_key}</span>
             <span>${block.block_template}</span>
+            <span>${triadLabel(block.triad_variant)}</span>
+            <span class="muted">видимость по умолчанию: ${block.is_visible_default ? "да" : "нет"}</span>
           </div>
           <div class="muted">${block.title || ""}</div>
         `;

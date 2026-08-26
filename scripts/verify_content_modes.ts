@@ -98,17 +98,52 @@ async function verifyDatabase(): Promise<string[]> {
             mode: entry.mode,
             psychotypeCode: psychotype,
             isActive: true,
+            triadVariant: null,
           },
         });
 
         if (count < entry.minPerPsychotype) {
           errors.push(
-            `DB ${entry.mode}/${psychotype}: ${count} rows (expected ≥ ${entry.minPerPsychotype})`,
+            `DB ${entry.mode}/${psychotype}: ${count} base rows (expected ≥ ${entry.minPerPsychotype})`,
           );
         }
       }
       console.log(`OK DB mode=${entry.mode}`);
     }
+
+    const complexCount = await db.contentBlock.count({
+      where: {
+        mode: "leader_resource",
+        psychotypeCode: "complex",
+        blockKey: "complex_profile_message",
+        isActive: true,
+      },
+    });
+    if (complexCount < 1) {
+      errors.push("DB leader_resource/complex: missing complex_profile_message");
+    } else {
+      console.log("OK DB leader_resource/complex_profile_message");
+    }
+
+    for (const psychotype of PSYCHOTYPES) {
+      for (const triad of ["left", "right"] as const) {
+        const key =
+          triad === "left" ? "triad_addition_left" : "triad_addition_right";
+        const count = await db.contentBlock.count({
+          where: {
+            mode: "leader_resource",
+            psychotypeCode: psychotype,
+            blockKey: key,
+            triadVariant: triad,
+            isActive: true,
+          },
+        });
+        if (count < 1) {
+          errors.push(`DB leader_resource/${psychotype}/${key}: missing`);
+        }
+      }
+    }
+    console.log("OK DB leader_resource triad additions (8×2)");
   } finally {
     await db.$disconnect();
   }

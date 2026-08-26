@@ -13,11 +13,19 @@ type ImportBlock = {
   sort_order?: number;
   is_visible_default?: boolean;
   version?: number;
+  triad_variant?: string | null;
 };
 
 type ImportBody = {
   blocks?: ImportBlock[];
 };
+
+function normalizeTriadVariant(value: string | null | undefined): string | null {
+  if (value === "left" || value === "right") {
+    return value;
+  }
+  return null;
+}
 
 export async function POST(request: Request) {
   const admin = await requireAdmin(request);
@@ -45,7 +53,10 @@ export async function POST(request: Request) {
       !block.block_template ||
       !block.content_text
     ) {
-      return error("Each block requires psychotype_code, mode, block_key, block_template, content_text", 400);
+      return error(
+        "Each block requires psychotype_code, mode, block_key, block_template, content_text",
+        400,
+      );
     }
 
     if (!isAllowedMode(block.mode)) {
@@ -54,49 +65,49 @@ export async function POST(request: Request) {
 
     const mode: ResultMode = block.mode;
     const version = block.version ?? 1;
+    const triadVariant = normalizeTriadVariant(block.triad_variant);
+
     const existing = await db.contentBlock.findFirst({
       where: {
         psychotypeCode: block.psychotype_code,
         mode,
         blockKey: block.block_key,
         version,
+        triadVariant,
       },
-    });
-
-    await db.contentBlock.upsert({
-      where: {
-        psychotypeCode_mode_blockKey_version: {
-          psychotypeCode: block.psychotype_code,
-          mode,
-          blockKey: block.block_key,
-          version,
-        },
-      },
-      create: {
-        psychotypeCode: block.psychotype_code,
-        mode,
-        blockKey: block.block_key,
-        blockTemplate: block.block_template,
-        title: block.title ?? null,
-        contentText: block.content_text,
-        sortOrder: block.sort_order ?? 0,
-        isVisibleDefault: block.is_visible_default ?? true,
-        version,
-        isActive: true,
-      },
-      update: {
-        blockTemplate: block.block_template,
-        title: block.title ?? null,
-        contentText: block.content_text,
-        sortOrder: block.sort_order ?? 0,
-        isVisibleDefault: block.is_visible_default ?? true,
-        isActive: true,
-      },
+      select: { id: true },
     });
 
     if (existing) {
+      await db.contentBlock.update({
+        where: { id: existing.id },
+        data: {
+          blockTemplate: block.block_template,
+          title: block.title ?? null,
+          contentText: block.content_text,
+          sortOrder: block.sort_order ?? 0,
+          isVisibleDefault: block.is_visible_default ?? true,
+          isActive: true,
+          triadVariant,
+        },
+      });
       updated += 1;
     } else {
+      await db.contentBlock.create({
+        data: {
+          psychotypeCode: block.psychotype_code,
+          mode,
+          blockKey: block.block_key,
+          blockTemplate: block.block_template,
+          title: block.title ?? null,
+          contentText: block.content_text,
+          sortOrder: block.sort_order ?? 0,
+          isVisibleDefault: block.is_visible_default ?? true,
+          version,
+          isActive: true,
+          triadVariant,
+        },
+      });
       created += 1;
     }
   }

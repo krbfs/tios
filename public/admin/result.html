@@ -258,7 +258,9 @@
           const text = document.createElement("div");
           text.innerHTML = `
             <div class="visibility-item-title">${block.title || block.block_key}</div>
-            <div class="visibility-item-key">${block.block_key}</div>
+            <div class="visibility-item-key">${block.block_key}${
+              block.triad_variant ? ` · triad ${block.triad_variant}` : ""
+            }</div>
           `;
 
           item.appendChild(checkbox);
