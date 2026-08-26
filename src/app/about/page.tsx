@@ -63,7 +63,7 @@ export default function AboutPage() {
       <section className="space-y-6 bg-white pb-12 pt-8 md:pb-16 md:pt-12">
         <div className="container-page mx-auto max-w-3xl space-y-4 text-center">
           <RevealOnScroll>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+            <p className="text-sm font-semibold uppercase tracking-wide text-muted">
               {siteConfig.russianName} · {siteConfig.shortName}
             </p>
             <h1 className="text-3xl leading-tight md:text-4xl">О тесте ТИОС</h1>
