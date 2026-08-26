@@ -18,3 +18,9 @@ Block 4 inverted pairs (A=RIG, B=LAB) still: **19,24,29** and **34,39,44** — m
 ## Doc quirk fixed in dump only
 
 Question **35** in the question-text table was labeled factor `3.5`, but the **keys** table places 35 in `5.3 Отношение к новизне` (LR). Dump factor corrected; scoring keys unchanged.
+
+## Import + smoke (2026-08-26)
+
+- `npm run db:import-questions -- --json data/questions_aug26.json` → **75 updated** on Neon (`ep-plain-brook…`, prod DB for tc_26).
+- Spot-check DB vs dump: ids **1, 38, 75** — texts match.
+- `vitest` `calculations.test.ts` + `questions/route.test.ts` — **34 passed** (API test mocks strings; no hardcoded real wording to update).
