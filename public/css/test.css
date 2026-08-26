@@ -2140,14 +2140,14 @@ input[type="range"].answer-slider {
 }
 
 .result-promo-company {
-  border: 1px solid #f5e6a8;
+  border: 1px solid #f0d66a;
   border-radius: var(--radius);
   background: linear-gradient(
     120deg,
-    #fff8d6 0%,
-    #fff3b8 35%,
-    #ffef9a 55%,
-    #fff8d6 100%
+    #fff4b8 0%,
+    #ffe98a 40%,
+    #fff1a0 70%,
+    #fff4b8 100%
   );
   background-size: 220% 220%;
   padding: 20px;
@@ -2168,7 +2168,7 @@ input[type="range"].answer-slider {
 @media (prefers-reduced-motion: reduce) {
   .result-promo-company {
     animation: none;
-    background: #fff8d6;
+    background: #fff4b8;
     background-size: auto;
   }
 }
@@ -2540,7 +2540,7 @@ input[type="range"].answer-slider {
 .result-promo.motion-reveal.is-visible .result-promo-company {
   animation:
     tc-fade-up 0.45s var(--motion-ease) 80ms both,
-    promo-card-colors 7s ease-in-out 1s infinite;
+    result-promo-b2b-bg 6s ease-in-out 0.5s infinite;
 }
 
 .result-promo.motion-reveal.is-visible .result-promo-card {
