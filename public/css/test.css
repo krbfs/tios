@@ -1173,7 +1173,8 @@ input[type="range"].answer-slider {
   margin-top: 32px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
   color: var(--muted);
 }
 
@@ -1641,11 +1642,12 @@ input[type="range"].answer-slider {
 }
 
 .disclaimer--highlight {
-  border: 1px solid #f59e0b;
-  border-radius: var(--radius);
-  background: #fffbeb;
-  color: #78350f;
-  padding: 12px 14px;
+  /* Keep wording emphasis without yellow callout */
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
 }
 
 .correspondence-card {
