@@ -1967,10 +1967,35 @@ input[type="range"].answer-slider {
 .result-promo-company {
   border: 1px solid #f5e6a8;
   border-radius: var(--radius);
-  background: #fff8d6;
+  background: linear-gradient(
+    120deg,
+    #fff8d6 0%,
+    #fff3b8 35%,
+    #ffef9a 55%,
+    #fff8d6 100%
+  );
+  background-size: 220% 220%;
   padding: 20px;
   text-align: center;
-  transition: border-color 0.35s ease, background-color 0.35s ease;
+  animation: result-promo-b2b-bg 6s ease-in-out infinite;
+}
+
+@keyframes result-promo-b2b-bg {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-promo-company {
+    animation: none;
+    background: #fff8d6;
+    background-size: auto;
+  }
 }
 
 .result-promo-company-text {
