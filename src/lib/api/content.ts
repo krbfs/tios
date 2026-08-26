@@ -14,13 +14,14 @@ export type AdminContentBlockDto = {
   sort_order: number;
   is_visible_default: boolean;
   version: number;
+  triad_variant: string | null;
   updated_at: string;
 };
 
 function latestBlocksByKey(blocks: ContentBlock[]): ContentBlock[] {
   const latestByKey = new Map<string, ContentBlock>();
   for (const block of blocks) {
-    const key = `${block.psychotypeCode}:${block.mode}:${block.blockKey}`;
+    const key = `${block.psychotypeCode}:${block.mode}:${block.blockKey}:${block.triadVariant ?? ""}`;
     const existing = latestByKey.get(key);
     if (!existing || block.version > existing.version) {
       latestByKey.set(key, block);
@@ -48,6 +49,7 @@ export function serializeContentBlock(block: ContentBlock): AdminContentBlockDto
     sort_order: block.sortOrder,
     is_visible_default: block.isVisibleDefault,
     version: block.version,
+    triad_variant: block.triadVariant,
     updated_at: block.updatedAt.toISOString(),
   };
 }

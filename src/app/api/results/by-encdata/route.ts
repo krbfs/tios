@@ -51,6 +51,7 @@ export async function GET(request: Request) {
       computed.psychotype_code,
       "leader_resource",
       {},
+      computed.triad_variant,
     );
 
     return json({
@@ -65,6 +66,9 @@ export async function GET(request: Request) {
       coaching_recommendations: computed.coaching_recommendations,
       psychotype_code: computed.psychotype_code,
       psychotype_secondary: computed.psychotype_secondary,
+      triad_variant: computed.triad_variant,
+      sub_index_s: computed.sub_index_s,
+      sub_index_n: computed.sub_index_n,
       avg_intensity: computed.avg_intensity,
       validation_warnings: computed.validation_warnings,
       warnings: computed.warnings,

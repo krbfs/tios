@@ -106,6 +106,7 @@ describe("GET /api/results/by-encdata", () => {
       payload.psychotype_code,
       "leader_resource",
       {},
+      null,
     );
   });
 

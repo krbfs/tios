@@ -41,9 +41,10 @@ export function parseVisibilityOverrides(
 function latestBlocksByKey(blocks: ContentBlock[]): ContentBlock[] {
   const latestByKey = new Map<string, ContentBlock>();
   for (const block of blocks) {
-    const existing = latestByKey.get(block.blockKey);
+    const mapKey = `${block.blockKey}::${block.triadVariant ?? ""}`;
+    const existing = latestByKey.get(mapKey);
     if (!existing || block.version > existing.version) {
-      latestByKey.set(block.blockKey, block);
+      latestByKey.set(mapKey, block);
     }
   }
 
@@ -67,17 +68,31 @@ function mapContentBlockDto(
   };
 }
 
+export type LoadContentOptions = {
+  includeHidden?: boolean;
+  /** When set to left/right, include matching triad blocks plus base (NULL). Otherwise only base. */
+  triadVariant?: string | null;
+};
+
 export async function loadContentBlocks(
   psychotypeCode: string,
   mode: ResultMode,
   visibilityOverrides: Record<string, boolean>,
-  options?: { includeHidden?: boolean },
+  options?: LoadContentOptions,
 ): Promise<ContentBlockDto[]> {
+  const triadVariant =
+    options?.triadVariant === "left" || options?.triadVariant === "right"
+      ? options.triadVariant
+      : null;
+
   const blocks = await db.contentBlock.findMany({
     where: {
       psychotypeCode,
       mode,
       isActive: true,
+      OR: triadVariant
+        ? [{ triadVariant: null }, { triadVariant }]
+        : [{ triadVariant: null }],
     },
     orderBy: [{ sortOrder: "asc" }, { blockKey: "asc" }],
   });
@@ -97,8 +112,11 @@ export async function loadVisibleContentBlocks(
   psychotypeCode: string,
   mode: ResultMode,
   visibilityOverrides: Record<string, boolean>,
+  triadVariant?: string | null,
 ): Promise<ContentBlockDto[]> {
-  return loadContentBlocks(psychotypeCode, mode, visibilityOverrides);
+  return loadContentBlocks(psychotypeCode, mode, visibilityOverrides, {
+    triadVariant,
+  });
 }
 
 export function getEncdataFromAnswers(answers: unknown): string | null {
@@ -193,6 +211,7 @@ export async function serializeResult(
     result.psychotypeCode,
     contentMode,
     visibilityOverrides,
+    result.triadVariant,
   );
 
   const encdata = getEncdataFromAnswers(result.answers);
@@ -218,6 +237,9 @@ export async function serializeResult(
       : [],
     psychotype_code: result.psychotypeCode,
     psychotype_secondary: result.psychotypeSecondary,
+    triad_variant: result.triadVariant,
+    sub_index_s: result.subIndexS,
+    sub_index_n: result.subIndexN,
     avg_intensity: result.avgIntensity,
     validation_warnings: result.validationWarnings,
     warnings: thresholdWarningsFromResult(result),
@@ -239,7 +261,7 @@ export async function serializeAdminResult(result: ResultWithSession) {
     result.psychotypeCode,
     "insighter",
     visibilityOverrides,
-    { includeHidden: true },
+    { includeHidden: true, triadVariant: result.triadVariant },
   );
 
   return {
