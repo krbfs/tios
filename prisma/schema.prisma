@@ -20,6 +20,7 @@ enum PsychotypeLevel {
   pure
   dyad
   triad
+  complex
 }
 
 enum ContentMode {
@@ -82,6 +83,12 @@ model TestResult {
   scaledSystemic       Json?    @map("scaled_systemic") @db.JsonB
   psychotypeCode       String   @map("psychotype_code")
   psychotypeSecondary  String?  @map("psychotype_secondary")
+  /// V1: triad refinement relative to the pure type pair (`left` | `right`).
+  triadVariant         String?  @map("triad_variant") @db.VarChar(10)
+  /// V1: Empath sub-index S (sensitivity side), range 0..12.
+  subIndexS            Int?     @map("sub_index_s")
+  /// V1: Empath sub-index N (normativity side), range 0..18.
+  subIndexN            Int?     @map("sub_index_n")
   avgIntensity         Float?   @map("avg_intensity")
   validationWarnings   Json?    @map("validation_warnings") @db.JsonB
   mode                 ContentMode @default(leader_resource)
