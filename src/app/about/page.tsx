@@ -126,7 +126,7 @@ export default function AboutPage() {
         </RevealOnScroll>
       </section>
 
-      <section className="container-page mx-auto max-w-3xl space-y-6 pb-12 md:pb-16">
+      <section className="container-page mx-auto max-w-3xl space-y-6 pt-12 pb-12 md:pt-16 md:pb-16">
         <RevealOnScroll>
           <h2 className="text-center text-2xl font-bold md:text-3xl">Для чего нужен тест</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-muted sm:text-lg">
