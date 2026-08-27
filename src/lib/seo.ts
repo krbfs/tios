@@ -107,6 +107,12 @@ export const pages = {
     description: "Вход в профиль TIOS для сохранения результатов теста ТИОС.",
     robots: { index: false, follow: false },
   },
+  privacy: {
+    path: "/privacy.html",
+    title: "Политика обработки персональных данных | TIOS",
+    description:
+      "Политика обработки персональных данных сервиса TIOS (тест ТИОС): цели, состав данных, сроки хранения, права пользователя и порядок отзыва согласия.",
+  },
 } as const satisfies Record<string, PageSeo>;
 
 export function absoluteUrl(path: string): string {

@@ -1,17 +1,7 @@
-import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
-import { buildBreadcrumbJsonLd, pages } from "@/lib/seo";
+import { buildBreadcrumbJsonLd, buildPageMetadata, pages } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: pages.testTake.title },
-  description: pages.testTake.description,
-  alternates: { canonical: pages.testTake.path },
-  openGraph: {
-    title: pages.testTake.title,
-    description: pages.testTake.description,
-    url: pages.testTake.path,
-  },
-};
+export const metadata = buildPageMetadata(pages.testTake);
 
 export default function TestTakeLayout({
   children,
