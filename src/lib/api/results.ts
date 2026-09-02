@@ -5,6 +5,7 @@ import {
   buildSortedPersonalScales,
   computeLeaderScores,
   determine_empath_subtype,
+  determine_expression_level,
   determine_psychotype,
   empathSubtypeBlockKey,
   EMPATH_SUBTYPE_BLOCK_KEYS,
@@ -31,6 +32,11 @@ export type ContentBlockDto = {
 };
 
 export const COMPLEX_PROFILE_BLOCK_KEY = "complex_profile_message";
+export const UNIVERSAL_TECHNIQUES_BLOCK_KEY = "universal_techniques";
+export const COMPLEX_BLOCK_KEYS = new Set([
+  COMPLEX_PROFILE_BLOCK_KEY,
+  UNIVERSAL_TECHNIQUES_BLOCK_KEY,
+]);
 export const TRIAD_ADDITION_LEFT_KEY = "triad_addition_left";
 export const TRIAD_ADDITION_RIGHT_KEY = "triad_addition_right";
 export const EMPATH_SUBTYPE_BLOCK_KEY_SET = new Set(
@@ -39,13 +45,13 @@ export const EMPATH_SUBTYPE_BLOCK_KEY_SET = new Set(
 
 /**
  * NAVIGATOR §5.1 display rules for V1 content.
- * complex → only complex_profile_message; otherwise keep loaded set (base ± triad).
+ * complex → complex_profile_message + universal_techniques; otherwise keep loaded set (base ± triad).
  */
 export function applyV1ContentDisplayRules<
   T extends { block_key: string },
 >(psychotypeCode: string, blocks: T[]): T[] {
   if (psychotypeCode === "complex") {
-    return blocks.filter((block) => block.block_key === COMPLEX_PROFILE_BLOCK_KEY);
+    return blocks.filter((block) => COMPLEX_BLOCK_KEYS.has(block.block_key));
   }
   return blocks;
 }
@@ -133,7 +139,7 @@ export async function loadContentBlocks(
           psychotypeCode,
           mode,
           isActive: true,
-          blockKey: COMPLEX_PROFILE_BLOCK_KEY,
+          blockKey: { in: [...COMPLEX_BLOCK_KEYS] },
         }
       : {
           psychotypeCode,
@@ -300,8 +306,12 @@ export async function serializeResult(
     sorted_personal_scales: buildSortedPersonalScales(scaledScores),
     leader_scores: computeLeaderScores(scaledScores),
     coaching_recommendations: scaledSystemic
-      ? buildCoachingRecommendations(scaledSystemic)
+      ? buildCoachingRecommendations(
+          scaledSystemic,
+          determine_expression_level(scaledScores),
+        )
       : [],
+    expression_level: determine_expression_level(scaledScores),
     psychotype_code: result.psychotypeCode,
     psychotype_secondary: result.psychotypeSecondary,
     triad_variant: result.triadVariant,

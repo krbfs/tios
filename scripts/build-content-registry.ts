@@ -194,7 +194,19 @@ const EMPATH_SUBTYPES = [
 ] as const;
 
 const COMPLEX_MESSAGE =
-  "Ваш профиль не сводится к одному из восьми чистых психотипов: среди трех ведущих тенденций нет соседней пары на круге. Такой результат называют сложным профилем. Для точной интерпретации рекомендуем углубленный разбор с консультантом.";
+  "Ваш профиль многогранен. Мы подберём универсальные техники, а вы сможете углубить самопонимание позже.\n\nВаш профиль сочетает разные тенденции, и мы пока не можем определить один ведущий психотип. Это нормально — мы подберём для вас универсальные техники, которые работают для большинства. Со временем, при повторном прохождении, профиль может стать яснее.";
+
+const UNIVERSAL_TECHNIQUES_MESSAGE =
+  "Универсальные техники (подходят при любом профиле):\n" +
+  "Короткие «звонки поддержки» близким — 5–10 минут, чтобы делиться переживаниями и не копить напряжение внутри.\n" +
+  "Техники заземления: дыхание 4–4–4, назвать три предмета вокруг, почувствовать опору ног.\n" +
+  "Маленькие ритуалы восстановления: прогулка, тёплый душ, 15 минут без телефона.";
+
+const AESTHETE_LEFT_TRIAD_CONTENT =
+  "Сильные стороны: создаёте тёплую атмосферу и поддерживаете других; усиливается социальная активность и стремление быть на виду.\n" +
+  "Слабые стороны: внутренняя тревожность, зависимость от оценки окружающих.\n" +
+  "Поведение в стрессе: усиление тревоги при социальном давлении, поиск подтверждения и поддержки.\n" +
+  "Рекомендации: короткие звонки поддержки близким, техники заземления, время на восстановление в одиночестве.";
 
 type RegistryBlock = {
   psychotype_code: string;
@@ -265,9 +277,14 @@ const INLINE_SUBTITLE_STRIPS: Partial<
   attraction: /^в профессиональном и личностном плане\?\s*/i,
 };
 
+function stripParserArtifacts(text: string): string {
+  return text.replace(/^\s*:\s+/, "").replace(/^\s*\.\s+/, "").trim();
+}
+
 function normalizeContent(text: string): string {
   const labelAlt = GLUED_SECTION_LABELS.join("|");
-  return text
+  return stripParserArtifacts(
+    text
     .replace(/^\?\s*/, "")
     .replace(/Ё/g, "Е")
     .replace(/ё/g, "е")
@@ -283,7 +300,8 @@ function normalizeContent(text: string): string {
     .replace(/\(Реалист\)/g, "(Прагматик)")
     .replace(/\bЭнтузиаст\b/g, "Инноватор")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim(),
+  );
 }
 
 function stripInlineSubtitle(
@@ -576,6 +594,18 @@ function parseTriads(
     throw new Error(`Expected 2 triad blocks for ${code}, got ${blocks.length}`);
   }
 
+  for (const block of blocks) {
+    if (
+      code === "aesthete" &&
+      block.block_key === "triad_addition_left" &&
+      !block.content_text.trim()
+    ) {
+      block.content_text = AESTHETE_LEFT_TRIAD_CONTENT;
+      block.title =
+        "Уточнение: Триада 1: EXT—LAB—ANX (добавление Экстраверсии)";
+    }
+  }
+
   return blocks;
 }
 
@@ -676,6 +706,19 @@ function buildContentRegistries(docxPath: string = DOCX) {
       title: "Сложный профиль",
       content_text: COMPLEX_MESSAGE,
       sort_order: 1,
+      triad_variant: null,
+      is_visible_default: true,
+      version: 2,
+      is_active: true,
+    },
+    {
+      psychotype_code: "complex",
+      mode: "leader_resource",
+      block_key: "universal_techniques",
+      block_template: "text_block",
+      title: "Универсальные техники",
+      content_text: UNIVERSAL_TECHNIQUES_MESSAGE,
+      sort_order: 2,
       triad_variant: null,
       is_visible_default: true,
       version: 2,

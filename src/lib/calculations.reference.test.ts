@@ -173,17 +173,8 @@ function referencePsychotype(scores: ScaledScores): string {
     return pairCode(top1, top2) ?? "mixed";
   }
 
-  const fallbacks: [ScaleKey, ScaleKey][] = [
-    [top1, top3],
-    [top2, top3],
-  ];
-  const best = fallbacks
-    .filter(([a, b]) => areAdjacent(a, b))
-    .map(([a, b]) => ({ sum: scores[a] + scores[b], code: pairCode(a, b) }))
-    .filter((item): item is { sum: number; code: string } => item.code !== null)
-    .sort((a, b) => b.sum - a.sum)[0];
-
-  return best?.code ?? "mixed";
+  // QA-решения §1: fallback pairs only for secondary, not primary (MVP → mixed).
+  return "mixed";
 }
 
 function randomAnswers(seed: number): number[] {

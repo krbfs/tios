@@ -297,7 +297,8 @@ describe("determine_psychotype", () => {
     expect(determine_psychotype(scores).psychotype_code).toBe("influencer");
   });
 
-  it("prefers adjacent top1+top2 over higher-scoring fallback pair (NAVIGATOR §5.3)", () => {
+  it("returns complex when top1+top2 are not adjacent (QA-решения §1)", () => {
+    process.env.TIOS_V1_PROFILES = "true";
     const result = determine_psychotype({
       extraversion: 18,
       introversion: 0,
@@ -308,21 +309,26 @@ describe("determine_psychotype", () => {
       lability: 20,
       rigidity: 0,
     });
-    // top1=SPO(30), top2=LAB(20) — not adjacent; fallback (SPO,EXT)=48 beats (LAB,EXT)=38
-    expect(result.psychotype_code).toBe("innovator");
+    // top1=SPO(30), top2=LAB(20) — not adjacent
+    expect(result.psychotype_code).toBe("complex");
+    expect(result.secondary).toBe("innovator");
+    expect(result.triad_variant).toBeNull();
+  });
 
-    const strict = determine_psychotype({
+  it("MVP: non-adjacent top1+top2 → mixed with secondary fallback", () => {
+    delete process.env.TIOS_V1_PROFILES;
+    const result = determine_psychotype({
       extraversion: 18,
       introversion: 0,
       anxiety: 0,
       aggression: 0,
       sensitivity: 0,
-      spontaneity: 10,
+      spontaneity: 30,
       lability: 20,
       rigidity: 0,
     });
-    // top1=LAB(20), top2=EXT(18) adjacent → influencer (not innovator via SPO)
-    expect(strict.psychotype_code).toBe("influencer");
+    expect(result.psychotype_code).toBe("mixed");
+    expect(result.secondary).toBe("innovator");
   });
 });
 
@@ -394,11 +400,15 @@ describe("computeLeaderScores", () => {
 
 describe("buildCoachingRecommendations", () => {
   it("maps correspondence types to coaching text", () => {
-    const items = buildCoachingRecommendations({
-      tension_zone: true,
-      correspondence_type: "Гибкий по натуре – жёсткий в работе",
-    });
-    expect(items[0]).toContain("выгорания");
+    const items = buildCoachingRecommendations(
+      {
+        tension_zone: true,
+        correspondence_type: "Гибкий по натуре – жёсткий в работе",
+      },
+      "moderate",
+    );
+    expect(items[0]).toContain("умеренный");
+    expect(items[1]).toContain("выгорания");
   });
 
   it("suggests coach review when tension zone has no typed label", () => {
@@ -501,7 +511,7 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
     expect(result.triad_variant).toBeNull();
   });
 
-  it("V1: unresolved → complex", () => {
+  it("V1: unresolved → complex without secondary when no adjacent fallback", () => {
     process.env.TIOS_V1_PROFILES = "true";
     const result = determine_psychotype({
       extraversion: 20,
@@ -513,7 +523,9 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
       lability: 0,
       rigidity: 0,
     });
+    // EXT+INT opposite; with ANX — no adjacent pair among top-3
     expect(result.psychotype_code).toBe("complex");
+    expect(result.secondary).toBeNull();
     expect(result.triad_variant).toBeNull();
   });
 
@@ -549,20 +561,35 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
     expect(result.triad_variant).toBe("right");
   });
 
-  it("V1: triad from fallback pair uses leftover as third", () => {
+  it("V1: no triad when 3rd tendency is below normalized 0.55 (QA-решения §3)", () => {
     process.env.TIOS_V1_PROFILES = "true";
-    // top1=SPO(30), top2=LAB(20), top3=EXT(18) → innovator via (SPO,EXT); third=LAB → right
     const result = determine_psychotype({
-      extraversion: 18,
+      extraversion: 5,
       introversion: 0,
       anxiety: 0,
-      aggression: 0,
+      aggression: 28,
       sensitivity: 0,
-      spontaneity: 30,
-      lability: 20,
-      rigidity: 0,
+      spontaneity: 26,
+      lability: 0,
+      rigidity: 16,
     });
-    expect(result.psychotype_code).toBe("innovator");
-    expect(result.triad_variant).toBe("right");
+    expect(result.psychotype_code).toBe("individualist");
+    expect(result.triad_variant).toBeNull();
+  });
+
+  it("V1: triad when 3rd tendency normalized ≥ 0.55", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = determine_psychotype({
+      extraversion: 5,
+      introversion: 0,
+      anxiety: 0,
+      aggression: 28,
+      sensitivity: 0,
+      spontaneity: 26,
+      lability: 0,
+      rigidity: 17,
+    });
+    expect(result.psychotype_code).toBe("individualist");
+    expect(result.triad_variant).toBe("left");
   });
 });

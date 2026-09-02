@@ -16,9 +16,19 @@ describe("applyV1ContentDisplayRules", () => {
     expect(applyV1ContentDisplayRules("influencer", sample)).toEqual(sample);
   });
 
-  it("keeps only complex_profile_message for complex", () => {
+  it("keeps complex plaque and universal techniques for complex", () => {
     expect(applyV1ContentDisplayRules("complex", sample)).toEqual([
       { block_key: COMPLEX_PROFILE_BLOCK_KEY },
+    ]);
+    expect(
+      applyV1ContentDisplayRules("complex", [
+        { block_key: COMPLEX_PROFILE_BLOCK_KEY },
+        { block_key: "universal_techniques" },
+        { block_key: "triad_addition_left" },
+      ]),
+    ).toEqual([
+      { block_key: COMPLEX_PROFILE_BLOCK_KEY },
+      { block_key: "universal_techniques" },
     ]);
   });
 });

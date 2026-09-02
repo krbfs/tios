@@ -45,6 +45,7 @@
     "ips:block": "tsx scripts/block-ips.ts",
     "db:promote-admin": "tsx scripts/promote-admin.ts",
     "content:build-registry": "tsx scripts/build-content-registry.ts",
+    "content:validate-catalog": "tsx scripts/validate_catalog.ts",
     "chrome:assemble": "tsx scripts/assemble-chrome.ts"
   },
   "postinstall": "node scripts/ensure-playwright.mjs",

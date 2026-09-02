@@ -84,6 +84,7 @@ export async function GET(request: Request) {
         ? EMPATH_SUBTYPE_LABELS[empathSubtype]
         : null,
       avg_intensity: computed.avg_intensity,
+      expression_level: computed.expression_level,
       validation_warnings: computed.validation_warnings,
       warnings: computed.warnings,
       mode: "leader_resource",

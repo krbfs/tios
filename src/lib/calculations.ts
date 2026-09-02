@@ -66,6 +66,8 @@ export type PsychotypeCode =
 
 export type TriadVariant = "left" | "right";
 
+export type ExpressionLevel = "expressed" | "moderate" | "weak" | "blurred";
+
 export type PsychotypeResult = {
   psychotype_code: PsychotypeCode;
   secondary: PsychotypeCode | null;
@@ -73,8 +75,21 @@ export type PsychotypeResult = {
   /** V1: left/right relative to the pure-type pair on the circle; null if absent. */
   triad_variant: TriadVariant | null;
   avg_intensity: number;
+  /** QA-решения §4: normalized top-2 scores → recommendation depth. */
+  expression_level: ExpressionLevel;
   warnings: string[];
 };
+
+/** Max raw score per tendency (NAVIGATOR / questionnaire). */
+export const SCALE_SCORE_MAX = 30;
+
+/** QA-решения §3: 3rd tendency must be expressed (normalized ≥ 0.55). */
+export const TRIAD_THIRD_NORMALIZED_MIN = 0.55;
+
+export const EXPRESSION_EXPRESSED_MIN = 0.7;
+export const EXPRESSION_MODERATE_MIN = 0.5;
+/** Normalized gap top-2 vs top-3 below this → blurred profile. */
+export const EXPRESSION_BLUR_TOP_GAP = 0.1;
 
 /** Empath sub-indices (NAVIGATOR 10.0 §4.6): sensitivity-side points on SS subsets. */
 export type EmpathSubIndices = {
@@ -299,6 +314,17 @@ function classifyCorrespondence(deltaLab: number, deltaRig: number): string | nu
   return null;
 }
 
+const EXPRESSION_COACHING: Record<ExpressionLevel, string> = {
+  expressed:
+    "Профиль выраженный — рекомендации ниже максимально привязаны к вашим ведущим тенденциям.",
+  moderate:
+    "Профиль умеренный — используйте рекомендации как ориентир и адаптируйте под ситуацию.",
+  weak:
+    "Ведущие тенденции выражены слабо — опирайтесь на универсальные практики и наблюдайте за собой дольше.",
+  blurred:
+    "Профиль смазанный — несколько тенденций близки по силе; начните с универсальных техник.",
+};
+
 const CORRESPONDENCE_COACHING: Record<string, string> = {
   Соответствие:
     "Роль соответствует личности. Поддерживайте текущий баланс между рабочими требованиями и естественным стилем.",
@@ -312,11 +338,76 @@ const CORRESPONDENCE_COACHING: Record<string, string> = {
     "Риск перегрузки: рабочий профиль требует больше, чем свойственно личности. Планируйте восстановление и делегирование.",
 };
 
+export function normalizeTendencyScore(score: number): number {
+  return score / SCALE_SCORE_MAX;
+}
+
+export function determine_expression_level(scaled_scores: ScaledScores): ExpressionLevel {
+  const ranked = SCALE_KEYS.map((key) => ({
+    key,
+    score: scaled_scores[key],
+  })).sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+
+  const n2 = normalizeTendencyScore(ranked[1]?.score ?? 0);
+  const n3 = normalizeTendencyScore(ranked[2]?.score ?? 0);
+  const n1 = normalizeTendencyScore(ranked[0]?.score ?? 0);
+
+  if (n2 - n3 < EXPRESSION_BLUR_TOP_GAP) {
+    return "blurred";
+  }
+  if (n1 >= EXPRESSION_EXPRESSED_MIN && n2 >= EXPRESSION_EXPRESSED_MIN) {
+    return "expressed";
+  }
+  if (n1 >= EXPRESSION_MODERATE_MIN && n2 >= EXPRESSION_MODERATE_MIN) {
+    return "moderate";
+  }
+  return "weak";
+}
+
+function computeSecondaryPsychotype(
+  ranked: { key: ScaleKey; score: number }[],
+): PsychotypeCode | null {
+  const top1 = ranked[0]?.key;
+  const top2 = ranked[1]?.key;
+  const top3 = ranked[2]?.key;
+  if (!top1 || !top2 || !top3) {
+    return null;
+  }
+
+  const scoreByKey = Object.fromEntries(
+    ranked.map((item) => [item.key, item.score]),
+  ) as Record<ScaleKey, number>;
+
+  const fallbackPairs: [ScaleKey, ScaleKey][] = [
+    [top1, top3],
+    [top2, top3],
+  ];
+
+  const bestFallback = fallbackPairs
+    .filter(([a, b]) => areScalesAdjacent(a, b))
+    .map(([a, b]) => ({
+      sum: scoreByKey[a] + scoreByKey[b],
+      code: psychotypeForPair(a, b),
+    }))
+    .filter(
+      (item): item is { sum: number; code: PsychotypeCode } => item.code !== null,
+    )
+    .sort((left, right) => right.sum - left.sum)[0];
+
+  return bestFallback?.code ?? null;
+}
+
 /** Интерпретационные рекомендации для коучинга (NAVIGATOR §4.7 / опросник §7). */
 export function buildCoachingRecommendations(
   systemic: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
+  expressionLevel?: ExpressionLevel | null,
 ): string[] {
   const items: string[] = [];
+
+  if (expressionLevel && EXPRESSION_COACHING[expressionLevel]) {
+    items.push(EXPRESSION_COACHING[expressionLevel]);
+  }
+
   const type = systemic.correspondence_type?.trim();
 
   if (type && CORRESPONDENCE_COACHING[type]) {
@@ -663,6 +754,8 @@ export function determine_psychotype(
   const warnings = buildThresholdWarnings(scaled_scores, avg_intensity, systemic);
   const v1 = isV1ProfilesEnabled();
 
+  const expression_level = determine_expression_level(scaled_scores);
+
   if (!top1 || !top2 || !top3) {
     return {
       psychotype_code: unresolvedPsychotypeCode(),
@@ -670,14 +763,16 @@ export function determine_psychotype(
       is_dyad: false,
       triad_variant: null,
       avg_intensity,
+      expression_level,
       warnings,
     };
   }
 
   let psychotype_code: PsychotypeCode = unresolvedPsychotypeCode();
+  let secondary: PsychotypeCode | null = null;
   let pair: [ScaleKey, ScaleKey] | null = null;
 
-  // NAVIGATOR §4.7: сначала top1+top2, иначе fallback top1+top3 / top2+top3.
+  // QA-решения §1: базовый тип — только смежная top1+top2; иначе complex/mixed.
   if (areScalesAdjacent(top1, top2)) {
     const code = psychotypeForPair(top1, top2);
     if (code) {
@@ -685,27 +780,8 @@ export function determine_psychotype(
       pair = [top1, top2];
     }
   } else {
-    const fallbackPairs: [ScaleKey, ScaleKey][] = [
-      [top1, top3],
-      [top2, top3],
-    ];
-    const bestFallback = fallbackPairs
-      .filter(([a, b]) => areScalesAdjacent(a, b))
-      .map(([a, b]) => ({
-        sum: scaled_scores[a] + scaled_scores[b],
-        code: psychotypeForPair(a, b),
-        pair: [a, b] as [ScaleKey, ScaleKey],
-      }))
-      .filter(
-        (item): item is { sum: number; code: PsychotypeCode; pair: [ScaleKey, ScaleKey] } =>
-          item.code !== null,
-      )
-      .sort((left, right) => right.sum - left.sum)[0];
-
-    if (bestFallback) {
-      psychotype_code = bestFallback.code;
-      pair = bestFallback.pair;
-    }
+    psychotype_code = unresolvedPsychotypeCode();
+    secondary = computeSecondaryPsychotype(ranked);
   }
 
   let triad_variant: TriadVariant | null = null;
@@ -718,17 +794,21 @@ export function determine_psychotype(
     const third = [top1, top2, top3].find(
       (key) => key !== pair[0] && key !== pair[1],
     );
-    if (third) {
+    if (
+      third &&
+      normalizeTendencyScore(scaled_scores[third]) >= TRIAD_THIRD_NORMALIZED_MIN
+    ) {
       triad_variant = determine_triad_variant(pair[0], pair[1], third);
     }
   }
 
   return {
     psychotype_code,
-    secondary: null,
+    secondary,
     is_dyad: false,
     triad_variant,
     avg_intensity,
+    expression_level,
     warnings,
   };
 }
@@ -916,7 +996,11 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     validation_warnings: [...new Set(validation_warnings)],
     sorted_personal_scales: buildSortedPersonalScales(scaled_scores),
     leader_scores: computeLeaderScores(scaled_scores),
-    coaching_recommendations: buildCoachingRecommendations(scaled_systemic),
+    expression_level: psychotype.expression_level,
+    coaching_recommendations: buildCoachingRecommendations(
+      scaled_systemic,
+      psychotype.expression_level,
+    ),
   };
 }
 

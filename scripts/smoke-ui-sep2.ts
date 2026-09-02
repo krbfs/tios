@@ -325,6 +325,9 @@ async function checkApi(testCase: Case): Promise<string[]> {
     if (!keys.includes("complex_profile_message")) {
       fails.push("missing complex_profile_message");
     }
+    if (!keys.includes("universal_techniques")) {
+      fails.push("missing universal_techniques");
+    }
     if (keys.includes("description_main")) {
       fails.push("complex must not include portrait");
     }
