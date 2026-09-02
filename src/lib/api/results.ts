@@ -3,7 +3,6 @@ import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 import {
   buildCoachingRecommendations,
   buildSortedPersonalScales,
-  classifyTriad,
   computeLeaderScores,
   determine_empath_subtype,
   determine_psychotype,
