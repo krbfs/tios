@@ -787,6 +787,10 @@
             const result = await apiJson(
               `/api/results/by-encdata?encdata=${encodeURIComponent(encdataParam)}`,
             );
+            if (result.encdata && result.encdata !== encdataParam) {
+              window.location.replace(buildResultUrl(result.encdata));
+              return;
+            }
             renderResult(result);
             return;
           }

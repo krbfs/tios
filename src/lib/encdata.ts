@@ -269,6 +269,20 @@ export function isDemoEncdata(encdata: string): boolean {
   return Boolean(decoded && matchesDemoAllowlist(decoded));
 }
 
+/** Old bookmarks → current demo (triad right); accepts legacy encdata on allowlist. */
+export function upgradeLegacyDemoEncdata(encdata: string): string {
+  const trimmed = encdata.trim();
+  const decoded = tryDecodeForDemoAllowlist(trimmed);
+  if (
+    decoded &&
+    answersEqual(decoded, getLegacyDemoAnswers()) &&
+    !answersEqual(decoded, getDemoAnswers())
+  ) {
+    return getDemoEncdata();
+  }
+  return trimmed;
+}
+
 /** Pre–triad-tuning demo (prod link until sep 2026); kept on allowlist for old bookmarks. */
 export function getLegacyDemoAnswers(): number[] {
   const answers = fillAnswers(0);
@@ -329,6 +343,7 @@ export function getDemoEncdata(): string {
 }
 
 export function computeFromEncdata(encdata: string) {
+  encdata = upgradeLegacyDemoEncdata(encdata);
   let answers: number[];
   try {
     answers = decodeAnswers(encdata);

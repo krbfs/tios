@@ -5,6 +5,7 @@ import {
   buildResultUrl,
   canonicalizeEncdata,
   isDemoEncdata,
+  upgradeLegacyDemoEncdata,
 } from "@/lib/encdata";
 import { loadVisibleContentBlocks } from "@/lib/api/results";
 import {
@@ -41,14 +42,16 @@ export async function GET(request: Request) {
     return response;
   }
 
-  const encdata = new URL(request.url).searchParams.get("encdata")?.trim();
+  const encdataRaw = new URL(request.url).searchParams.get("encdata")?.trim();
 
-  if (!encdata) {
+  if (!encdataRaw) {
     return error("encdata query parameter is required", 400);
   }
 
+  const encdata = upgradeLegacyDemoEncdata(encdataRaw);
+
   try {
-    assertPublicEncdata(encdata);
+    assertPublicEncdata(encdataRaw);
     const computed = computeFromEncdata(encdata);
     const canonical = canonicalizeEncdata(encdata);
     const isDemo = isDemoEncdata(canonical);

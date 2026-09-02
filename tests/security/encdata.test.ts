@@ -14,6 +14,7 @@ import {
   isDemoEncdata,
   isSignedEncdata,
   assertPublicEncdata,
+  upgradeLegacyDemoEncdata,
 } from "@/lib/encdata";
 
 describe("encdata", () => {
@@ -141,6 +142,18 @@ describe("encdata", () => {
       "AUgUJAqSBQmDZEGyIFGQKNgUbAm2BJuybdg2bBsA";
     expect(isDemoEncdata(legacy)).toBe(true);
     expect(() => assertPublicEncdata(legacy)).not.toThrow();
+  });
+
+  it("upgrades legacy demo encdata to current triad profile", () => {
+    const legacy =
+      "AUgUJAqSBQmDZEGyIFGQKNgUbAm2BJuybdg2bBsA";
+    const upgraded = upgradeLegacyDemoEncdata(legacy);
+    expect(upgraded).not.toBe(legacy);
+    expect(upgraded).toBe(getDemoEncdata());
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = computeFromEncdata(legacy);
+    expect(result.triad_variant).toBe("right");
+    expect(result.scaled_scores?.anxiety).toBe(17);
   });
 
   it("accepts demo signed with a foreign JWT secret", () => {
