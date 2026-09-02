@@ -77,6 +77,7 @@ export async function GET(request: Request) {
       psychotype_code: computed.psychotype_code,
       psychotype_secondary: computed.psychotype_secondary,
       triad_variant: computed.triad_variant,
+      triad_status: computed.triad_status,
       sub_index_s: computed.sub_index_s,
       sub_index_n: computed.sub_index_n,
       empath_subtype: empathSubtype,

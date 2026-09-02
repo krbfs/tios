@@ -10,6 +10,7 @@ import {
   calculate_systemic_scores,
   determine_empath_subtype,
   buildCoachingRecommendations,
+  classifyTriad,
   computeLeaderScores,
   determine_psychotype,
   determine_triad_variant,
@@ -418,6 +419,30 @@ describe("buildCoachingRecommendations", () => {
     });
     expect(items[0]).toContain("коучем");
   });
+
+  it("returns tension coaching for conflict triad (QA 2)", () => {
+    const items = buildCoachingRecommendations(
+      { tension_zone: false, correspondence_type: null },
+      "expressed",
+      { triadStatus: "conflict", psychotypeCode: "conservative" },
+    );
+    expect(items).toHaveLength(2);
+    expect(items[0]).toContain("напряжения");
+    expect(items.some((item) => item.includes("умеренный"))).toBe(false);
+  });
+
+  it("returns no coaching for complex (QA 2)", () => {
+    expect(
+      buildCoachingRecommendations(
+        {
+          tension_zone: true,
+          correspondence_type: "Соответствие",
+        },
+        "moderate",
+        { psychotypeCode: "complex" },
+      ),
+    ).toEqual([]);
+  });
 });
 
 describe("calculate_result extras", () => {
@@ -433,6 +458,62 @@ describe("calculate_result extras", () => {
     expect(result.sub_index_s).toBe(12);
     expect(result.sub_index_n).toBe(18);
     expect(result.triad_variant).toBeNull();
+  });
+});
+
+describe("classifyTriad (QA 2)", () => {
+  it("detects impossible triad 1-5-6 (AGG+ANX+SEN)", () => {
+    expect(
+      classifyTriad(
+        ["aggression", "anxiety", "sensitivity"],
+        {
+          extraversion: 0,
+          introversion: 0,
+          anxiety: 28,
+          aggression: 24,
+          sensitivity: 26,
+          spontaneity: 0,
+          lability: 0,
+          rigidity: 0,
+        },
+      ),
+    ).toBe("impossible");
+  });
+
+  it("detects conflict when one antagonistic pair is high (AGG+ANX)", () => {
+    expect(
+      classifyTriad(
+        ["aggression", "spontaneity", "anxiety"],
+        {
+          extraversion: 0,
+          introversion: 0,
+          anxiety: 20,
+          aggression: 28,
+          sensitivity: 0,
+          spontaneity: 26,
+          lability: 0,
+          rigidity: 0,
+        },
+      ),
+    ).toBe("conflict");
+  });
+
+  it("returns none when third tendency is below 0.55 and triad is stable", () => {
+    expect(
+      classifyTriad(
+        ["aggression", "spontaneity", "rigidity"],
+        {
+          extraversion: 0,
+          introversion: 0,
+          anxiety: 0,
+          aggression: 28,
+          sensitivity: 0,
+          spontaneity: 26,
+          lability: 0,
+          rigidity: 16,
+        },
+      ),
+    ).toBe("none");
   });
 });
 
@@ -527,6 +608,39 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
     expect(result.psychotype_code).toBe("complex");
     expect(result.secondary).toBeNull();
     expect(result.triad_variant).toBeNull();
+  });
+
+  it("V1: impossible triad hides triad_variant (conservative + AGG top-3)", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const result = determine_psychotype({
+      extraversion: 0,
+      introversion: 0,
+      anxiety: 28,
+      aggression: 24,
+      sensitivity: 26,
+      spontaneity: 0,
+      lability: 0,
+      rigidity: 0,
+    });
+    expect(result.psychotype_code).toBe("conservative");
+    expect(result.triad_status).toBe("impossible");
+    expect(result.triad_variant).toBeNull();
+  });
+
+  it("V1: complex has null expression_level", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    const psychotype = determine_psychotype({
+      extraversion: 20,
+      introversion: 18,
+      anxiety: 16,
+      aggression: 0,
+      sensitivity: 0,
+      spontaneity: 0,
+      lability: 0,
+      rigidity: 0,
+    });
+    expect(psychotype.psychotype_code).toBe("complex");
+    expect(psychotype.expression_level).toBeNull();
   });
 
   it("V1: triad left for individualist + RIG", () => {

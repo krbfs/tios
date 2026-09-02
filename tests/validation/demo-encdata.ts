@@ -6,10 +6,12 @@
 import { computeFromEncdata, DEMO_THRESHOLD_WARNINGS, getDemoEncdata } from "../../src/lib/encdata";
 
 const encdata = getDemoEncdata();
+process.env.TIOS_V1_PROFILES = "true";
 const result = computeFromEncdata(encdata);
 
 const checks: [string, boolean][] = [
   ["psychotype influencer", result.psychotype_code === "influencer"],
+  ["triad right (V1 demo)", result.triad_variant === "right"],
   ["has scaled scores", Boolean(result.scaled_scores?.extraversion != null)],
   ["has systemic", Boolean(result.scaled_systemic?.LAB_work != null)],
   ["curated warnings", result.warnings?.length === DEMO_THRESHOLD_WARNINGS.length],

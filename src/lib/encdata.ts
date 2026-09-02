@@ -186,7 +186,7 @@ export function assertPublicEncdata(encdata: string): void {
     return;
   }
   const decoded = tryDecodeForDemoAllowlist(encdata);
-  if (decoded && answersEqual(decoded, getDemoAnswers())) {
+  if (decoded && matchesDemoAllowlist(decoded)) {
     return;
   }
   throw new Error("Invalid or unsigned result link");
@@ -250,21 +250,57 @@ export const DEMO_THRESHOLD_WARNINGS = [
   "Высокая вероятность непредсказуемого поведения",
 ] as const;
 
+function matchesDemoAllowlist(answers: readonly number[]): boolean {
+  return (
+    answersEqual(answers, getDemoAnswers()) ||
+    answersEqual(answers, getLegacyDemoAnswers())
+  );
+}
+
 export function isDemoEncdata(encdata: string): boolean {
   try {
-    if (answersEqual(decodeAnswers(encdata), getDemoAnswers())) {
+    if (matchesDemoAllowlist(decodeAnswers(encdata))) {
       return true;
     }
   } catch {
     // signed with foreign JWT still counts as demo if body matches
   }
   const decoded = tryDecodeForDemoAllowlist(encdata);
-  return Boolean(decoded && answersEqual(decoded, getDemoAnswers()));
+  return Boolean(decoded && matchesDemoAllowlist(decoded));
+}
+
+/** Pre–triad-tuning demo (prod link until sep 2026); kept on allowlist for old bookmarks. */
+export function getLegacyDemoAnswers(): number[] {
+  const answers = fillAnswers(0);
+  const set = (ids: number[], value: number) => {
+    for (const id of ids) {
+      answers[id - 1] = value;
+    }
+  };
+
+  set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56], -2);
+  set([61, 66, 71], 1);
+  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], -1);
+  set([65, 70, 75], -2);
+  set([2, 7, 12, 17, 22, 27, 32, 37], -1);
+  set([42, 47, 52, 57, 62, 67, 72], 1);
+  set([3, 8, 13, 18, 23, 28, 33, 38], -1);
+  set([43, 48, 53, 58, 63, 68, 73], 1);
+  set([4, 9, 14], 0);
+  answers[13] = 1;
+  set([19, 24, 29], 1);
+  answers[18] = 2;
+  set([34, 39, 44], 0);
+  set([49, 54], -1);
+  answers[58] = 0;
+  set([64, 69, 74], 1);
+
+  return answers;
 }
 
 /**
- * Demo profile for landing / «Пример результата» — Лидер мнений.
- * Answers tuned for separate-count math: filled radar (not flat zeros) + legacy block-4 systemic pattern.
+ * Demo profile for landing / «Пример результата» — Лидер мнений + триада right (V1).
+ * Answers tuned for separate-count math: filled radar + triad third ≥ 0.55.
  */
 export function getDemoAnswers(): number[] {
   const answers = fillAnswers(0);
@@ -277,10 +313,10 @@ export function getDemoAnswers(): number[] {
   // 8 шкал — насыщенный профиль (близко к старому образцу mock-result / prod demo)
   set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56], -2);
   set([61, 66, 71], 1);
-  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], -1);
+  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], -2);
   set([65, 70, 75], -2);
-  set([2, 7, 12, 17, 22, 27, 32, 37], -1);
-  set([42, 47, 52, 57, 62, 67, 72], 1);
+  set([2, 7, 12, 17, 22, 27, 32, 37, 42], -2);
+  set([47, 52, 57, 62, 67, 72], 0);
   set([3, 8, 13, 18, 23, 28, 33, 38], -1);
   set([43, 48, 53, 58, 63, 68, 73], 1);
 
@@ -312,7 +348,7 @@ export function computeFromEncdata(encdata: string) {
     answers = decodeAnswers(encdata);
   } catch (err) {
     const decoded = tryDecodeForDemoAllowlist(encdata);
-    if (!decoded || !answersEqual(decoded, getDemoAnswers())) {
+    if (!decoded || !matchesDemoAllowlist(decoded)) {
       throw err;
     }
     answers = decoded;

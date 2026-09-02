@@ -177,7 +177,7 @@ function buildCases(): Case[] {
   cases.push({
     name: "demo",
     encdata: getDemoEncdata(),
-    expect: { psychotype_code: "influencer" },
+    expect: { psychotype_code: "influencer", triad_variant: "right" },
   });
 
   for (const testCase of cases) {

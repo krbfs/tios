@@ -3,13 +3,14 @@ import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 import {
   buildCoachingRecommendations,
   buildSortedPersonalScales,
+  classifyTriad,
   computeLeaderScores,
   determine_empath_subtype,
-  determine_expression_level,
   determine_psychotype,
   empathSubtypeBlockKey,
   EMPATH_SUBTYPE_BLOCK_KEYS,
   EMPATH_SUBTYPE_LABELS,
+  type PsychotypeCode,
   type ScaledScores,
   type SystemicScores,
 } from "@/lib/calculations";
@@ -290,6 +291,17 @@ export async function serializeResult(
   const encdata = getEncdataFromAnswers(result.answers);
   const scaledScores = result.scaledScores as ScaledScores;
   const scaledSystemic = result.scaledSystemic as SystemicScores | null;
+  const systemicForPsychotype = scaledSystemic
+    ? {
+        tension_zone: scaledSystemic.tension_zone,
+        correspondence_type: scaledSystemic.correspondence_type,
+      }
+    : undefined;
+  const psychotypeFromScores = determine_psychotype(
+    scaledScores,
+    systemicForPsychotype,
+  );
+  const expressionLevel = psychotypeFromScores.expression_level;
   const modeRequestNotice = viewerOwnsResult(result, viewer)
     ? await loadModeRequestNotice(result.id)
     : null;
@@ -306,15 +318,16 @@ export async function serializeResult(
     sorted_personal_scales: buildSortedPersonalScales(scaledScores),
     leader_scores: computeLeaderScores(scaledScores),
     coaching_recommendations: scaledSystemic
-      ? buildCoachingRecommendations(
-          scaledSystemic,
-          determine_expression_level(scaledScores),
-        )
+      ? buildCoachingRecommendations(scaledSystemic, expressionLevel, {
+          triadStatus: psychotypeFromScores.triad_status,
+          psychotypeCode: result.psychotypeCode as PsychotypeCode,
+        })
       : [],
-    expression_level: determine_expression_level(scaledScores),
+    expression_level: expressionLevel,
     psychotype_code: result.psychotypeCode,
     psychotype_secondary: result.psychotypeSecondary,
     triad_variant: result.triadVariant,
+    triad_status: psychotypeFromScores.triad_status,
     sub_index_s: result.subIndexS,
     sub_index_n: result.subIndexN,
     empath_subtype: empathSubtype,

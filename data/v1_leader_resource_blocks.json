@@ -10,11 +10,11 @@
       "block_key": "complex_profile_message",
       "block_template": "text_block",
       "title": "Сложный профиль",
-      "content_text": "Ваш профиль многогранен. Мы подберём универсальные техники, а вы сможете углубить самопонимание позже.\n\nВаш профиль сочетает разные тенденции, и мы пока не можем определить один ведущий психотип. Это нормально — мы подберём для вас универсальные техники, которые работают для большинства. Со временем, при повторном прохождении, профиль может стать яснее.",
+      "content_text": "Ваш профиль сочетает разные тенденции, и мы пока не можем определить один ведущий психотип. Это нормально — мы подберём для вас универсальные техники, которые работают для большинства людей. Со временем, при повторном прохождении, профиль может стать яснее.",
       "sort_order": 1,
       "triad_variant": null,
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -23,11 +23,12 @@
       "block_key": "universal_techniques",
       "block_template": "text_block",
       "title": "Универсальные техники",
-      "content_text": "Универсальные техники (подходят при любом профиле):\nКороткие «звонки поддержки» близким — 5–10 минут, чтобы делиться переживаниями и не копить напряжение внутри.\nТехники заземления: дыхание 4–4–4, назвать три предмета вокруг, почувствовать опору ног.\nМаленькие ритуалы восстановления: прогулка, тёплый душ, 15 минут без телефона.",
+      "content_text": "Универсальные техники (подходят при любом профиле):\n1. Короткие «звонки поддержки» близким — 5–10 минут, чтобы делиться переживаниями и не копить напряжение внутри.\n2. Техники заземления 5-4-3-2-1: назвать 5 предметов, 4 ощущения, 3 звука, 2 запаха, 1 вкус.\n3. Маленькие ритуалы стабильности: прогулка, тёплый душ, 15 минут без телефона.\n4. Дыхание 4-7-8: вдох на 4 счёта, задержка на 7, выдох на 8.\n5. Дневник благодарности: записывать 3 вещи, за которые благодарны сегодня.\n6. Техника «Стоп-мысль»: заметить навязчивую мысль, сказать «стоп» и переключиться на дыхание или заземление.",
+      "psychotypes": ["any"],
       "sort_order": 2,
       "triad_variant": null,
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -40,7 +41,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -53,7 +54,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -66,7 +67,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -79,7 +80,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -92,7 +93,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -105,7 +106,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -118,7 +119,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -131,7 +132,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -144,7 +145,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -157,7 +158,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -170,7 +171,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -183,7 +184,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -196,7 +197,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -209,7 +210,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -222,7 +223,7 @@
       "sort_order": 12,
       "triad_variant": "right",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -235,7 +236,7 @@
       "sort_order": 11,
       "triad_variant": "left",
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true
     },
     {
@@ -247,7 +248,7 @@
       "content_text": "Глубоко чувствует мир и людей. Именно поэтому стремится упорядочивать пространство и следовать правилам - это его способ защитить себя и близких от хаоса. Ответственный и эмпатичный, но может истощаться, беря на себя слишком много чужих эмоций и обязанностей.",
       "sort_order": 13,
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true,
       "triad_variant": null
     },
@@ -260,7 +261,7 @@
       "content_text": "Обладает «тонкой кожей» и отлично чувствует нюансы и красоту. При этом не любит жестких рамок и инструкций, предпочитая жить по вдохновению. Можете быть блестящим творцом, но рутина и бюрократия его быстро разрушают.",
       "sort_order": 13,
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true,
       "triad_variant": null
     },
@@ -273,7 +274,7 @@
       "content_text": "Ценит стабильность, четкие правила и логику. Надежен и создает порядок вокруг себя. При этом предпочитает не погружаться в глубокие эмоциональные переживания и чужие драмы, опираясь в сложных ситуациях на логику, факты и проверенные алгоритмы. Часто - опора команды в кризисных ситуациях.",
       "sort_order": 13,
       "is_visible_default": true,
-      "version": 2,
+      "version": 3,
       "is_active": true,
       "triad_variant": null
     }

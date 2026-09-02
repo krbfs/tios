@@ -554,7 +554,10 @@
         );
       }
 
-      function renderBlock(block) {
+      const TRIAD_CONFLICT_DISCLAIMER =
+        "Ваш профиль сочетает разные тенденции. Сначала сосредоточимся на снижении общего напряжения.";
+
+      function renderBlock(block, result) {
         const presentation = resolveTriadBlock(block);
         const wrapper = document.createElement("article");
         wrapper.className = "content-block";
@@ -578,6 +581,18 @@
           title.className = "content-block-title";
           title.textContent = presentation.title;
           wrapper.appendChild(title);
+        }
+
+        if (
+          result?.triad_status === "conflict" &&
+          (TRIAD_BLOCK_KEYS.has(presentation.block_key) ||
+            presentation.triad_variant === "left" ||
+            presentation.triad_variant === "right")
+        ) {
+          const disclaimer = document.createElement("p");
+          disclaimer.className = "content-block-disclaimer";
+          disclaimer.textContent = TRIAD_CONFLICT_DISCLAIMER;
+          wrapper.appendChild(disclaimer);
         }
 
         const body = document.createElement("div");
@@ -738,7 +753,7 @@
 
         contentBlocksEl.replaceChildren();
         orderContentBlocks(result.content_blocks).forEach((block, index) => {
-          const element = renderBlock(block);
+          const element = renderBlock(block, result);
           element.classList.add("content-block--reveal");
           element.style.animationDelay = `${index * 60}ms`;
           contentBlocksEl.appendChild(element);

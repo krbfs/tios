@@ -81,6 +81,42 @@ function verifyRegistry(entry: (typeof REGISTRIES)[number]): string[] {
   return errors;
 }
 
+function verifyV1ComplexBlocks(): string[] {
+  const errors: string[] = [];
+  const filePath = resolve(process.cwd(), "data/v1_leader_resource_blocks.json");
+  const blocks = loadBlocks(filePath).filter(
+    (block) =>
+      block.is_active !== false &&
+      block.mode === "leader_resource" &&
+      block.psychotype_code === "complex",
+  );
+
+  for (const blockKey of ["complex_profile_message", "universal_techniques"]) {
+    const match = blocks.find(
+      (block) =>
+        block.block_key === blockKey &&
+        typeof block.content_text === "string" &&
+        block.content_text.trim(),
+    );
+    if (!match) {
+      errors.push(`v1_leader_resource/complex: missing ${blockKey}`);
+    }
+  }
+
+  const universal = blocks.find(
+    (block) => block.block_key === "universal_techniques",
+  );
+  if (universal?.content_text && !universal.content_text.includes("4-7-8")) {
+    errors.push("v1_leader_resource/complex: universal_techniques missing 4-7-8");
+  }
+
+  if (!errors.length) {
+    console.log("OK v1_leader_resource complex blocks (plaque + universal_techniques)");
+  }
+
+  return errors;
+}
+
 async function verifyDatabase(): Promise<string[]> {
   if (!process.env.DATABASE_URL) {
     console.log("Skip DB check (DATABASE_URL not set)");
@@ -123,6 +159,20 @@ async function verifyDatabase(): Promise<string[]> {
       errors.push("DB leader_resource/complex: missing complex_profile_message");
     } else {
       console.log("OK DB leader_resource/complex_profile_message");
+    }
+
+    const universalCount = await db.contentBlock.count({
+      where: {
+        mode: "leader_resource",
+        psychotypeCode: "complex",
+        blockKey: "universal_techniques",
+        isActive: true,
+      },
+    });
+    if (universalCount < 1) {
+      errors.push("DB leader_resource/complex: missing universal_techniques");
+    } else {
+      console.log("OK DB leader_resource/universal_techniques");
     }
 
     for (const psychotype of PSYCHOTYPES) {
@@ -172,7 +222,7 @@ async function verifyDatabase(): Promise<string[]> {
 
 async function main() {
   const checkDb = process.argv.includes("--db");
-  const errors = REGISTRIES.flatMap(verifyRegistry);
+  const errors = [...REGISTRIES.flatMap(verifyRegistry), ...verifyV1ComplexBlocks()];
 
   if (checkDb) {
     errors.push(...(await verifyDatabase()));

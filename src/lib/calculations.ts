@@ -66,6 +66,8 @@ export type PsychotypeCode =
 
 export type TriadVariant = "left" | "right";
 
+export type TriadStatus = "stable" | "conflict" | "impossible" | "none";
+
 export type ExpressionLevel = "expressed" | "moderate" | "weak" | "blurred";
 
 export type PsychotypeResult = {
@@ -74,9 +76,11 @@ export type PsychotypeResult = {
   is_dyad: boolean;
   /** V1: left/right relative to the pure-type pair on the circle; null if absent. */
   triad_variant: TriadVariant | null;
+  /** QA 2 / NAVIGATOR §2.5: stable | conflict | impossible | none (triad not formed). */
+  triad_status: TriadStatus;
   avg_intensity: number;
-  /** QA-решения §4: normalized top-2 scores → recommendation depth. */
-  expression_level: ExpressionLevel;
+  /** QA-решения §4: normalized top-2 scores → recommendation depth; null at complex. */
+  expression_level: ExpressionLevel | null;
   warnings: string[];
 };
 
@@ -325,6 +329,12 @@ const EXPRESSION_COACHING: Record<ExpressionLevel, string> = {
     "Профиль смазанный — несколько тенденций близки по силе; начните с универсальных техник.",
 };
 
+/** QA 2 A4.11: coaching when triad_status = conflict (replaces expression-level prefix). */
+const TRIAD_CONFLICT_COACHING = [
+  "Ваш профиль сочетает разные тенденции. Сначала сосредоточимся на снижении общего напряжения.",
+  "Практикуйте дыхание и заземление; персонализацию по триаде добавим, когда напряжение снизится.",
+] as const;
+
 const CORRESPONDENCE_COACHING: Record<string, string> = {
   Соответствие:
     "Роль соответствует личности. Поддерживайте текущий баланс между рабочими требованиями и естественным стилем.",
@@ -397,11 +407,122 @@ function computeSecondaryPsychotype(
   return bestFallback?.code ?? null;
 }
 
+/** Circle positions 1–8 (QA 2): AGG SPO EXT LAB ANX SEN INT RIG — same order as TENDENCY_CIRCLE. */
+export const TRIAD_ANTAGONISTIC_POSITION_PAIRS: ReadonlyArray<
+  readonly [number, number]
+> = [
+  [1, 5],
+  [1, 6],
+  [2, 8],
+  [3, 7],
+  [4, 8],
+] as const;
+
+const IMPOSSIBLE_TRIAD_POSITION_SETS: ReadonlyArray<readonly [number, number, number]> =
+  [
+    [1, 5, 6],
+    [2, 4, 8],
+  ] as const;
+
+export function tendencyCirclePosition(key: ScaleKey): number {
+  const index = TENDENCY_CIRCLE.indexOf(key);
+  return index >= 0 ? index + 1 : -1;
+}
+
+function isImpossibleTriadPositions(positions: number[]): boolean {
+  const sorted = [...positions].sort((left, right) => left - right);
+  return IMPOSSIBLE_TRIAD_POSITION_SETS.some(
+    (set) =>
+      set[0] === sorted[0] && set[1] === sorted[1] && set[2] === sorted[2],
+  );
+}
+
+function countAntagonisticPairsInTop3(
+  top3Keys: ScaleKey[],
+  scores: ScaledScores,
+): { presenceCount: number; qualifyingConflictCount: number } {
+  const positions = new Set(top3Keys.map(tendencyCirclePosition));
+  let presenceCount = 0;
+  let qualifyingConflictCount = 0;
+
+  for (const [leftPosition, rightPosition] of TRIAD_ANTAGONISTIC_POSITION_PAIRS) {
+    if (!positions.has(leftPosition) || !positions.has(rightPosition)) {
+      continue;
+    }
+    presenceCount++;
+    const leftKey = TENDENCY_CIRCLE[leftPosition - 1];
+    const rightKey = TENDENCY_CIRCLE[rightPosition - 1];
+    if (
+      leftKey &&
+      rightKey &&
+      normalizeTendencyScore(scores[leftKey]) >= TRIAD_THIRD_NORMALIZED_MIN &&
+      normalizeTendencyScore(scores[rightKey]) >= TRIAD_THIRD_NORMALIZED_MIN
+    ) {
+      qualifyingConflictCount++;
+    }
+  }
+
+  return { presenceCount, qualifyingConflictCount };
+}
+
+/**
+ * QA 2 A3: classify top-3 tendency set (any order).
+ * `none` — stable triad not formed (3rd normalized &lt; 0.55); impossible/conflict override.
+ */
+export function classifyTriad(
+  top3Keys: ScaleKey[],
+  scores: ScaledScores,
+): TriadStatus {
+  if (top3Keys.length < 3) {
+    return "none";
+  }
+
+  const positions = top3Keys.map(tendencyCirclePosition);
+  if (isImpossibleTriadPositions(positions)) {
+    return "impossible";
+  }
+
+  const thirdKey = top3Keys[2];
+  const thirdNormalized =
+    thirdKey !== undefined ? normalizeTendencyScore(scores[thirdKey]) : 0;
+  const triadFormed = thirdNormalized >= TRIAD_THIRD_NORMALIZED_MIN;
+
+  const { presenceCount, qualifyingConflictCount } = countAntagonisticPairsInTop3(
+    top3Keys,
+    scores,
+  );
+
+  if (presenceCount === 1 && qualifyingConflictCount === 1) {
+    return "conflict";
+  }
+
+  if (!triadFormed) {
+    return "none";
+  }
+
+  return "stable";
+}
+
+/** UI disclaimer when triad block is shown at triad_status = conflict (QA 2 A4.11). */
+export const TRIAD_CONFLICT_DISCLAIMER = TRIAD_CONFLICT_COACHING[0];
+
 /** Интерпретационные рекомендации для коучинга (NAVIGATOR §4.7 / опросник §7). */
 export function buildCoachingRecommendations(
   systemic: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
   expressionLevel?: ExpressionLevel | null,
+  options?: {
+    triadStatus?: TriadStatus;
+    psychotypeCode?: PsychotypeCode;
+  },
 ): string[] {
+  if (options?.psychotypeCode === "complex") {
+    return [];
+  }
+
+  if (options?.triadStatus === "conflict") {
+    return [...TRIAD_CONFLICT_COACHING];
+  }
+
   const items: string[] = [];
 
   if (expressionLevel && EXPRESSION_COACHING[expressionLevel]) {
@@ -754,19 +875,23 @@ export function determine_psychotype(
   const warnings = buildThresholdWarnings(scaled_scores, avg_intensity, systemic);
   const v1 = isV1ProfilesEnabled();
 
-  const expression_level = determine_expression_level(scaled_scores);
-
   if (!top1 || !top2 || !top3) {
     return {
       psychotype_code: unresolvedPsychotypeCode(),
       secondary: null,
       is_dyad: false,
       triad_variant: null,
+      triad_status: "none",
       avg_intensity,
-      expression_level,
+      expression_level:
+        unresolvedPsychotypeCode() === COMPLEX_PSYCHOTYPE_LABEL
+          ? null
+          : determine_expression_level(scaled_scores),
       warnings,
     };
   }
+
+  const triad_status = classifyTriad([top1, top2, top3], scaled_scores);
 
   let psychotype_code: PsychotypeCode = unresolvedPsychotypeCode();
   let secondary: PsychotypeCode | null = null;
@@ -789,7 +914,8 @@ export function determine_psychotype(
     v1 &&
     pair &&
     psychotype_code !== MIXED_PSYCHOTYPE_LABEL &&
-    psychotype_code !== COMPLEX_PSYCHOTYPE_LABEL
+    psychotype_code !== COMPLEX_PSYCHOTYPE_LABEL &&
+    triad_status !== "impossible"
   ) {
     const third = [top1, top2, top3].find(
       (key) => key !== pair[0] && key !== pair[1],
@@ -802,11 +928,17 @@ export function determine_psychotype(
     }
   }
 
+  const expression_level =
+    psychotype_code === COMPLEX_PSYCHOTYPE_LABEL
+      ? null
+      : determine_expression_level(scaled_scores);
+
   return {
     psychotype_code,
     secondary,
     is_dyad: false,
     triad_variant,
+    triad_status,
     avg_intensity,
     expression_level,
     warnings,
@@ -997,9 +1129,14 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     sorted_personal_scales: buildSortedPersonalScales(scaled_scores),
     leader_scores: computeLeaderScores(scaled_scores),
     expression_level: psychotype.expression_level,
+    triad_status: psychotype.triad_status,
     coaching_recommendations: buildCoachingRecommendations(
       scaled_systemic,
       psychotype.expression_level,
+      {
+        triadStatus: psychotype.triad_status,
+        psychotypeCode: psychotype.psychotype_code,
+      },
     ),
   };
 }

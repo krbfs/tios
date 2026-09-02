@@ -122,6 +122,27 @@ describe("encdata", () => {
     expect(nonZeroScales).toBeGreaterThanOrEqual(6);
   });
 
+  it("demo encdata shows influencer triad right when V1 profiles enabled", () => {
+    const prev = process.env.TIOS_V1_PROFILES;
+    process.env.TIOS_V1_PROFILES = "true";
+    try {
+      const result = computeFromEncdata(getDemoEncdata());
+      expect(result.psychotype_code).toBe("influencer");
+      expect(result.triad_variant).toBe("right");
+      expect(result.triad_status).toBe("stable");
+    } finally {
+      if (prev === undefined) delete process.env.TIOS_V1_PROFILES;
+      else process.env.TIOS_V1_PROFILES = prev;
+    }
+  });
+
+  it("keeps legacy prod demo encdata on the allowlist", () => {
+    const legacy =
+      "AUgUJAqSBQmDZEGyIFGQKNgUbAm2BJuybdg2bBsA";
+    expect(isDemoEncdata(legacy)).toBe(true);
+    expect(() => assertPublicEncdata(legacy)).not.toThrow();
+  });
+
   it("accepts demo signed with a foreign JWT secret", () => {
     const prev = process.env.JWT_SECRET;
     process.env.JWT_SECRET = "foreign-secret-for-test";
