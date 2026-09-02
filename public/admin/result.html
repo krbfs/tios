@@ -235,10 +235,14 @@
           typeof result.sub_index_s === "number" ? String(result.sub_index_s) : "—";
         const subN =
           typeof result.sub_index_n === "number" ? String(result.sub_index_n) : "—";
+        const empathSubtype = result.empath_subtype_label
+          ? String(result.empath_subtype_label)
+          : null;
         resultMeta.innerHTML = `
           <dt>ID</dt><dd>${result.id}</dd>
           <dt>Дата</dt><dd>${formatDate(result.created_at)}</dd>
           <dt>Психотип</dt><dd>${formatPsychotypeSummary(result.psychotype_code)}</dd>
+          ${empathSubtype ? `<dt>Подтип Эмпата</dt><dd>${empathSubtype}</dd>` : ""}
           <dt>triad_variant</dt><dd>${triad}</dd>
           <dt>sub_index_s</dt><dd>${subS}</dd>
           <dt>sub_index_n</dt><dd>${subN}</dd>

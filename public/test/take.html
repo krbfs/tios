@@ -83,12 +83,20 @@
           <div id="question-content">
             <div id="questions-batch" class="questions-batch"></div>
 
-            <div class="actions">
+            <div class="actions actions--quiz-nav">
+              <button
+                id="back-btn"
+                class="btn btn-outline"
+                type="button"
+                data-ga-event="cta_test_back"
+                hidden
+              >Назад</button>
               <button
                 id="next-btn"
                 class="btn btn-primary"
                 type="button"
                 data-ga-event="cta_test_next"
+                disabled
               >Далее</button>
             </div>
           </div>
@@ -168,6 +176,7 @@
       const questionArea = document.getElementById("question-area");
       const questionContent = document.getElementById("question-content");
       const questionsBatch = document.getElementById("questions-batch");
+      const backBtn = document.getElementById("back-btn");
       const nextBtn = document.getElementById("next-btn");
       const errorEl = document.getElementById("error");
       const fastModal = document.getElementById("fast-modal");
@@ -234,6 +243,29 @@
         window.setTimeout(() => handle.classList.remove("slider-handle--snap"), 260);
       }
 
+      const UNANSWERED_CAPTION = "Выберите значение на шкале";
+
+      function isQuestionAnswered(questionIndex) {
+        return answers[questionIndex] !== null;
+      }
+
+      function isPageComplete() {
+        return pageQuestionIndices().every(isQuestionAnswered);
+      }
+
+      function updateNavigationButtons() {
+        const complete = isPageComplete();
+        backBtn.hidden = pageIndex === 0;
+        backBtn.disabled = isAnimating;
+        nextBtn.disabled = isAnimating || !complete;
+      }
+
+      function showUnansweredCaption(caption) {
+        if (!caption) return;
+        caption.classList.add("slider-value--placeholder");
+        caption.textContent = UNANSWERED_CAPTION;
+      }
+
       function updateStatementHighlight(container, value, options = {}) {
         const { updateSlider = false, animate = false } = options;
         const left = container.querySelector(".statement--left");
@@ -251,11 +283,17 @@
             "statement--intensity-0",
             "statement--intensity-1",
             "statement--intensity-2",
+            "statement--neutral-selected",
           );
         }
 
-        left?.classList.add(`statement--intensity-${leftIntensity}`);
-        right?.classList.add(`statement--intensity-${rightIntensity}`);
+        if (value === 0) {
+          left?.classList.add("statement--neutral-selected");
+          right?.classList.add("statement--neutral-selected");
+        } else {
+          left?.classList.add(`statement--intensity-${leftIntensity}`);
+          right?.classList.add(`statement--intensity-${rightIntensity}`);
+        }
 
         if (animate && valueChanged) {
           const prevLeftIntensity = Number(container.dataset.leftIntensity ?? "0");
@@ -274,6 +312,7 @@
 
       function updateSliderCaption(caption, value) {
         if (!caption) return;
+        caption.classList.remove("slider-value--placeholder");
         caption.classList.add("is-changing");
         caption.textContent = SLIDER_LABELS[String(value)] ?? "";
         window.setTimeout(() => {
@@ -324,6 +363,7 @@
       function setAnswer(questionIndex, value) {
         answers[questionIndex] = value;
         markQuestionStarted(questionIndex);
+        updateNavigationButtons();
       }
 
       function createDesktopRow(questionIndex, question) {
@@ -390,9 +430,13 @@
 
         desktop.append(left, likertStack, right, caption);
 
-        const initialValue = answers[questionIndex] ?? 0;
-        updateSliderCaption(caption, initialValue);
-        updateStatementHighlight(desktop, initialValue);
+        const savedAnswer = answers[questionIndex];
+        if (savedAnswer !== null) {
+          updateSliderCaption(caption, savedAnswer);
+          updateStatementHighlight(desktop, savedAnswer);
+        } else {
+          showUnansweredCaption(caption);
+        }
 
         return desktop;
       }
@@ -460,25 +504,41 @@
         const caption = document.createElement("div");
         caption.className = "slider-value";
 
-        const syncMobileRow = () => {
-          const value = Number(slider.value);
-          setAnswer(questionIndex, value);
+        const applyMobileRowVisual = (value, options = {}) => {
+          slider.value = String(value);
           updateMobileSliderCaption(slider, caption);
           slider.setAttribute("aria-label", SLIDER_LABELS[String(value)] ?? "");
-          if (mobile.closest(".question-row")) {
-            syncQuestionRow(questionIndex, value, { animate: true });
-          } else {
-            updateStatementHighlight(mobile, value, { updateSlider: true, animate: true });
-          }
+          updateStatementHighlight(mobile, value, {
+            updateSlider: true,
+            animate: options.animate ?? false,
+          });
+        };
+
+        const commitMobileAnswer = (options = {}) => {
+          const value = Number(slider.value);
+          setAnswer(questionIndex, value);
+          applyMobileRowVisual(value, options);
           errorEl.hidden = true;
         };
 
-        slider.addEventListener("input", syncMobileRow);
+        slider.addEventListener("input", () => commitMobileAnswer({ animate: true }));
+        slider.addEventListener("change", () => commitMobileAnswer({ animate: true }));
+        slider.addEventListener("click", () => {
+          if (answers[questionIndex] === null) {
+            commitMobileAnswer({ animate: true });
+          }
+        });
 
         sliderWrap.append(sliderControl, labels);
         mobile.append(heading, statements, caption, sliderWrap);
 
-        syncMobileRow();
+        const savedAnswer = answers[questionIndex];
+        if (savedAnswer !== null) {
+          applyMobileRowVisual(savedAnswer);
+        } else {
+          showUnansweredCaption(caption);
+          updateSliderHandle(slider, sliderHandle);
+        }
 
         const resizeObserver = new ResizeObserver(() => {
           updateSliderHandle(slider, sliderHandle);
@@ -517,6 +577,7 @@
         if (pageIndex < TOTAL_PAGES - 1) {
           ensurePageLoaded(pageIndex + 1).catch(() => {});
         }
+        updateNavigationButtons();
       }
 
       function updateProgress() {
@@ -530,35 +591,8 @@
           pageIndex === TOTAL_PAGES - 1 ? "cta_test_submit" : "cta_test_next";
       }
 
-      function isDesktopLayout() {
-        return window.matchMedia("(min-width: 1024px)").matches;
-      }
-
       function collectPageAnswers() {
-        const indices = pageQuestionIndices();
-        if (isDesktopLayout()) {
-          for (const questionIndex of indices) {
-            const checked = document.querySelector(
-              `input[name="answer-${questionIndex}"]:checked`,
-            );
-            if (!checked) {
-              return false;
-            }
-            answers[questionIndex] = Number(checked.value);
-          }
-          return true;
-        }
-
-        for (const questionIndex of indices) {
-          const slider = questionsBatch.querySelector(
-            `.question-row[data-question-index="${questionIndex}"] .answer-slider`,
-          );
-          if (!slider) {
-            return false;
-          }
-          answers[questionIndex] = Number(slider.value);
-        }
-        return true;
+        return isPageComplete();
       }
 
       function recordPageTimes() {
@@ -577,6 +611,7 @@
         }
 
         isAnimating = true;
+        updateNavigationButtons();
         questionContent.classList.remove("question-enter");
         questionContent.classList.add("question-exit");
 
@@ -588,6 +623,7 @@
           window.setTimeout(() => {
             questionContent.classList.remove("question-enter");
             isAnimating = false;
+            updateNavigationButtons();
           }, 280);
         }, 220);
       }
@@ -644,8 +680,17 @@
         submitAnswers();
       }
 
+      backBtn.addEventListener("click", () => {
+        if (isAnimating || pageIndex === 0) return;
+        errorEl.hidden = true;
+        const prevPage = pageIndex - 1;
+        runPageTransition(() => {
+          pageIndex = prevPage;
+        });
+      });
+
       nextBtn.addEventListener("click", async () => {
-        if (isAnimating) return;
+        if (isAnimating || nextBtn.disabled) return;
         errorEl.hidden = true;
 
         if (!collectPageAnswers()) {
@@ -664,8 +709,7 @@
             runPageTransition(() => {});
           } catch (err) {
             showError(err instanceof Error ? err.message : "Не удалось загрузить вопросы");
-          } finally {
-            nextBtn.disabled = false;
+            updateNavigationButtons();
           }
           return;
         }
