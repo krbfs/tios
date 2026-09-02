@@ -36,6 +36,7 @@
     "db:import-all": "tsx scripts/import_all.ts",
     "db:seed-complex": "tsx scripts/seed_complex_psychotype.ts",
     "db:verify-content": "tsx scripts/verify_content_modes.ts",
+    "content:verify-docx": "tsx scripts/verify-content-against-docx.ts",
     "verify:demo": "tsx scripts/verify_demo_encdata.ts",
     "validate:seo-a2a": "tsx scripts/validate_seo_a2a.ts",
     "logs:antibot": "python3 scripts/antibot-logs.py",

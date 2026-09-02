@@ -200,7 +200,7 @@
         SCALE_TABLE_ORDER,
         formatScaleValue,
       } from "/js/psychotypes.js";
-      import { renderBlockBody } from "/js/block-templates.js";
+      import { renderBlockBody, resolveTriadBlock } from "/js/block-templates.js";
       import { apiJson, formatDate, getSessionUuid } from "/js/session.js";
       import { buildResultUrl, getAccessToken, getStoredUser } from "/js/user-auth.js";
       import { initSiteAnalytics } from "/js/analytics.js";
@@ -237,6 +237,7 @@
         "triad_addition_right",
       ]);
       const COMPLEX_BLOCK_KEY = "complex_profile_message";
+      const KEY_FORMULA_BLOCK_KEY = "key_formula";
       const radarAverageEl = document.getElementById("radar-average");
       const scaleTableBody = document.getElementById("scale-table-body");
       const contentBlocksEl = document.getElementById("content-blocks");
@@ -554,35 +555,38 @@
       }
 
       function renderBlock(block) {
+        const presentation = resolveTriadBlock(block);
         const wrapper = document.createElement("article");
         wrapper.className = "content-block";
-        if (block.block_key === COMPLEX_BLOCK_KEY) {
+        if (presentation.block_key === COMPLEX_BLOCK_KEY) {
           wrapper.classList.add("content-block--complex");
+        } else if (presentation.block_key === KEY_FORMULA_BLOCK_KEY) {
+          wrapper.classList.add("content-block--key-formula");
         } else if (
-          TRIAD_BLOCK_KEYS.has(block.block_key) ||
-          block.triad_variant === "left" ||
-          block.triad_variant === "right"
+          TRIAD_BLOCK_KEYS.has(presentation.block_key) ||
+          presentation.triad_variant === "left" ||
+          presentation.triad_variant === "right"
         ) {
           wrapper.classList.add("content-block--triad");
-          if (block.triad_variant) {
-            wrapper.dataset.triadVariant = block.triad_variant;
+          if (presentation.triad_variant) {
+            wrapper.dataset.triadVariant = presentation.triad_variant;
           }
         }
 
-        if (block.title) {
+        if (presentation.title) {
           const title = document.createElement("div");
           title.className = "content-block-title";
-          title.textContent = block.title;
+          title.textContent = presentation.title;
           wrapper.appendChild(title);
         }
 
         const body = document.createElement("div");
         body.className = "content-block-body";
-        body.appendChild(renderBlockBody(block));
+        body.appendChild(renderBlockBody(presentation));
 
         wrapper.appendChild(body);
 
-        if (block.block_key === COMPLEX_BLOCK_KEY) {
+        if (presentation.block_key === COMPLEX_BLOCK_KEY) {
           const actions = document.createElement("div");
           actions.className = "content-block-actions";
           const contact = document.createElement("a");

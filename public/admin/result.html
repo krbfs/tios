@@ -128,7 +128,7 @@
 
     <script type="module">
       import { initSiteAnalytics } from "/js/analytics.js";
-      import { renderBlockBody } from "/js/block-templates.js";
+      import { renderBlockBody, resolveTriadBlock } from "/js/block-templates.js";
       import { formatPsychotypeSummary } from "/js/psychotypes.js";
       import {
         renderResultAnalytics,
@@ -291,21 +291,24 @@
         }
 
         for (const block of visibleBlocks) {
+          const presentation = resolveTriadBlock(block);
           const wrapper = document.createElement("article");
           wrapper.className = "content-block";
-          if (block.block_key === "complex_profile_message") {
+          if (presentation.block_key === "complex_profile_message") {
             wrapper.classList.add("content-block--complex");
+          } else if (presentation.block_key === "key_formula") {
+            wrapper.classList.add("content-block--key-formula");
           } else if (
-            block.block_key === "triad_addition_left" ||
-            block.block_key === "triad_addition_right" ||
-            block.triad_variant
+            presentation.block_key === "triad_addition_left" ||
+            presentation.block_key === "triad_addition_right" ||
+            presentation.triad_variant
           ) {
             wrapper.classList.add("content-block--triad");
           }
-          wrapper.innerHTML = `<div class="content-block-title">${block.title || block.block_key}</div>`;
+          wrapper.innerHTML = `<div class="content-block-title">${presentation.title || presentation.block_key}</div>`;
           const body = document.createElement("div");
           body.className = "content-block-body";
-          body.appendChild(renderBlockBody(block));
+          body.appendChild(renderBlockBody(presentation));
           wrapper.appendChild(body);
           contentPreview.appendChild(wrapper);
         }

@@ -8,6 +8,7 @@
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import AdmZip from "adm-zip";
 
@@ -59,7 +60,7 @@ const BLOCK_DEFS = [
   },
   {
     block_key: "efficiency_map",
-    title: "Карта эффективности (Пик эффективности, Зона провала)",
+    title: "Карта эффективности",
     sort_order: 3,
     start: /^3\.\s*Карта эффективности/i,
   },
@@ -246,7 +247,26 @@ function normalizeTriadContent(parts: string[]): string {
     .join("\n");
 }
 
+const GLUED_SECTION_LABELS = [
+  "Возможности",
+  "Ограничения",
+  "Идеальный партнер",
+  "Как пополнять",
+  "Как рационально тратить",
+  "Профессионально",
+  "Личностно",
+];
+
+const INLINE_SUBTITLE_STRIPS: Partial<
+  Record<(typeof BLOCK_DEFS)[number]["block_key"], RegExp>
+> = {
+  energy_sources: /^:?\s*как пополнять и рационально тратить:?\s*/i,
+  partnership: /^:?\s*возможности и ограничения\s*/i,
+  attraction: /^в профессиональном и личностном плане\?\s*/i,
+};
+
 function normalizeContent(text: string): string {
+  const labelAlt = GLUED_SECTION_LABELS.join("|");
   return text
     .replace(/^\?\s*/, "")
     .replace(/Ё/g, "Е")
@@ -255,6 +275,7 @@ function normalizeContent(text: string): string {
     .replace(/–/g, "—")
     .replace(/\.([А-ЯA-Z«])/g, ". $1")
     .replace(/:([А-ЯA-Z«])/g, ": $1")
+    .replace(new RegExp(`([а-яё»])(${labelAlt}):`, "g"), "$1 $2:")
     .replace(/—(?=\S)/g, "— ")
     .replace(/\bМодник\b/g, "Эстет")
     .replace(/\bЧувствительный\b/g, "Эмпат")
@@ -263,6 +284,14 @@ function normalizeContent(text: string): string {
     .replace(/\bЭнтузиаст\b/g, "Инноватор")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function stripInlineSubtitle(
+  text: string,
+  blockKey: (typeof BLOCK_DEFS)[number]["block_key"],
+): string {
+  const pattern = INLINE_SUBTITLE_STRIPS[blockKey];
+  return pattern ? text.replace(pattern, "").trim() : text;
 }
 
 function stripHeaderPrefix(line: string, start: RegExp): string {
@@ -332,10 +361,24 @@ function parseMultilineBlocks(
   const stopMarkers = [
     /^Специальный раздел для Эмпата/i,
     /^Для более точного портрета используются/i,
+    /^Индекс Чувствительности/i,
+    /^Индекс Любви к порядку/i,
+    /^На основе их сочетания/i,
+    /^Условие$/i,
+    /^Подтип$/i,
+    /^Дополнительный текст/i,
+    /^Высокий S/i,
+    /^Низкий S/i,
+    /^\(В остальных случаях/i,
   ];
-  const contentLines = lines.filter(
+  const filtered = lines.filter(
     (line) => !stopMarkers.some((marker) => marker.test(line)),
   );
+  const empathTailIndex = filtered.findIndex((line) =>
+    EMPATH_SUBTYPES.some((subtype) => line.includes(subtype.marker)),
+  );
+  const contentLines =
+    empathTailIndex === -1 ? filtered : filtered.slice(0, empathTailIndex);
 
   const keyFormula = parseKeyFormula(contentLines);
   const blockStarts: Array<{
@@ -351,7 +394,10 @@ function parseMultilineBlocks(
         blockStarts.push({
           def,
           lineIndex: index,
-          inlineTail: stripHeaderPrefix(line, def.start),
+          inlineTail: stripInlineSubtitle(
+            stripHeaderPrefix(line, def.start),
+            def.block_key,
+          ),
         });
         break;
       }
@@ -386,8 +432,11 @@ function parseMultilineBlocks(
       .slice(current.lineIndex + 1, nextIndex)
       .filter((line) => !line.startsWith("Ключевая формула:"));
 
-    const contentText = normalizeContent(
-      [current.inlineTail, ...bodyLines].filter(Boolean).join(" "),
+    const contentText = stripInlineSubtitle(
+      normalizeContent(
+        [current.inlineTail, ...bodyLines].filter(Boolean).join(" "),
+      ),
+      current.def.block_key,
     );
 
     if (!contentText) {
@@ -468,8 +517,15 @@ function parseTriads(
       currentVariant === "left"
         ? "triad_addition_left"
         : "triad_addition_right";
-    const title =
-      currentVariant === "left"
+    const fullText = normalizeTriadContent(currentParts);
+    const headerMatch = fullText.match(/^Триада\s+\d+:[^\n]*/i);
+    const headerLine = headerMatch?.[0]?.trim() ?? "";
+    const contentText = headerMatch
+      ? fullText.slice(headerMatch[0].length).replace(/^\n+/, "").trim()
+      : fullText;
+    const title = headerLine
+      ? `Уточнение: ${headerLine}`
+      : currentVariant === "left"
         ? "Уточнение: левая триада"
         : "Уточнение: правая триада";
 
@@ -479,7 +535,7 @@ function parseTriads(
       block_key: blockKey,
       block_template: "text_block",
       title,
-      content_text: normalizeTriadContent(currentParts),
+      content_text: contentText,
       sort_order: currentVariant === "left" ? 11 : 12,
       triad_variant: currentVariant,
       is_visible_default: true,
@@ -577,8 +633,8 @@ function parseEmpathSubtypes(lines: string[]): RegistryBlock[] {
   return blocks;
 }
 
-function main() {
-  const paragraphs = extractParagraphs(DOCX);
+function buildContentRegistries(docxPath: string = DOCX) {
+  const paragraphs = extractParagraphs(docxPath);
   const portraitLines = findSection(
     paragraphs,
     /^2\.\s*Полные портреты психотипов/i,
@@ -629,9 +685,28 @@ function main() {
     ...empathSubtypeBlocks,
   ];
 
-  const relativeSource = DOCX.includes("source_sep_2nd")
-    ? `source_sep_2nd/${DOCX.split("/").pop()}`
-    : `source_current/${DOCX.split("/").pop()}`;
+  return {
+    docxPath,
+    portraitBlocks,
+    v1Blocks,
+    portraitSections,
+    triadSections,
+  };
+}
+
+export {
+  buildContentRegistries,
+  normalizeContent,
+  stripInlineSubtitle,
+  BLOCK_DEFS,
+  type RegistryBlock,
+};
+
+function main() {
+  const { docxPath, portraitBlocks, v1Blocks } = buildContentRegistries();
+  const relativeSource = docxPath.includes("source_sep_2nd")
+    ? `source_sep_2nd/${docxPath.split("/").pop()}`
+    : `source_current/${docxPath.split("/").pop()}`;
 
   const generatedAt = new Date().toISOString();
 
@@ -672,4 +747,10 @@ function main() {
   console.log(`Wrote ${v1Blocks.length} V1 blocks to ${OUT_V1}`);
 }
 
-main();
+const isDirectRun =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+
+if (isDirectRun) {
+  main();
+}
