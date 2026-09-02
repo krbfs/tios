@@ -300,35 +300,21 @@ export function getLegacyDemoAnswers(): number[] {
 
 /**
  * Demo profile for landing / «Пример результата» — Лидер мнений + триада right (V1).
- * Answers tuned for separate-count math: filled radar + triad third ≥ 0.55.
+ * Same scales as legacy demo except block 2 tuned so anxiety is 3rd ≥ 0.55 (17/30).
  */
 export function getDemoAnswers(): number[] {
-  const answers = fillAnswers(0);
+  const answers = getLegacyDemoAnswers();
   const set = (ids: number[], value: number) => {
     for (const id of ids) {
       answers[id - 1] = value;
     }
   };
 
-  // 8 шкал — насыщенный профиль (близко к старому образцу mock-result / prod demo)
-  set([1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56], -2);
-  set([61, 66, 71], 1);
-  set([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], -2);
-  set([65, 70, 75], -2);
-  set([2, 7, 12, 17, 22, 27, 32, 37, 42], -2);
-  set([47, 52, 57, 62, 67, 72], 0);
-  set([3, 8, 13, 18, 23, 28, 33, 38], -1);
-  set([43, 48, 53, 58, 63, 68, 73], 1);
-
-  // Блок 4 (системные свойства) — как в demo encdata до rework
-  set([4, 9, 14], 0);
-  answers[13] = 1;
-  set([19, 24, 29], 1);
-  answers[18] = 2;
-  set([34, 39, 44], 0);
-  set([49, 54], -1);
-  answers[58] = 0;
-  set([64, 69, 74], 1);
+  // Block 2 only: raise anxiety to 17 without moving extraversion/lability.
+  set([2], 0);
+  set([7, 12, 17, 22, 27], 1);
+  set([32], -1);
+  set([37, 42, 47, 52, 57, 62, 67, 72], -2);
 
   return answers;
 }
