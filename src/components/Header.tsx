@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { getDemoResultHref } from "@/lib/encdata";
+
 /** Keep in sync with chrome/header-public.html */
 const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/test", label: "Пройти тест", gaEvent: "cta_header_start_test" },
-  { href: "/results", label: "Пример результата", gaEvent: "cta_header_demo_result" },
+  { href: getDemoResultHref(), label: "Пример результата", gaEvent: "cta_header_demo_result" },
   { href: "/about", label: "О тесте", gaEvent: "cta_header_about" },
   { href: "/author", label: "Об авторе", gaEvent: "cta_header_author" },
   { href: "/contact", label: "Свяжитесь с нами", gaEvent: "cta_header_contact" },

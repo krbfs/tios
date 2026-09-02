@@ -12,6 +12,8 @@
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { getDemoResultHref } from "../src/lib/encdata";
+
 const ROOT = process.cwd();
 const CHROME_DIR = join(ROOT, "chrome");
 const PUBLIC_DIR = join(ROOT, "public");
@@ -71,6 +73,7 @@ function renderPartial(
   const vars: Record<string, string> = {
     logoHref: "/",
     loginAttrs: 'data-ga-event="cta_header_login"',
+    demoResultHref: getDemoResultHref(),
     resultsClass: "",
     contentClass: "",
     modeRequestsClass: "",

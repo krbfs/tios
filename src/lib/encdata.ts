@@ -342,6 +342,11 @@ export function getDemoEncdata(): string {
   return packAnswersBinary(getDemoAnswers()).toString("base64");
 }
 
+/** Menu / CTA: canonical demo result with current encdata (V1 triad). */
+export function getDemoResultHref(): string {
+  return `/quiz/result?encdata=${encodeURIComponent(getDemoEncdata())}`;
+}
+
 export function computeFromEncdata(encdata: string) {
   encdata = upgradeLegacyDemoEncdata(encdata);
   let answers: number[];
