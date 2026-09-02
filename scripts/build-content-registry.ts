@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Build content_registry.json for leader_resource from source docx.
+ * Build portrait content from source_sep_2nd docx:
+ *   - data/content_registry.json (8×11 base blocks)
+ *   - data/v1_leader_resource_blocks.json (complex + triads + empath subtypes)
  *
- * Source: source_current/Предложение_пo_изменению_ТК_вопросы (2).docx
  * Usage: npm run content:build-registry
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -10,26 +11,32 @@ import { join, resolve } from "node:path";
 
 import AdmZip from "adm-zip";
 
-function findLeaderResourceDocx(): string {
-  const sourceDir = resolve(process.cwd(), "../source_current");
-  const file = readdirSync(sourceDir).find(
-    (name) =>
-      name.includes("Предложение") &&
-      name.includes("ТК") &&
-      name.endsWith(".docx") &&
-      !name.startsWith("~") &&
-      !name.startsWith("."),
-  );
+import {
+  determine_triad_variant,
+  type ScaleKey,
+} from "../src/lib/calculations";
 
-  if (!file) {
-    throw new Error(`Leader resource docx not found in ${sourceDir}`);
+function findPortraitDocx(): string {
+  for (const sourceDir of ["../source_sep_2nd", "../source_current"]) {
+    const dir = resolve(process.cwd(), sourceDir);
+    const file = readdirSync(dir).find(
+      (name) =>
+        name.includes("Предложение") &&
+        name.includes("ТК") &&
+        name.endsWith(".docx") &&
+        !name.startsWith("~") &&
+        !name.startsWith("."),
+    );
+    if (file) {
+      return join(dir, file);
+    }
   }
-
-  return join(sourceDir, file);
+  throw new Error("Portrait docx not found in source_sep_2nd or source_current");
 }
 
-const DOCX = findLeaderResourceDocx();
-const OUT = resolve(process.cwd(), "data/content_registry.json");
+const DOCX = findPortraitDocx();
+const OUT_REGISTRY = resolve(process.cwd(), "data/content_registry.json");
+const OUT_V1 = resolve(process.cwd(), "data/v1_leader_resource_blocks.json");
 
 const LIST_BLOCK_KEYS = new Set([
   "energy_loss_channels",
@@ -42,79 +49,151 @@ const BLOCK_DEFS = [
     block_key: "description_main",
     title: "Описание основного психотипа",
     sort_order: 1,
-    pattern: /1\.\s*Описание основного психотипа\s*(.*)/,
+    start: /^1\.\s*Описание основного психотипа/i,
   },
   {
     block_key: "stress_behavior",
     title: "Поведение в стрессе",
     sort_order: 2,
-    pattern: /2\.\s*Поведение в стрессе\s*(.*)/,
+    start: /^2\.\s*Поведение в стрессе/i,
   },
   {
     block_key: "efficiency_map",
     title: "Карта эффективности (Пик эффективности, Зона провала)",
     sort_order: 3,
-    pattern: /3\.\s*Карта эффективности\s*(.*)/,
+    start: /^3\.\s*Карта эффективности/i,
   },
   {
     block_key: "energy_loss_channels",
     title: "Каналы потери энергии",
     sort_order: 4,
-    pattern: /4\.\s*Каналы потери энергии\s*(.*)/,
+    start: /^4\.\s*Каналы потери энергии/i,
   },
   {
     block_key: "decision_making_channel",
     title: "Канал принятия решений",
     sort_order: 5,
-    pattern: /5\.\s*Канал принятия решений\s*(.*)/,
+    start: /^(?:5\.\s*)?Канал принятия решений/i,
   },
   {
     block_key: "energy_sources",
     title: "Источники энергии",
     sort_order: 6,
-    pattern:
-      /6\.\s*Источники энергии(?:: как пополнять и рационально тратить)?\s*(.*)/,
+    start: /^6\.\s*Источники энергии/i,
   },
   {
     block_key: "business_problems",
     title: "Диагностика возможных бизнес-проблем",
     sort_order: 7,
-    pattern: /7\.\s*Диагностика возможных бизнес-проблем\s*(.*)/,
+    start: /^7\.\s*Диагностика возможных бизнес-проблем/i,
   },
   {
     block_key: "strengths",
     title: "Сильные стороны",
     sort_order: 8,
-    pattern: /8\.\s*Сильные стороны\s*(.*)/,
+    start: /^8\.\s*Сильные стороны/i,
   },
   {
     block_key: "partnership",
     title: "Партнерство: возможности и ограничения",
     sort_order: 9,
-    pattern: /9\.\s*Партн[её]рство: возможности и ограничения:?\s*(.*)/,
+    start: /^(?:9\.\s*)?Партн[её]рство/i,
   },
   {
     block_key: "attraction",
     title: "Что привлекает в профессиональном и личностном плане",
     sort_order: 10,
-    pattern:
-      /10\.\s*Что привлекает(?:\s+в\s+профессиональном\s+и\s+личностном\s+плане)?\??\s*(.*)/,
+    start: /^10\.\s*Что привлекает/i,
   },
 ] as const;
 
 const PSYCHOTYPE_HEADERS: Array<{
   code: string;
   match: RegExp;
+  pair: [ScaleKey, ScaleKey];
 }> = [
-  { code: "individualist", match: /^1\.\s*Индивидуалист(?:\s|\(|$)/i },
-  { code: "innovator", match: /^2\.\s*(?:Энтузиаст|Инноватор)(?:\s|\(|$)/i },
-  { code: "influencer", match: /^3\.\s*Лидер мнений(?:\s|\(|$)/i },
-  { code: "aesthete", match: /^4\.\s*(?:Модник|Эстет)(?:\s|\(|$)/i },
-  { code: "conservative", match: /^5\.\s*Консерватор(?:\s|\(|$)/i },
-  { code: "empath", match: /^6\.\s*(?:Чувствительный|Эмпат)(?:\s|\(|$)/i },
-  { code: "analyst", match: /^7\.\s*Аналитик(?:\s|\(|$)/i },
-  { code: "pragmatist", match: /^8\.\s*(?:Прагматик|Реалист)(?:\s|\(|$)/i },
+  {
+    code: "individualist",
+    match: /^2\.1\.\s*Индивидуалист/i,
+    pair: ["aggression", "spontaneity"],
+  },
+  {
+    code: "innovator",
+    match: /^2\.2\.\s*(?:Энтузиаст|Инноватор)/i,
+    pair: ["spontaneity", "extraversion"],
+  },
+  {
+    code: "influencer",
+    match: /^2\.3\.\s*Лидер мнений/i,
+    pair: ["extraversion", "lability"],
+  },
+  {
+    code: "aesthete",
+    match: /^2\.4\.\s*(?:Модник|Эстет)/i,
+    pair: ["lability", "anxiety"],
+  },
+  {
+    code: "conservative",
+    match: /^2\.5\.\s*Консерватор/i,
+    pair: ["anxiety", "sensitivity"],
+  },
+  {
+    code: "empath",
+    match: /^2\.6\.\s*(?:Чувствительный|Эмпат)/i,
+    pair: ["sensitivity", "introversion"],
+  },
+  {
+    code: "analyst",
+    match: /^2\.7\.\s*Аналитик/i,
+    pair: ["introversion", "rigidity"],
+  },
+  {
+    code: "pragmatist",
+    match: /^2\.8\.\s*(?:Прагматик|Реалист)/i,
+    pair: ["rigidity", "aggression"],
+  },
 ];
+
+const TRIAD_HEADERS = PSYCHOTYPE_HEADERS.map(({ code, match, pair }) => ({
+  code,
+  match: new RegExp(match.source.replace("^2\\.", "^3\\."), match.flags),
+  pair,
+}));
+
+const SCALE_TOKEN_MAP: Record<string, ScaleKey> = {
+  AGG: "aggression",
+  SPO: "spontaneity",
+  EXT: "extraversion",
+  LAB: "lability",
+  ANX: "anxiety",
+  SEN: "sensitivity",
+  INT: "introversion",
+  RIG: "rigidity",
+};
+
+const EMPATH_SUBTYPES = [
+  {
+    block_key: "empath_subtype_guardian",
+    title: "Чуткий Хранитель",
+    marker: "«Чуткий Хранитель»",
+    sort_order: 13,
+  },
+  {
+    block_key: "empath_subtype_creator",
+    title: "Вдохновенный Творец",
+    marker: "«Вдохновенный Творец»",
+    sort_order: 13,
+  },
+  {
+    block_key: "empath_subtype_systematic",
+    title: "Сдержанный Систематик",
+    marker: "«Сдержанный Систематик»",
+    sort_order: 13,
+  },
+] as const;
+
+const COMPLEX_MESSAGE =
+  "Ваш профиль не сводится к одному из восьми чистых психотипов: среди трех ведущих тенденций нет соседней пары на круге. Такой результат называют сложным профилем. Для точной интерпретации рекомендуем углубленный разбор с консультантом.";
 
 type RegistryBlock = {
   psychotype_code: string;
@@ -127,6 +206,7 @@ type RegistryBlock = {
   is_visible_default: boolean;
   version: number;
   is_active: boolean;
+  triad_variant?: string | null;
 };
 
 function extractParagraphs(docxPath: string): string[] {
@@ -152,6 +232,20 @@ function extractParagraphs(docxPath: string): string[] {
   return paragraphs;
 }
 
+function normalizeTriadContent(parts: string[]): string {
+  return parts
+    .map((part) =>
+      part
+        .replace(/Ё/g, "Е")
+        .replace(/ё/g, "е")
+        .replace(/–/g, "—")
+        .replace(/\u00a0/g, " ")
+        .trim(),
+    )
+    .filter(Boolean)
+    .join("\n");
+}
+
 function normalizeContent(text: string): string {
   return text
     .replace(/^\?\s*/, "")
@@ -171,19 +265,39 @@ function normalizeContent(text: string): string {
     .trim();
 }
 
-function splitPsychotypeSections(paragraphs: string[]): Map<string, string[]> {
-  const startIndex = paragraphs.findIndex((line) =>
-    line.includes("Психологические портреты"),
-  );
+function stripHeaderPrefix(line: string, start: RegExp): string {
+  return line.replace(start, "").trim();
+}
+
+function findSection(
+  paragraphs: string[],
+  startPattern: RegExp,
+  endPattern: RegExp,
+): string[] {
+  const startIndex = paragraphs.findIndex((line) => startPattern.test(line));
   if (startIndex === -1) {
-    throw new Error("Psychotype section header not found in docx");
+    throw new Error(`Section not found: ${startPattern}`);
   }
 
+  const lines: string[] = [];
+  for (const line of paragraphs.slice(startIndex + 1)) {
+    if (endPattern.test(line)) {
+      break;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+function splitPsychotypeSections(
+  lines: string[],
+  headers: typeof PSYCHOTYPE_HEADERS,
+): Map<string, string[]> {
   const sections = new Map<string, string[]>();
   let currentCode: string | null = null;
 
-  for (const line of paragraphs.slice(startIndex + 1)) {
-    const header = PSYCHOTYPE_HEADERS.find((item) => item.match.test(line));
+  for (const line of lines) {
+    const header = headers.find((item) => item.match.test(line));
     if (header) {
       currentCode = header.code;
       sections.set(currentCode, []);
@@ -202,37 +316,261 @@ function splitPsychotypeSections(paragraphs: string[]): Map<string, string[]> {
   return sections;
 }
 
-function parseBlocks(
+function parseKeyFormula(lines: string[]): string | null {
+  const line = lines.find((item) => item.startsWith("Ключевая формула:"));
+  if (!line) {
+    return null;
+  }
+  const match = line.match(/Ключевая формула:\s*(.+)/);
+  return match?.[1] ? normalizeContent(match[1]) : null;
+}
+
+function parseMultilineBlocks(
   psychotypeCode: string,
   lines: string[],
-): RegistryBlock[] {
+): { keyFormula: string | null; blocks: RegistryBlock[] } {
+  const stopMarkers = [
+    /^Специальный раздел для Эмпата/i,
+    /^Для более точного портрета используются/i,
+  ];
+  const contentLines = lines.filter(
+    (line) => !stopMarkers.some((marker) => marker.test(line)),
+  );
+
+  const keyFormula = parseKeyFormula(contentLines);
+  const blockStarts: Array<{
+    def: (typeof BLOCK_DEFS)[number];
+    lineIndex: number;
+    inlineTail: string;
+  }> = [];
+
+  for (let index = 0; index < contentLines.length; index += 1) {
+    const line = contentLines[index];
+    for (const def of BLOCK_DEFS) {
+      if (def.start.test(line)) {
+        blockStarts.push({
+          def,
+          lineIndex: index,
+          inlineTail: stripHeaderPrefix(line, def.start),
+        });
+        break;
+      }
+    }
+  }
+
   const blocks: RegistryBlock[] = [];
 
-  for (const def of BLOCK_DEFS) {
-    const line = lines.find((item) => def.pattern.test(item));
-    const match = line?.match(def.pattern);
-    if (!match?.[1]?.trim()) {
+  if (keyFormula) {
+    blocks.push({
+      psychotype_code: psychotypeCode,
+      mode: "leader_resource",
+      block_key: "key_formula",
+      block_template: "text_block",
+      title: "Ключевая формула",
+      content_text: keyFormula,
+      sort_order: 0,
+      is_visible_default: true,
+      version: 2,
+      is_active: true,
+    });
+  }
+
+  for (let index = 0; index < blockStarts.length; index += 1) {
+    const current = blockStarts[index];
+    const nextIndex =
+      index + 1 < blockStarts.length
+        ? blockStarts[index + 1].lineIndex
+        : contentLines.length;
+
+    const bodyLines = contentLines
+      .slice(current.lineIndex + 1, nextIndex)
+      .filter((line) => !line.startsWith("Ключевая формула:"));
+
+    const contentText = normalizeContent(
+      [current.inlineTail, ...bodyLines].filter(Boolean).join(" "),
+    );
+
+    if (!contentText) {
       throw new Error(
-        `Missing block ${def.block_key} for psychotype ${psychotypeCode}`,
+        `Empty block ${current.def.block_key} for psychotype ${psychotypeCode}`,
       );
     }
 
     blocks.push({
       psychotype_code: psychotypeCode,
       mode: "leader_resource",
-      block_key: def.block_key,
+      block_key: current.def.block_key,
       block_template:
-        def.block_key === "efficiency_map"
+        current.def.block_key === "efficiency_map"
           ? "card_block"
-          : LIST_BLOCK_KEYS.has(def.block_key)
+          : LIST_BLOCK_KEYS.has(current.def.block_key)
             ? "list_block"
             : "text_block",
-      title: def.title,
-      content_text: normalizeContent(match[1]),
-      sort_order: def.sort_order,
+      title: current.def.title,
+      content_text: contentText,
+      sort_order: current.def.sort_order,
       is_visible_default: true,
-      version: 1,
+      version: 2,
       is_active: true,
+    });
+  }
+
+  if (blocks.filter((block) => block.block_key !== "key_formula").length !== 10) {
+    throw new Error(
+      `Expected 10 content blocks for ${psychotypeCode}, got ${blocks.length}`,
+    );
+  }
+
+  return { keyFormula, blocks };
+}
+
+function parseTriadScales(headerLine: string): ScaleKey[] {
+  const match = headerLine.match(/Триада\s+\d+:\s*([^(]+)/i);
+  if (!match?.[1]) {
+    throw new Error(`Cannot parse triad header: ${headerLine}`);
+  }
+
+  const tokens = match[1]
+    .split(/[–—\-+]/g)
+    .map((token) => token.trim().toUpperCase())
+    .filter(Boolean);
+
+  const scales = tokens.map((token) => {
+    const key = SCALE_TOKEN_MAP[token];
+    if (!key) {
+      throw new Error(`Unknown scale token ${token} in ${headerLine}`);
+    }
+    return key;
+  });
+
+  if (scales.length !== 3) {
+    throw new Error(`Expected 3 scales in triad header: ${headerLine}`);
+  }
+
+  return scales;
+}
+
+function parseTriads(
+  code: string,
+  pair: [ScaleKey, ScaleKey],
+  lines: string[],
+): RegistryBlock[] {
+  const blocks: RegistryBlock[] = [];
+  let currentVariant: "left" | "right" | null = null;
+  let currentParts: string[] = [];
+
+  const flush = () => {
+    if (!currentVariant || currentParts.length === 0) {
+      return;
+    }
+
+    const blockKey =
+      currentVariant === "left"
+        ? "triad_addition_left"
+        : "triad_addition_right";
+    const title =
+      currentVariant === "left"
+        ? "Уточнение: левая триада"
+        : "Уточнение: правая триада";
+
+    blocks.push({
+      psychotype_code: code,
+      mode: "leader_resource",
+      block_key: blockKey,
+      block_template: "text_block",
+      title,
+      content_text: normalizeTriadContent(currentParts),
+      sort_order: currentVariant === "left" ? 11 : 12,
+      triad_variant: currentVariant,
+      is_visible_default: true,
+      version: 2,
+      is_active: true,
+    });
+
+    currentVariant = null;
+    currentParts = [];
+  };
+
+  for (const line of lines) {
+    if (/^Триада\s+\d+:/i.test(line)) {
+      flush();
+      const scales = parseTriadScales(line);
+      const pairSet = new Set(pair);
+      const third = scales.find((scale) => !pairSet.has(scale));
+      if (!third) {
+        throw new Error(`Triad third scale not found for ${code}: ${line}`);
+      }
+      const variant = determine_triad_variant(pair[0], pair[1], third);
+      if (!variant) {
+        throw new Error(`Triad variant unresolved for ${code}: ${line}`);
+      }
+      currentVariant = variant;
+      currentParts = [line];
+      continue;
+    }
+
+    if (currentVariant) {
+      currentParts.push(line);
+    }
+  }
+
+  flush();
+
+  if (blocks.length !== 2) {
+    throw new Error(`Expected 2 triad blocks for ${code}, got ${blocks.length}`);
+  }
+
+  return blocks;
+}
+
+function parseEmpathSubtypes(lines: string[]): RegistryBlock[] {
+  const blocks: RegistryBlock[] = [];
+
+  for (const subtype of EMPATH_SUBTYPES) {
+    const markerIndex = lines.findIndex((line) => line.includes(subtype.marker));
+    if (markerIndex === -1) {
+      throw new Error(`Empath subtype not found: ${subtype.title}`);
+    }
+
+    const markerLine = lines[markerIndex];
+    const inline = markerLine.includes(subtype.marker)
+      ? markerLine.split(subtype.marker)[1]?.trim() ?? ""
+      : "";
+
+    let bodyLine = "";
+    for (let index = markerIndex + 1; index < lines.length; index += 1) {
+      const line = lines[index].trim();
+      if (!line || line.startsWith("(")) {
+        continue;
+      }
+      if (/^Высокий|^Низкий|^Условие|^Подтип|^Дополнительный|^2\./i.test(line)) {
+        continue;
+      }
+      if (/^«[^»]+»\s*$/.test(line)) {
+        continue;
+      }
+      bodyLine = line;
+      break;
+    }
+
+    const contentText = normalizeContent([inline, bodyLine].filter(Boolean).join(" "));
+
+    if (!contentText) {
+      throw new Error(`Empty empath subtype text: ${subtype.title}`);
+    }
+
+    blocks.push({
+      psychotype_code: "empath",
+      mode: "leader_resource",
+      block_key: subtype.block_key,
+      block_template: "text_block",
+      title: subtype.title,
+      content_text: contentText,
+      sort_order: subtype.sort_order,
+      is_visible_default: true,
+      version: 2,
+      is_active: true,
+      triad_variant: null,
     });
   }
 
@@ -241,26 +579,97 @@ function parseBlocks(
 
 function main() {
   const paragraphs = extractParagraphs(DOCX);
-  const sections = splitPsychotypeSections(paragraphs);
-
-  const blocks = [...sections.entries()].flatMap(([code, lines]) =>
-    parseBlocks(code, lines),
+  const portraitLines = findSection(
+    paragraphs,
+    /^2\.\s*Полные портреты психотипов/i,
+    /^3\.\s*Триады/i,
+  );
+  const triadLines = findSection(
+    paragraphs,
+    /^3\.\s*Триады/i,
+    /^4\.\s*/,
   );
 
-  if (blocks.length !== 80) {
-    throw new Error(`Expected 80 blocks, got ${blocks.length}`);
+  const portraitSections = splitPsychotypeSections(
+    portraitLines,
+    PSYCHOTYPE_HEADERS,
+  );
+  const triadSections = splitPsychotypeSections(triadLines, TRIAD_HEADERS);
+
+  const portraitBlocks = [...portraitSections.entries()].flatMap(
+    ([code, lines]) => parseMultilineBlocks(code, lines).blocks,
+  );
+
+  if (portraitBlocks.length !== 88) {
+    throw new Error(`Expected 88 portrait blocks, got ${portraitBlocks.length}`);
   }
 
-  const payload = {
-    mode: "leader_resource",
-    source: "source_current/Предложение_пo_изменению_ТК_вопросы (2).docx",
-    generated_at: new Date().toISOString(),
-    blocks,
-  };
+  const triadBlocks = TRIAD_HEADERS.flatMap(({ code, pair }) =>
+    parseTriads(code, pair, triadSections.get(code) ?? []),
+  );
+
+  const empathSection = portraitSections.get("empath") ?? [];
+  const empathSubtypeBlocks = parseEmpathSubtypes(empathSection);
+
+  const v1Blocks: RegistryBlock[] = [
+    {
+      psychotype_code: "complex",
+      mode: "leader_resource",
+      block_key: "complex_profile_message",
+      block_template: "text_block",
+      title: "Сложный профиль",
+      content_text: COMPLEX_MESSAGE,
+      sort_order: 1,
+      triad_variant: null,
+      is_visible_default: true,
+      version: 2,
+      is_active: true,
+    },
+    ...triadBlocks,
+    ...empathSubtypeBlocks,
+  ];
+
+  const relativeSource = DOCX.includes("source_sep_2nd")
+    ? `source_sep_2nd/${DOCX.split("/").pop()}`
+    : `source_current/${DOCX.split("/").pop()}`;
+
+  const generatedAt = new Date().toISOString();
 
   mkdirSync(resolve(process.cwd(), "data"), { recursive: true });
-  writeFileSync(OUT, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  console.log(`Wrote ${blocks.length} blocks to ${OUT}`);
+
+  writeFileSync(
+    OUT_REGISTRY,
+    `${JSON.stringify(
+      {
+        mode: "leader_resource",
+        source: relativeSource,
+        generated_at: generatedAt,
+        blocks: portraitBlocks,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  writeFileSync(
+    OUT_V1,
+    `${JSON.stringify(
+      {
+        mode: "leader_resource",
+        source: relativeSource,
+        generated_at: generatedAt,
+        note: "V1 blocks: complex + triads + empath subtypes (sep_2nd).",
+        blocks: v1Blocks,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  console.log(`Wrote ${portraitBlocks.length} portrait blocks to ${OUT_REGISTRY}`);
+  console.log(`Wrote ${v1Blocks.length} V1 blocks to ${OUT_V1}`);
 }
 
 main();

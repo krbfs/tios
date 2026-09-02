@@ -490,6 +490,54 @@ export function calculate_empath_sub_indices(
   return { sub_index_s, sub_index_n };
 }
 
+export const EMPATH_S_INDEX_MAX = 12;
+export const EMPATH_N_INDEX_MAX = 18;
+export const EMPATH_SUB_INDEX_HIGH_RATIO = 0.7;
+
+export type EmpathSubtypeCode = "guardian" | "creator" | "systematic";
+
+export const EMPATH_SUBTYPE_BLOCK_KEYS: Record<EmpathSubtypeCode, string> = {
+  guardian: "empath_subtype_guardian",
+  creator: "empath_subtype_creator",
+  systematic: "empath_subtype_systematic",
+};
+
+export const EMPATH_SUBTYPE_LABELS: Record<EmpathSubtypeCode, string> = {
+  guardian: "Чуткий Хранитель",
+  creator: "Вдохновенный Творец",
+  systematic: "Сдержанный Систематик",
+};
+
+function empathSubIndexHighThreshold(max: number): number {
+  return Math.ceil(max * EMPATH_SUB_INDEX_HIGH_RATIO);
+}
+
+/** §2.6 sep_2nd: high/low S and N → one of three subtypes, else null. */
+export function determine_empath_subtype(
+  sub_index_s: number,
+  sub_index_n: number,
+): EmpathSubtypeCode | null {
+  const sHigh = sub_index_s >= empathSubIndexHighThreshold(EMPATH_S_INDEX_MAX);
+  const nHigh = sub_index_n >= empathSubIndexHighThreshold(EMPATH_N_INDEX_MAX);
+
+  if (sHigh && nHigh) {
+    return "guardian";
+  }
+  if (sHigh && !nHigh) {
+    return "creator";
+  }
+  if (!sHigh && nHigh) {
+    return "systematic";
+  }
+  return null;
+}
+
+export function empathSubtypeBlockKey(
+  subtype: EmpathSubtypeCode | null,
+): string | null {
+  return subtype ? EMPATH_SUBTYPE_BLOCK_KEYS[subtype] : null;
+}
+
 function unresolvedPsychotypeCode(): PsychotypeCode {
   return isV1ProfilesEnabled()
     ? COMPLEX_PSYCHOTYPE_LABEL

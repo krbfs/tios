@@ -4,7 +4,11 @@ import {
   buildCoachingRecommendations,
   buildSortedPersonalScales,
   computeLeaderScores,
+  determine_empath_subtype,
   determine_psychotype,
+  empathSubtypeBlockKey,
+  EMPATH_SUBTYPE_BLOCK_KEYS,
+  EMPATH_SUBTYPE_LABELS,
   type ScaledScores,
   type SystemicScores,
 } from "@/lib/calculations";
@@ -29,6 +33,9 @@ export type ContentBlockDto = {
 export const COMPLEX_PROFILE_BLOCK_KEY = "complex_profile_message";
 export const TRIAD_ADDITION_LEFT_KEY = "triad_addition_left";
 export const TRIAD_ADDITION_RIGHT_KEY = "triad_addition_right";
+export const EMPATH_SUBTYPE_BLOCK_KEY_SET = new Set(
+  Object.values(EMPATH_SUBTYPE_BLOCK_KEYS),
+);
 
 /**
  * NAVIGATOR §5.1 display rules for V1 content.
@@ -92,7 +99,22 @@ export type LoadContentOptions = {
   includeHidden?: boolean;
   /** When set to left/right, include matching triad blocks plus base (NULL). Otherwise only base. */
   triadVariant?: string | null;
+  empathSubtypeBlockKey?: string | null;
 };
+
+function filterEmpathSubtypeBlocks<
+  T extends { block_key: string },
+>(blocks: T[], empathSubtypeBlockKey: string | null | undefined): T[] {
+  return blocks.filter((block) => {
+    if (!EMPATH_SUBTYPE_BLOCK_KEY_SET.has(block.block_key)) {
+      return true;
+    }
+    return (
+      typeof empathSubtypeBlockKey === "string" &&
+      block.block_key === empathSubtypeBlockKey
+    );
+  });
+}
 
 export async function loadContentBlocks(
   psychotypeCode: string,
@@ -129,8 +151,11 @@ export async function loadContentBlocks(
 
   const mapped = applyV1ContentDisplayRules(
     psychotypeCode,
-    latestBlocksByKey(blocks).map((block) =>
-      mapContentBlockDto(block, visibilityOverrides),
+    filterEmpathSubtypeBlocks(
+      latestBlocksByKey(blocks).map((block) =>
+        mapContentBlockDto(block, visibilityOverrides),
+      ),
+      psychotypeCode === "empath" ? options?.empathSubtypeBlockKey : null,
     ),
   );
 
@@ -146,9 +171,11 @@ export async function loadVisibleContentBlocks(
   mode: ResultMode,
   visibilityOverrides: Record<string, boolean>,
   triadVariant?: string | null,
+  empathSubtypeBlockKey?: string | null,
 ): Promise<ContentBlockDto[]> {
   return loadContentBlocks(psychotypeCode, mode, visibilityOverrides, {
     triadVariant,
+    empathSubtypeBlockKey,
   });
 }
 
@@ -240,11 +267,18 @@ export async function serializeResult(
     result.session.sessionUuid,
     viewer,
   );
+  const empathSubtype =
+    result.psychotypeCode === "empath" &&
+    typeof result.subIndexS === "number" &&
+    typeof result.subIndexN === "number"
+      ? determine_empath_subtype(result.subIndexS, result.subIndexN)
+      : null;
   const blocks = await loadVisibleContentBlocks(
     result.psychotypeCode,
     contentMode,
     visibilityOverrides,
     result.triadVariant,
+    empathSubtypeBlockKey(empathSubtype),
   );
 
   const encdata = getEncdataFromAnswers(result.answers);
@@ -273,6 +307,10 @@ export async function serializeResult(
     triad_variant: result.triadVariant,
     sub_index_s: result.subIndexS,
     sub_index_n: result.subIndexN,
+    empath_subtype: empathSubtype,
+    empath_subtype_label: empathSubtype
+      ? EMPATH_SUBTYPE_LABELS[empathSubtype]
+      : null,
     avg_intensity: result.avgIntensity,
     validation_warnings: result.validationWarnings,
     warnings: thresholdWarningsFromResult(result),
@@ -290,11 +328,21 @@ export async function serializeResult(
 
 export async function serializeAdminResult(result: ResultWithSession) {
   const visibilityOverrides = parseVisibilityOverrides(result.visibilityOverrides);
+  const empathSubtype =
+    result.psychotypeCode === "empath" &&
+    typeof result.subIndexS === "number" &&
+    typeof result.subIndexN === "number"
+      ? determine_empath_subtype(result.subIndexS, result.subIndexN)
+      : null;
   const blocks = await loadContentBlocks(
     result.psychotypeCode,
     "insighter",
     visibilityOverrides,
-    { includeHidden: true, triadVariant: result.triadVariant },
+    {
+      includeHidden: true,
+      triadVariant: result.triadVariant,
+      empathSubtypeBlockKey: empathSubtypeBlockKey(empathSubtype),
+    },
   );
 
   return {

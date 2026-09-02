@@ -7,6 +7,11 @@ import {
   isDemoEncdata,
 } from "@/lib/encdata";
 import { loadVisibleContentBlocks } from "@/lib/api/results";
+import {
+  empathSubtypeBlockKey,
+  determine_empath_subtype,
+  EMPATH_SUBTYPE_LABELS,
+} from "@/lib/calculations";
 import { logAntibotEvent } from "@/lib/antibot-log";
 import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
 import { clientIp, consumeRateLimit } from "@/lib/test-access";
@@ -47,11 +52,16 @@ export async function GET(request: Request) {
     const computed = computeFromEncdata(encdata);
     const canonical = canonicalizeEncdata(encdata);
     const isDemo = isDemoEncdata(canonical);
+    const empathSubtype =
+      computed.psychotype_code === "empath"
+        ? determine_empath_subtype(computed.sub_index_s, computed.sub_index_n)
+        : null;
     const blocks = await loadVisibleContentBlocks(
       computed.psychotype_code,
       "leader_resource",
       {},
       computed.triad_variant,
+      empathSubtypeBlockKey(empathSubtype),
     );
 
     return json({
@@ -69,6 +79,10 @@ export async function GET(request: Request) {
       triad_variant: computed.triad_variant,
       sub_index_s: computed.sub_index_s,
       sub_index_n: computed.sub_index_n,
+      empath_subtype: empathSubtype,
+      empath_subtype_label: empathSubtype
+        ? EMPATH_SUBTYPE_LABELS[empathSubtype]
+        : null,
       avg_intensity: computed.avg_intensity,
       validation_warnings: computed.validation_warnings,
       warnings: computed.warnings,

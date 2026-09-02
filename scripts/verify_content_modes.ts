@@ -144,6 +144,25 @@ async function verifyDatabase(): Promise<string[]> {
       }
     }
     console.log("OK DB leader_resource triad additions (8×2)");
+
+    for (const blockKey of [
+      "empath_subtype_guardian",
+      "empath_subtype_creator",
+      "empath_subtype_systematic",
+    ]) {
+      const count = await db.contentBlock.count({
+        where: {
+          mode: "leader_resource",
+          psychotypeCode: "empath",
+          blockKey,
+          isActive: true,
+        },
+      });
+      if (count < 1) {
+        errors.push(`DB leader_resource/empath/${blockKey}: missing`);
+      }
+    }
+    console.log("OK DB leader_resource empath subtypes (3)");
   } finally {
     await db.$disconnect();
   }

@@ -107,6 +107,7 @@ describe("GET /api/results/by-encdata", () => {
       "leader_resource",
       {},
       null,
+      null,
     );
   });
 

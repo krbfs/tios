@@ -98,6 +98,7 @@
 
         <section id="empath-subindices" class="empath-subindices" hidden aria-label="Суб-индексы Эмпата">
           <h2>Уточнение профиля Эмпата</h2>
+          <p id="empath-subtype-label" class="empath-subtype-label" hidden></p>
           <p class="muted" style="margin: 0 0 12px">
             Дополнительные индексы по блоку сензитивности (NAVIGATOR §4.6).
           </p>
@@ -222,6 +223,7 @@
       const empathSubindices = document.getElementById("empath-subindices");
       const subIndexSEl = document.getElementById("sub-index-s");
       const subIndexNEl = document.getElementById("sub-index-n");
+      const empathSubtypeLabelEl = document.getElementById("empath-subtype-label");
 
       const VALIDATION_LABELS = {
         falsy_answers: "Все ответы одинаковые — достоверность результата снижена.",
@@ -614,6 +616,13 @@
         }
         subIndexSEl.textContent = String(result.sub_index_s);
         subIndexNEl.textContent = String(result.sub_index_n);
+        if (result.empath_subtype_label) {
+          empathSubtypeLabelEl.textContent = `Подтип: ${result.empath_subtype_label}`;
+          empathSubtypeLabelEl.hidden = false;
+        } else {
+          empathSubtypeLabelEl.textContent = "";
+          empathSubtypeLabelEl.hidden = true;
+        }
         empathSubindices.hidden = false;
       }
 

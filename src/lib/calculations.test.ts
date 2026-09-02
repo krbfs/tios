@@ -8,6 +8,7 @@ import {
   calculate_result,
   calculate_scaled_scores,
   calculate_systemic_scores,
+  determine_empath_subtype,
   buildCoachingRecommendations,
   computeLeaderScores,
   determine_psychotype,
@@ -462,6 +463,24 @@ describe("calculate_empath_sub_indices", () => {
       sub_index_s: 0,
       sub_index_n: 0,
     });
+  });
+});
+
+describe("determine_empath_subtype", () => {
+  it("maps high S + high N to guardian", () => {
+    expect(determine_empath_subtype(12, 18)).toBe("guardian");
+  });
+
+  it("maps high S + low N to creator", () => {
+    expect(determine_empath_subtype(12, 0)).toBe("creator");
+  });
+
+  it("maps low S + high N to systematic", () => {
+    expect(determine_empath_subtype(0, 18)).toBe("systematic");
+  });
+
+  it("returns null for medium indices", () => {
+    expect(determine_empath_subtype(8, 8)).toBeNull();
   });
 });
 
