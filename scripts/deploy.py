@@ -341,9 +341,9 @@ def validate_ai_agent_files(root: Path | None = None) -> None:
         if "agent-card.json" not in ai_text:
             errors.append("ai.txt missing agent-card.json reference")
 
-    validate_script = base / "scripts" / "validate_seo_a2a.ts"
+    validate_script = base / "tests" / "validation" / "seo-a2a.ts"
     if not validate_script.is_file():
-        errors.append("missing scripts/validate_seo_a2a.ts")
+        errors.append("missing tests/validation/seo-a2a.ts")
     else:
         proc = subprocess.run(
             ["npx", "tsx", str(validate_script)],

@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def _load():
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     path = root / "scripts" / "deploy.py"
     spec = importlib.util.spec_from_file_location("deploy", path)
     assert spec and spec.loader
