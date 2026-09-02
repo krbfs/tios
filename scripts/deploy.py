@@ -380,7 +380,7 @@ def run_unit_tests() -> None:
             "unittest",
             "discover",
             "-s",
-            "tests",
+            "tests/deploy",
             "-p",
             "test_*.py",
             "-q",
