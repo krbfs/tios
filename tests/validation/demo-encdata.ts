@@ -3,13 +3,15 @@
  * Smoke-check demo encdata profile (landing / quiz/result link).
  * Usage: npm run verify:demo
  */
-import { computeFromEncdata, DEMO_THRESHOLD_WARNINGS, getDemoEncdata } from "../../src/lib/encdata";
+import { computeFromEncdata, DEMO_THRESHOLD_WARNINGS, getDemoEncdata, getDemoResultHref } from "../../src/lib/encdata";
+import { DEMO_RESULT_HREF } from "../../src/lib/demo-links";
 
 const encdata = getDemoEncdata();
 process.env.TIOS_V1_PROFILES = "true";
 const result = computeFromEncdata(encdata);
 
 const checks: [string, boolean][] = [
+  ["demo menu href in sync", DEMO_RESULT_HREF === getDemoResultHref()],
   ["psychotype influencer", result.psychotype_code === "influencer"],
   ["triad right (V1 demo)", result.triad_variant === "right"],
   ["has scaled scores", Boolean(result.scaled_scores?.extraversion != null)],
