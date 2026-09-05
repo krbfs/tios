@@ -106,6 +106,10 @@ export const PSYCHOTYPE_META: Record<PsychotypeCode, PsychotypeMeta> = {
   },
 };
 
+export function primaryTypeLabel(code: PsychotypeCode | string): string {
+  return PSYCHOTYPE_META[code as PsychotypeCode]?.name ?? String(code);
+}
+
 export function formatPsychotypeSummary(code: string): string {
   const meta = PSYCHOTYPE_META[code as PsychotypeCode];
   if (!meta) {

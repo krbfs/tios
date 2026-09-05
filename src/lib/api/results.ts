@@ -2,7 +2,11 @@ import type { ContentBlock, TestResult, TestSession } from "@prisma/client";
 
 import {
   buildCoachingRecommendations,
+  buildCongruenceAnalysis,
+  buildRawScores,
   buildSortedPersonalScales,
+  buildTzSortedPersonalScales,
+  buildWorkProfile,
   computeLeaderScores,
   determine_empath_subtype,
   determine_psychotype,
@@ -14,8 +18,10 @@ import {
   type SystemicScores,
 } from "@/lib/calculations";
 import { db } from "@/lib/db";
+import { buildCompensatoryCheck } from "@/lib/compensatory-checks";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
 import { resolveContentModeForSession, MODE_LABELS, type ResultMode } from "@/lib/modes";
+import { primaryTypeLabel } from "@/lib/psychotypes";
 
 export { ALLOWED_MODES, type ResultMode } from "@/lib/modes";
 
@@ -301,9 +307,25 @@ export async function serializeResult(
     systemicForPsychotype,
   );
   const expressionLevel = psychotypeFromScores.expression_level;
+  const rawScores = scaledSystemic
+    ? buildRawScores(scaledScores, scaledSystemic)
+    : null;
+  const workProfile = scaledSystemic ? buildWorkProfile(scaledSystemic) : null;
+  const congruenceAnalysis = scaledSystemic
+    ? buildCongruenceAnalysis(scaledSystemic)
+    : null;
   const modeRequestNotice = viewerOwnsResult(result, viewer)
     ? await loadModeRequestNotice(result.id)
     : null;
+  const answersArray = Array.isArray(result.answers) ? result.answers : [];
+  const compensatory_check =
+    answersArray.length === 75
+      ? buildCompensatoryCheck(
+          result.psychotypeCode as PsychotypeCode,
+          scaledScores,
+          answersArray as number[],
+        )
+      : null;
 
   return {
     id: result.id,
@@ -314,6 +336,11 @@ export async function serializeResult(
     answers: result.answers,
     scaled_scores: result.scaledScores,
     scaled_systemic: result.scaledSystemic,
+    raw_scores: rawScores,
+    work_profile: workProfile,
+    congruence_analysis: congruenceAnalysis,
+    primary_type: primaryTypeLabel(result.psychotypeCode),
+    tz_sorted_personal_scales: buildTzSortedPersonalScales(scaledScores),
     sorted_personal_scales: buildSortedPersonalScales(scaledScores),
     leader_scores: computeLeaderScores(scaledScores),
     coaching_recommendations: scaledSystemic
@@ -345,6 +372,7 @@ export async function serializeResult(
     share_link: encdata ? buildShareUrl(encdata) : null,
     content_blocks: blocks,
     mode_request_notice: modeRequestNotice,
+    compensatory_check,
   };
 }
 

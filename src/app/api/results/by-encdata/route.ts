@@ -13,6 +13,7 @@ import {
   determine_empath_subtype,
   EMPATH_SUBTYPE_LABELS,
 } from "@/lib/calculations";
+import { primaryTypeLabel } from "@/lib/psychotypes";
 import { logAntibotEvent } from "@/lib/antibot-log";
 import { rejectIfBlockedIp } from "@/lib/ip-blocklist";
 import { clientIp, consumeRateLimit } from "@/lib/test-access";
@@ -74,6 +75,11 @@ export async function GET(request: Request) {
       ...(isDemo ? {} : { created_at: new Date().toISOString() }),
       scaled_scores: computed.scaled_scores,
       scaled_systemic: computed.scaled_systemic,
+      raw_scores: computed.raw_scores,
+      work_profile: computed.work_profile,
+      congruence_analysis: computed.congruence_analysis,
+      primary_type: primaryTypeLabel(computed.psychotype_code),
+      tz_sorted_personal_scales: computed.tz_sorted_personal_scales,
       sorted_personal_scales: computed.sorted_personal_scales,
       leader_scores: computed.leader_scores,
       coaching_recommendations: computed.coaching_recommendations,
@@ -91,6 +97,7 @@ export async function GET(request: Request) {
       expression_level: computed.expression_level,
       validation_warnings: computed.validation_warnings,
       warnings: computed.warnings,
+      compensatory_check: computed.compensatory_check,
       mode: "leader_resource",
       content_mode: "leader_resource",
       admin_comment: null,

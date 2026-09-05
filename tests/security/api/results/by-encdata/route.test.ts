@@ -127,6 +127,11 @@ describe("GET /api/results/by-encdata", () => {
     expect(payload.psychotype_code).toBe("influencer");
     expect(payload.is_demo).toBe(true);
     expect(payload.created_at).toBeUndefined();
+    expect(payload.compensatory_check).toMatchObject({
+      psychotype_code: "influencer",
+      outcome: "risk",
+      peak_scale: "extraversion",
+    });
     expect(payload.warnings.length).toBeGreaterThan(0);
     expect(
       payload.warnings.some((w) => w.includes("Вероятность достоверного прогноза")),

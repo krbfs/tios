@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run chrome:assemble && next dev --turbopack",
+    "dev": "next dev --turbopack",
+    "dev:fast": "next dev --turbopack",
+    "dev:open": "bash scripts/dev-open.sh",
     "build": "npm run chrome:assemble && next build",
     "start": "next start -p ${PORT:-8080}",
     "lint": "next lint",
@@ -41,6 +43,7 @@
     "db:verify-content": "tsx tests/validation/content-modes.ts",
     "content:verify-docx": "tsx tests/validation/content-docx.ts",
     "verify:demo": "tsx tests/validation/demo-encdata.ts",
+    "verify:questions": "tsx tests/validation/questions-sep2.ts",
     "smoke:ui": "tsx tests/smoke/ui-sep2.ts",
     "validate:seo-a2a": "tsx tests/validation/seo-a2a.ts",
     "logs:antibot": "python3 scripts/antibot-logs.py",

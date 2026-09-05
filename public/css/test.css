@@ -1648,6 +1648,115 @@ input[type="range"].answer-slider {
   color: #c2410c;
 }
 
+.efficiency-card--failure .efficiency-card-title {
+  color: #c2410c;
+}
+
+.compensatory-check-host {
+  margin: 24px 0;
+}
+
+.compensatory-check-card {
+  margin: 0;
+}
+
+.compensatory-check-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.compensatory-check-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.compensatory-check-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.compensatory-check-badge--resource {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.compensatory-check-badge--risk {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.compensatory-check-card--resource {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.compensatory-check-card--risk {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.compensatory-check-meta {
+  margin: 0 0 10px;
+}
+
+.compensatory-balance {
+  height: 8px;
+  margin: 0 0 12px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.compensatory-balance-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+
+.compensatory-balance-fill--resource {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.compensatory-balance-fill--risk {
+  background: linear-gradient(90deg, #fb923c, #ea580c);
+}
+
+.compensatory-check-text {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.compensatory-practice {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.compensatory-check-card--risk .compensatory-practice {
+  border-top-color: rgba(154, 52, 18, 0.15);
+}
+
+.compensatory-practice-label {
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text, #0f172a);
+}
+
+.compensatory-coaching {
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.5;
+}
+
 @media (min-width: 768px) {
   .efficiency-cards {
     grid-template-columns: 1fr 1fr;

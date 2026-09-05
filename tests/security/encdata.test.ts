@@ -51,6 +51,18 @@ describe("encdata", () => {
     expect(() => assertPublicEncdata(unsigned)).toThrow(/unsigned/i);
   });
 
+  it("allows unsigned encdata in development", () => {
+    const prevNode = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+    const unsigned = encodeAnswersUnsignedForTests(fillAnswers(1));
+    try {
+      expect(() => assertPublicEncdata(unsigned)).not.toThrow();
+      expect(computeFromEncdata(unsigned).answers).toEqual(fillAnswers(1));
+    } finally {
+      process.env.NODE_ENV = prevNode;
+    }
+  });
+
   it("allows unsigned encdata only for the fixed demo profile", () => {
     const unsignedDemo = encodeAnswersUnsignedForTests(getDemoAnswers());
     expect(() => assertPublicEncdata(unsignedDemo)).not.toThrow();
@@ -115,12 +127,21 @@ describe("encdata", () => {
     const result = computeFromEncdata(demo);
     expect(result.psychotype_code).toBe("influencer");
     expect(result.warnings).toEqual([...DEMO_THRESHOLD_WARNINGS]);
-    expect(result.scaled_scores?.extraversion).toBeGreaterThan(15);
-    expect(result.scaled_scores?.lability).toBeGreaterThan(15);
-    const nonZeroScales = Object.values(result.scaled_scores ?? {}).filter(
-      (v) => v > 0,
-    ).length;
-    expect(nonZeroScales).toBeGreaterThanOrEqual(6);
+    expect(result.scaled_scores).toMatchObject({
+      extraversion: 24,
+      lability: 18,
+      anxiety: 17,
+      sensitivity: 8,
+      spontaneity: 7,
+      aggression: 5,
+      introversion: 3,
+      rigidity: 0,
+    });
+    expect(result.compensatory_check).toMatchObject({
+      psychotype_code: "influencer",
+      outcome: "risk",
+      peak_scale: "extraversion",
+    });
   });
 
   it("demo encdata shows influencer triad right when V1 profiles enabled", () => {

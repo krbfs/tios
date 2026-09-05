@@ -215,15 +215,20 @@ const EMPATH_S_QUESTIONS = [33, 38, 43, 63, 68, 73] as const;
 /** Empath N — sensitivity-side points on normative facet items (0..18). */
 const EMPATH_N_QUESTIONS = [3, 8, 13, 18, 23, 28, 48, 53, 58] as const;
 
-function assertAnswers(answers: readonly number[]): void {
+/** TZ §9: null → 0; values must be integers in −2..+2. */
+export function normalizeAnswers(answers: readonly (number | null)[]): number[] {
   if (answers.length !== QUESTION_COUNT) {
     throw new Error(`Expected ${QUESTION_COUNT} answers, got ${answers.length}`);
   }
-  for (const value of answers) {
+  return answers.map((value) => {
+    if (value === null) {
+      return 0;
+    }
     if (!Number.isInteger(value) || value < -2 || value > 2) {
       throw new Error(`Invalid answer value: ${value}`);
     }
-  }
+    return value;
+  });
 }
 
 function applySeparateAnswer(
@@ -281,14 +286,16 @@ function emptyWorkSubscales(): Record<WorkSubscaleKey, number> {
   };
 }
 
-export function calculate_scaled_scores(answers: readonly number[]): ScaledScores {
-  assertAnswers(answers);
+export function calculate_scaled_scores(
+  answers: readonly (number | null)[],
+): ScaledScores {
+  const normalized = normalizeAnswers(answers);
   const scores = emptyScaledScores();
 
   for (const block of PERSONALITY_BLOCKS) {
     for (const questionId of block.questions) {
       applySeparateAnswer(
-        answers[questionId - 1],
+        normalized[questionId - 1],
         block.left,
         block.right,
         scores,
@@ -546,8 +553,10 @@ export function buildCoachingRecommendations(
   return items;
 }
 
-export function calculate_systemic_scores(answers: readonly number[]): SystemicScores {
-  assertAnswers(answers);
+export function calculate_systemic_scores(
+  answers: readonly (number | null)[],
+): SystemicScores {
+  const normalized = normalizeAnswers(answers);
 
   const subscales = emptyWorkSubscales();
   const legacyBars: Record<SystemicKey, number> = {
@@ -561,7 +570,7 @@ export function calculate_systemic_scores(answers: readonly number[]): SystemicS
   BLOCK4_SUBSCALES.forEach((subscale, index) => {
     for (const questionId of subscale.questions) {
       applyBlock4Answer(
-        answers[questionId - 1],
+        normalized[questionId - 1],
         subscale.inverted,
         subscale.labKey,
         subscale.rigKey,
@@ -586,7 +595,7 @@ export function calculate_systemic_scores(answers: readonly number[]): SystemicS
     subscales.sub4_4_RIG +
     subscales.sub4_5_RIG;
 
-  const personality = calculate_scaled_scores(answers);
+  const personality = calculate_scaled_scores(normalized);
   const delta_LAB = personality.lability - LAB_work;
   const delta_RIG = personality.rigidity - RIG_work;
   const tension_zone =
@@ -688,16 +697,16 @@ function leftSidePoints(val: number): number {
 
 /** Empath S/N — always computed (MVP metrics; V1 subtypes later). */
 export function calculate_empath_sub_indices(
-  answers: readonly number[],
+  answers: readonly (number | null)[],
 ): EmpathSubIndices {
-  assertAnswers(answers);
+  const normalized = normalizeAnswers(answers);
   let sub_index_s = 0;
   let sub_index_n = 0;
   for (const questionId of EMPATH_S_QUESTIONS) {
-    sub_index_s += leftSidePoints(answers[questionId - 1]);
+    sub_index_s += leftSidePoints(normalized[questionId - 1]);
   }
   for (const questionId of EMPATH_N_QUESTIONS) {
-    sub_index_n += leftSidePoints(answers[questionId - 1]);
+    sub_index_n += leftSidePoints(normalized[questionId - 1]);
   }
   return { sub_index_s, sub_index_n };
 }
@@ -1005,6 +1014,169 @@ export function validate_answers(
   return [...new Set(codes)];
 }
 
+/** TZ §8: 8 personality + 10 subscales + LAB_work + RIG_work (20 indicators). */
+export type RawScores = {
+  EXT: number;
+  INT: number;
+  ANX: number;
+  AGG: number;
+  SEN: number;
+  SPO: number;
+  LAB_pers: number;
+  RIG_pers: number;
+  sub4_1_LAB: number;
+  sub4_1_RIG: number;
+  sub4_2_LAB: number;
+  sub4_2_RIG: number;
+  sub4_3_LAB: number;
+  sub4_3_RIG: number;
+  sub4_4_LAB: number;
+  sub4_4_RIG: number;
+  sub4_5_LAB: number;
+  sub4_5_RIG: number;
+  LAB_work: number;
+  RIG_work: number;
+};
+
+export type WorkProfile = {
+  energy_efficiency: "LAB" | "RIG";
+  focus: "LAB" | "RIG";
+  quality_control: "LAB" | "RIG";
+  rules: "LAB" | "RIG";
+  responsibility: "LAB" | "RIG";
+};
+
+export type CongruenceAnalysis = {
+  delta_LAB: number;
+  delta_RIG: number;
+  tension_zone: boolean;
+  misalignment_type: string | null;
+  recommendations: string[];
+};
+
+export type TzSortedPersonalScale = {
+  scale: string;
+  score: number;
+};
+
+const TZ_PERSONAL_SCALE_CODES: Record<ScaleKey, string> = {
+  extraversion: "EXT",
+  introversion: "INT",
+  anxiety: "ANX",
+  aggression: "AGG",
+  sensitivity: "SEN",
+  spontaneity: "SPO",
+  lability: "LAB_pers",
+  rigidity: "RIG_pers",
+};
+
+/** TZ §7 / §8: bullet recommendations per misalignment type. */
+const CORRESPONDENCE_TZ_RECOMMENDATIONS: Record<string, string[]> = {
+  Соответствие: [
+    "Поддерживайте текущий баланс между рабочими требованиями и естественным стилем.",
+  ],
+  "Гибкий по натуре – жёсткий в работе": [
+    "Снизить количество регламентов и согласований.",
+    "Делегировать часть контрольных функций.",
+  ],
+  "Жёсткий по натуре – гибкий в работе": [
+    "Структурируйте задачи и заранее планируйте рамки, чтобы снизить постоянную адаптацию.",
+    "Согласуйте с руководителем ожидания к гибкости в роли.",
+  ],
+  "Обе шкалы выше в личности": [
+    "Уточните ожидания к лабильности и ригидности в роли.",
+    "Проверьте, не слишком ли жёстко или слишком свободно устроена рабочая среда.",
+  ],
+  "Обе шкалы выше в работе": [
+    "Планируйте восстановление и делегирование.",
+    "Снизьте перегрузку от требований среды, которые выше вашего личного профиля.",
+  ],
+};
+
+function dominantWorkPole(lab: number, rig: number): "LAB" | "RIG" {
+  return lab >= rig ? "LAB" : "RIG";
+}
+
+export function buildRawScores(
+  scaled_scores: ScaledScores,
+  systemic: SystemicScores,
+): RawScores {
+  return {
+    EXT: scaled_scores.extraversion,
+    INT: scaled_scores.introversion,
+    ANX: scaled_scores.anxiety,
+    AGG: scaled_scores.aggression,
+    SEN: scaled_scores.sensitivity,
+    SPO: scaled_scores.spontaneity,
+    LAB_pers: scaled_scores.lability,
+    RIG_pers: scaled_scores.rigidity,
+    sub4_1_LAB: systemic.sub4_1_LAB,
+    sub4_1_RIG: systemic.sub4_1_RIG,
+    sub4_2_LAB: systemic.sub4_2_LAB,
+    sub4_2_RIG: systemic.sub4_2_RIG,
+    sub4_3_LAB: systemic.sub4_3_LAB,
+    sub4_3_RIG: systemic.sub4_3_RIG,
+    sub4_4_LAB: systemic.sub4_4_LAB,
+    sub4_4_RIG: systemic.sub4_4_RIG,
+    sub4_5_LAB: systemic.sub4_5_LAB,
+    sub4_5_RIG: systemic.sub4_5_RIG,
+    LAB_work: systemic.LAB_work,
+    RIG_work: systemic.RIG_work,
+  };
+}
+
+export function buildWorkProfile(systemic: SystemicScores): WorkProfile {
+  return {
+    energy_efficiency: dominantWorkPole(
+      systemic.sub4_1_LAB,
+      systemic.sub4_1_RIG,
+    ),
+    focus: dominantWorkPole(systemic.sub4_2_LAB, systemic.sub4_2_RIG),
+    quality_control: dominantWorkPole(
+      systemic.sub4_3_LAB,
+      systemic.sub4_3_RIG,
+    ),
+    rules: dominantWorkPole(systemic.sub4_4_LAB, systemic.sub4_4_RIG),
+    responsibility: dominantWorkPole(
+      systemic.sub4_5_LAB,
+      systemic.sub4_5_RIG,
+    ),
+  };
+}
+
+export function buildCongruenceRecommendations(
+  correspondence_type: string | null,
+): string[] {
+  if (!correspondence_type) {
+    return [];
+  }
+  return CORRESPONDENCE_TZ_RECOMMENDATIONS[correspondence_type] ?? [];
+}
+
+export function buildCongruenceAnalysis(
+  systemic: SystemicScores,
+): CongruenceAnalysis {
+  return {
+    delta_LAB: systemic.delta_LAB,
+    delta_RIG: systemic.delta_RIG,
+    tension_zone: systemic.tension_zone,
+    misalignment_type: systemic.correspondence_type,
+    recommendations: buildCongruenceRecommendations(systemic.correspondence_type),
+  };
+}
+
+export function buildTzSortedPersonalScales(
+  scores: ScaledScores,
+): TzSortedPersonalScale[] {
+  return SCALE_KEYS.map((key) => ({
+    scale: TZ_PERSONAL_SCALE_CODES[key],
+    score: scores[key],
+  })).sort(
+    (left, right) =>
+      right.score - left.score || left.scale.localeCompare(right.scale),
+  );
+}
+
 export type SortedPersonalScale = {
   key: ScaleKey;
   value: number;
@@ -1104,12 +1276,18 @@ export function computeLeaderScores(scores: ScaledScores): LeaderScore[] {
 }
 
 /** Удобная обёртка для API submit. */
-export function calculate_result(answers: readonly number[], time_per_question: readonly number[]) {
-  const scaled_scores = calculate_scaled_scores(answers);
-  const scaled_systemic = calculate_systemic_scores(answers);
+export function calculate_result(
+  answers: readonly (number | null)[],
+  time_per_question: readonly number[],
+) {
+  const normalized_answers = normalizeAnswers(answers);
+  const scaled_scores = calculate_scaled_scores(normalized_answers);
+  const scaled_systemic = calculate_systemic_scores(normalized_answers);
   const psychotype = determine_psychotype(scaled_scores, scaled_systemic);
-  const empath_sub_indices = calculate_empath_sub_indices(answers);
+  const empath_sub_indices = calculate_empath_sub_indices(normalized_answers);
   const validation_warnings = validate_answers(answers, time_per_question);
+  const congruence_analysis = buildCongruenceAnalysis(scaled_systemic);
+  const raw_scores = buildRawScores(scaled_scores, scaled_systemic);
 
   if (psychotype.psychotype_code === MIXED_PSYCHOTYPE_LABEL) {
     validation_warnings.push("irregular_psycho_type");
@@ -1118,6 +1296,9 @@ export function calculate_result(answers: readonly number[], time_per_question: 
   return {
     scaled_scores,
     scaled_systemic,
+    raw_scores,
+    work_profile: buildWorkProfile(scaled_systemic),
+    congruence_analysis,
     psychotype_code: psychotype.psychotype_code,
     psychotype_secondary: psychotype.secondary,
     triad_variant: psychotype.triad_variant,
@@ -1127,6 +1308,7 @@ export function calculate_result(answers: readonly number[], time_per_question: 
     warnings: psychotype.warnings,
     validation_warnings: [...new Set(validation_warnings)],
     sorted_personal_scales: buildSortedPersonalScales(scaled_scores),
+    tz_sorted_personal_scales: buildTzSortedPersonalScales(scaled_scores),
     leader_scores: computeLeaderScores(scaled_scores),
     expression_level: psychotype.expression_level,
     triad_status: psychotype.triad_status,

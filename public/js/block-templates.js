@@ -531,6 +531,16 @@ export function shouldRenderAsCardBlock(block) {
 }
 
 /**
+ * Public triad titles: drop docx numbering («Триада 2: EXT—…» → «Триада EXT—…»).
+ */
+export function formatTriadBlockTitle(title) {
+  if (!title) {
+    return title;
+  }
+  return title.replace(/Триада\s+\d+:\s*/gi, "Триада ");
+}
+
+/**
  * Moves "Триада N: …" from body into title for legacy rows.
  */
 export function resolveTriadBlock(block) {
@@ -544,26 +554,30 @@ export function resolveTriadBlock(block) {
     return block;
   }
 
-  if (/^Уточнение:\s*Триада\s+\d+:/i.test(block.title ?? "")) {
-    return block;
+  let next = block;
+
+  if (!/^Уточнение:\s*Триада\s+\d+:/i.test(block.title ?? "")) {
+    const headerMatch = block.content_text?.match(/^Триада\s+\d+:[^\n]*/i);
+    if (headerMatch) {
+      const header = formatTriadBlockTitle(headerMatch[0].trim());
+      const body = block.content_text
+        .slice(headerMatch[0].length)
+        .replace(/^\n+/, "")
+        .trim();
+
+      next = {
+        ...block,
+        title: `Уточнение: ${header}`,
+        content_text: body,
+      };
+    }
   }
 
-  const headerMatch = block.content_text?.match(/^Триада\s+\d+:[^\n]*/i);
-  if (!headerMatch) {
-    return block;
+  if (next.title) {
+    next = { ...next, title: formatTriadBlockTitle(next.title) };
   }
 
-  const header = headerMatch[0].trim();
-  const body = block.content_text
-    .slice(headerMatch[0].length)
-    .replace(/^\n+/, "")
-    .trim();
-
-  return {
-    ...block,
-    title: `Уточнение: ${header}`,
-    content_text: body,
-  };
+  return next;
 }
 
 export function renderBlockBody(block) {

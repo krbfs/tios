@@ -25,10 +25,8 @@ const SYSTEMIC_BY_SUB: Record<string, string> = {
   "4.5": "sys_delegation",
 };
 
-/** Known Q35 label quirk in question table (says 3.5) vs keys table (5.3). */
-const FACTOR_OVERRIDES: Record<number, string> = {
-  35: "5.3 Отношение к новизне",
-};
+/** Legacy: question-table label quirk (aug docx). Sep docx table already has 5.3. */
+const FACTOR_OVERRIDES: Record<number, string> = {};
 
 function decodeXmlEntities(value: string): string {
   return value
@@ -325,6 +323,7 @@ export function parseQuestionnaireDocx(docxPath: string): ParsedQuestion[] {
   const fromParagraphs = parseQuestionsFromParagraphs(paragraphs);
 
   const factorsFromKeysTable = parseFactorMappingFromKeysTable(tables);
+  // Keys table («Факторы и ключи») is source of truth for scoring metadata; question-table factor labels are display-only fallback.
   const factorsFromKeys =
     factorsFromKeysTable.size >= 75
       ? factorsFromKeysTable

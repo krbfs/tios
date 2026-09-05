@@ -1,4 +1,4 @@
-import { calculate_result } from "@/lib/calculations";
+import { calculate_result, normalizeAnswers } from "@/lib/calculations";
 import { encodeAnswers } from "@/lib/encdata";
 import { getAuthUser } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
@@ -7,7 +7,7 @@ import { assertHumanLikeTimings, requireTestAccess } from "@/lib/test-access";
 
 type SubmitBody = {
   session_uuid?: string;
-  answers?: number[];
+  answers?: (number | null)[];
   time_per_question?: number[];
 };
 
@@ -38,7 +38,9 @@ export async function POST(request: Request) {
   }
 
   let computed;
+  let normalizedAnswers: number[];
   try {
+    normalizedAnswers = normalizeAnswers(answers);
     computed = calculate_result(answers, timePerQuestion);
   } catch (err) {
     return error(
@@ -79,7 +81,7 @@ export async function POST(request: Request) {
   const result = await db.testResult.create({
     data: {
       sessionId: session.id,
-      answers,
+      answers: normalizedAnswers,
       scaledScores: computed.scaled_scores,
       scaledSystemic: computed.scaled_systemic,
       psychotypeCode: computed.psychotype_code,
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
   return json(
     {
       result_id: result.id,
-      encdata: encodeAnswers(answers),
+      encdata: encodeAnswers(normalizedAnswers),
       session_uuid: session.sessionUuid,
     },
     201,

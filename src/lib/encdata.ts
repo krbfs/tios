@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { fillTimings, fillAnswers, calculate_result } from "@/lib/calculations";
+import { buildCompensatoryCheck } from "@/lib/compensatory-checks";
 
 const QUESTION_COUNT = 75;
 const PACKED_VERSION = 1;
@@ -189,6 +190,17 @@ export function assertPublicEncdata(encdata: string): void {
   if (decoded && matchesDemoAllowlist(decoded)) {
     return;
   }
+  if (process.env.NODE_ENV === "development") {
+    if (decoded) {
+      return;
+    }
+    try {
+      decodeAnswers(encdata);
+      return;
+    } catch {
+      // fall through
+    }
+  }
   throw new Error("Invalid or unsigned result link");
 }
 
@@ -312,23 +324,112 @@ export function getLegacyDemoAnswers(): number[] {
   return answers;
 }
 
-/**
- * Demo profile for landing / «Пример результата» — Лидер мнений + триада right (V1).
- * Same scales as legacy demo except block 2 tuned so anxiety is 3rd ≥ 0.55 (17/30).
- */
-export function getDemoAnswers(): number[] {
-  const answers = getLegacyDemoAnswers();
+/** Marketing demo — fixed 8 personality scales (sep_2026 influencer sample). */
+export const DEMO_PERSONALITY_SCALES = {
+  extraversion: 24,
+  lability: 18,
+  anxiety: 17,
+  sensitivity: 8,
+  spontaneity: 7,
+  aggression: 5,
+  introversion: 3,
+  rigidity: 0,
+} as const;
+
+const DEMO_BLOCK_EI = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71];
+const DEMO_BLOCK_TA = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72];
+const DEMO_BLOCK_SS = [3, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73];
+const DEMO_BLOCK_LR = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75];
+
+function assignPersonalityBlock(
+  answers: number[],
+  questionIds: readonly number[],
+  leftTarget: number,
+  rightTarget: number,
+): void {
+  let left = leftTarget;
+  let right = rightTarget;
+  const pending: number[] = [];
+
+  for (const questionId of questionIds) {
+    if (left >= 2) {
+      answers[questionId - 1] = -2;
+      left -= 2;
+      continue;
+    }
+    if (left >= 1) {
+      answers[questionId - 1] = -1;
+      left -= 1;
+      continue;
+    }
+    pending.push(questionId);
+  }
+
+  for (const questionId of pending) {
+    if (right >= 2) {
+      answers[questionId - 1] = 2;
+      right -= 2;
+      continue;
+    }
+    if (right >= 1) {
+      answers[questionId - 1] = 1;
+      right -= 1;
+      continue;
+    }
+    answers[questionId - 1] = 0;
+  }
+}
+
+function applyLegacyDemoBlock4(answers: number[]): void {
   const set = (ids: number[], value: number) => {
     for (const id of ids) {
       answers[id - 1] = value;
     }
   };
 
-  // Block 2 only: raise anxiety to 17 without moving extraversion/lability.
-  set([2], 0);
-  set([7, 12, 17, 22, 27], 1);
-  set([32], -1);
-  set([37, 42, 47, 52, 57, 62, 67, 72], -2);
+  set([4, 9, 14], 0);
+  answers[13] = 1;
+  set([19, 24, 29], 1);
+  answers[18] = 2;
+  set([34, 39, 44], 0);
+  set([49, 54], -1);
+  answers[58] = 0;
+  set([64, 69, 74], 1);
+}
+
+/**
+ * Demo profile for landing / «Пример результата» — Лидер мнений + триада right (V1).
+ * Personality scales fixed per DEMO_PERSONALITY_SCALES; block 4 unchanged vs legacy demo.
+ */
+export function getDemoAnswers(): number[] {
+  const answers = fillAnswers(0);
+  const scales = DEMO_PERSONALITY_SCALES;
+
+  assignPersonalityBlock(
+    answers,
+    DEMO_BLOCK_EI,
+    scales.extraversion,
+    scales.introversion,
+  );
+  assignPersonalityBlock(
+    answers,
+    DEMO_BLOCK_TA,
+    scales.anxiety,
+    scales.aggression,
+  );
+  assignPersonalityBlock(
+    answers,
+    DEMO_BLOCK_SS,
+    scales.sensitivity,
+    scales.spontaneity,
+  );
+  assignPersonalityBlock(
+    answers,
+    DEMO_BLOCK_LR,
+    scales.lability,
+    scales.rigidity,
+  );
+  applyLegacyDemoBlock4(answers);
 
   return answers;
 }
@@ -354,15 +455,27 @@ export function computeFromEncdata(encdata: string) {
     answers = decodeAnswers(encdata);
   } catch (err) {
     const decoded = tryDecodeForDemoAllowlist(encdata);
-    if (!decoded || !matchesDemoAllowlist(decoded)) {
+    if (
+      decoded &&
+      (process.env.NODE_ENV === "development" || matchesDemoAllowlist(decoded))
+    ) {
+      answers = decoded;
+    } else {
       throw err;
     }
-    answers = decoded;
   }
 
+  const base = calculate_result(answers, fillTimings(5));
+  const isDemo = matchesDemoAllowlist(answers);
   const computed = {
     answers,
-    ...calculate_result(answers, fillTimings(5)),
+    ...base,
+    compensatory_check: buildCompensatoryCheck(
+      base.psychotype_code,
+      base.scaled_scores,
+      answers,
+      { force: isDemo },
+    ),
   };
 
   if (isDemoEncdata(encdata)) {

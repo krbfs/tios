@@ -310,8 +310,59 @@ export function renderResultAnalytics(result, root) {
   buildWorkProfile(systemic, root);
   renderCorrespondence(result, root);
   renderLeaderScores(result.leader_scores, root);
+  renderCompensatoryCheck(result, root);
 
   root.classList.add("result-loaded");
+}
+
+const COMPENSATORY_OUTCOME_LABELS = {
+  resource: "Ресурс и сила",
+  risk: "Зона риска",
+};
+
+export function renderCompensatoryCheck(result, root) {
+  const host =
+    root.querySelector("[data-analytics-compensatory]") ||
+    document.getElementById("compensatory-check-root");
+  if (!host) {
+    return;
+  }
+
+  const check = result?.compensatory_check;
+  if (!check) {
+    host.hidden = true;
+    host.replaceChildren();
+    return;
+  }
+
+  host.hidden = false;
+  const isResource = check.outcome === "resource";
+  const peakLabel = (SCALE_LABELS[check.peak_scale] || check.peak_scale).toLowerCase();
+
+  host.className = `compensatory-check-host chart-card compensatory-check-card compensatory-check-card--${check.outcome}`;
+  host.innerHTML = `
+    <div class="compensatory-check-head">
+      <h2>Баланс пиковой тенденции</h2>
+      <span class="compensatory-check-badge compensatory-check-badge--${check.outcome}">
+        ${COMPENSATORY_OUTCOME_LABELS[check.outcome] || check.outcome}
+      </span>
+    </div>
+    <p class="muted compensatory-check-meta">Пик: ${peakLabel}</p>
+    <div class="compensatory-balance" aria-hidden="true">
+      <div class="compensatory-balance-fill compensatory-balance-fill--${check.outcome}" style="width:${Math.max(0, Math.min(100, check.balance_index))}%"></div>
+    </div>
+    <p class="compensatory-check-text">${check.active_text}</p>
+    ${
+      !isResource && check.coaching_recommendations?.length
+        ? `<div class="compensatory-practice">
+            <p class="compensatory-practice-label">Практическая рекомендация:</p>
+            <ul class="compensatory-coaching">${check.coaching_recommendations
+              .map((item) => `<li>${item}</li>`)
+              .join("")}</ul>
+          </div>`
+        : ""
+    }
+  `;
 }
 
 export const RESULT_ANALYTICS_HTML = `
@@ -358,4 +409,10 @@ export const RESULT_ANALYTICS_HTML = `
     <p class="muted">4 типа по формулам ТЗ §3.5 (порог 21 из 30)</p>
     <ul data-analytics-leader-scores class="leader-scores" aria-label="Типы лидерства"></ul>
   </section>
+  <section
+    data-analytics-compensatory
+    class="chart-card compensatory-check-card"
+    hidden
+    aria-label="Компенсаторная проверка пиковой тенденции"
+  ></section>
 `;

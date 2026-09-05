@@ -158,7 +158,7 @@ export const QUIZ_E2E_FIXTURES: QuizE2EFixture[] = [
     "Демо-вектор ответов → Лидер мнений",
     getDemoAnswers(),
     "Лидер мнений",
-    { extraversion: 20, lability: 15 },
+    { extraversion: 24, lability: 18, anxiety: 17 },
   ),
 ];
 
