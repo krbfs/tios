@@ -1,12 +1,22 @@
 /**
- * Compensatory checks for 8 pure psychotypes (sep_5th docx).
- * Uses simplified table formulas until methodologist confirms Q1–Q2.
+ * Compensatory checks for 8 pure psychotypes (sep_5th docx + Отвечаю по пунктам.docx).
+ * MVP: simplified table formulas; full comp-vs-aggrav model — V1.1 (eng-4, `TIOS_COMPENSATORY_FULL=1`).
  */
 
-import type { PsychotypeCode, ScaleKey, ScaledScores } from "@/lib/calculations";
+import {
+  SCALE_KEYS,
+  type PsychotypeCode,
+  type ScaleKey,
+  type ScaledScores,
+} from "@/lib/calculations";
 import {
   calculateSubfactorScores,
+  isBlock42ProcessModerate,
+  isBlock42ResultModerate,
   isSubfactorModerate,
+  scoreAnxietyTriplet,
+  scoreIntroversionTriplet,
+  type SubfactorCode,
   type SubfactorScores,
 } from "@/lib/subfactors";
 
@@ -43,6 +53,21 @@ const PSYCHOTYPE_SCALE_PAIRS: Record<PurePsychotypeCode, readonly [ScaleKey, Sca
   analyst: ["introversion", "rigidity"],
   pragmatist: ["rigidity", "aggression"],
 };
+
+/** Methodologist Q1: tie-break peak within the type's diad. */
+const PEAK_TIE_BREAK: Record<PurePsychotypeCode, ScaleKey> = {
+  individualist: "aggression",
+  innovator: "spontaneity",
+  influencer: "lability",
+  aesthete: "anxiety",
+  conservative: "anxiety",
+  empath: "sensitivity",
+  analyst: "rigidity",
+  pragmatist: "aggression",
+};
+
+/** Methodologist Q7: 2nd − 3rd scale score must be ≥ this for a «чистый» profile. */
+export const COMPENSATORY_PURE_GAP_MIN = 6;
 
 type CompensatoryProfile = {
   evaluateResource: (scores: SubfactorScores) => boolean;
@@ -167,6 +192,195 @@ const PROFILES: Record<PurePsychotypeCode, CompensatoryProfile> = {
   },
 };
 
+type FactorRule =
+  | { kind: "subfactor_high"; code: SubfactorCode; weight?: number }
+  | { kind: "subfactor_low"; code: SubfactorCode; weight?: number }
+  | { kind: "normativity_high"; weight?: number }
+  | { kind: "normativity_low"; weight?: number }
+  | { kind: "block42_result_high"; weight?: number }
+  | { kind: "block42_process_high"; weight?: number }
+  | { kind: "anxiety_high"; weight?: number }
+  | { kind: "introversion_high"; weight?: number };
+
+type FullFactorSet = {
+  compensators: FactorRule[];
+  aggravators: FactorRule[];
+};
+
+/** Full model (docx tables): weighted count of active compensators vs aggravators. */
+const FULL_FACTOR_SETS: Record<PurePsychotypeCode, FullFactorSet> = {
+  individualist: {
+    compensators: [
+      { kind: "subfactor_high", code: "3.3" },
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "block42_result_high" },
+      { kind: "normativity_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_low", code: "3.3" },
+      { kind: "subfactor_high", code: "5.3" },
+      { kind: "block42_process_high" },
+      { kind: "normativity_low" },
+    ],
+  },
+  innovator: {
+    compensators: [
+      { kind: "normativity_high" },
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "block42_result_high" },
+      { kind: "subfactor_high", code: "3.4" },
+    ],
+    aggravators: [
+      { kind: "normativity_low" },
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "block42_process_high" },
+      { kind: "subfactor_low", code: "3.4" },
+    ],
+  },
+  influencer: {
+    compensators: [
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "subfactor_high", code: "3.4" },
+      { kind: "subfactor_high", code: "3.3" },
+      { kind: "block42_result_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "subfactor_low", code: "3.4" },
+      { kind: "subfactor_low", code: "3.3" },
+      { kind: "block42_process_high" },
+    ],
+  },
+  aesthete: {
+    compensators: [
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "subfactor_high", code: "3.4" },
+      { kind: "subfactor_high", code: "2.3" },
+      { kind: "block42_result_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "subfactor_low", code: "3.4" },
+      { kind: "subfactor_low", code: "2.3" },
+      { kind: "block42_process_high" },
+    ],
+  },
+  conservative: {
+    compensators: [
+      { kind: "subfactor_high", code: "2.3" },
+      { kind: "subfactor_high", code: "5.3" },
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "block42_result_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_low", code: "2.3" },
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "block42_process_high" },
+    ],
+  },
+  empath: {
+    compensators: [
+      { kind: "subfactor_high", code: "2.3" },
+      { kind: "subfactor_high", code: "5.3" },
+      { kind: "subfactor_high", code: "1.2" },
+      { kind: "block42_result_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_low", code: "2.3" },
+      { kind: "anxiety_high" },
+      { kind: "introversion_high" },
+      { kind: "block42_process_high" },
+    ],
+  },
+  analyst: {
+    compensators: [
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "subfactor_high", code: "5.3" },
+      { kind: "subfactor_high", code: "2.3" },
+      { kind: "block42_result_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_low", code: "5.1" },
+      { kind: "anxiety_high" },
+      { kind: "subfactor_low", code: "2.3" },
+      { kind: "block42_process_high" },
+    ],
+  },
+  pragmatist: {
+    compensators: [
+      { kind: "subfactor_high", code: "5.1" },
+      { kind: "subfactor_high", code: "3.3" },
+      { kind: "subfactor_high", code: "5.3" },
+      { kind: "block42_process_high" },
+    ],
+    aggravators: [
+      { kind: "subfactor_low", code: "5.1" },
+      { kind: "subfactor_low", code: "3.3" },
+      { kind: "subfactor_high", code: "5.5" },
+      { kind: "block42_result_high" },
+    ],
+  },
+};
+
+type FactorContext = {
+  subfactors: SubfactorScores;
+  answers: readonly (number | null)[];
+};
+
+function isNormativityCombinedModerate(subfactors: SubfactorScores): boolean {
+  return subfactors["3.2"] + subfactors["3.4"] > 4;
+}
+
+function evaluateFactorRule(rule: FactorRule, ctx: FactorContext): boolean {
+  const { subfactors, answers } = ctx;
+  switch (rule.kind) {
+    case "subfactor_high":
+      return isSubfactorModerate(subfactors[rule.code]);
+    case "subfactor_low":
+      return !isSubfactorModerate(subfactors[rule.code]);
+    case "normativity_high":
+      return isNormativityCombinedModerate(subfactors);
+    case "normativity_low":
+      return !isNormativityCombinedModerate(subfactors);
+    case "block42_result_high":
+      return isBlock42ResultModerate(answers);
+    case "block42_process_high":
+      return isBlock42ProcessModerate(answers);
+    case "anxiety_high":
+      return isSubfactorModerate(scoreAnxietyTriplet(answers));
+    case "introversion_high":
+      return isSubfactorModerate(scoreIntroversionTriplet(answers));
+    default:
+      return false;
+  }
+}
+
+function evaluateFullBalance(
+  psychotype: PurePsychotypeCode,
+  subfactors: SubfactorScores,
+  answers: readonly (number | null)[],
+): { compWeight: number; aggWeight: number; balanceIndex: number } {
+  const ctx: FactorContext = { subfactors, answers };
+  const set = FULL_FACTOR_SETS[psychotype];
+  let compWeight = 0;
+  let aggWeight = 0;
+
+  for (const rule of set.compensators) {
+    if (evaluateFactorRule(rule, ctx)) {
+      compWeight += rule.weight ?? 1;
+    }
+  }
+  for (const rule of set.aggravators) {
+    if (evaluateFactorRule(rule, ctx)) {
+      aggWeight += rule.weight ?? 1;
+    }
+  }
+
+  const total = compWeight + aggWeight;
+  const balanceIndex = total > 0 ? Math.round((compWeight / total) * 100) : 0;
+  return { compWeight, aggWeight, balanceIndex };
+}
+
 export type CompensatoryCheckResult = {
   psychotype_code: PurePsychotypeCode;
   outcome: CompensatoryOutcome;
@@ -206,7 +420,9 @@ export function buildCompensatoryCheck(
     return null;
   }
   return toPublicCompensatoryCheck(
-    evaluateCompensatoryCheck(psychotypeCode, scaledScores, answers),
+    evaluateCompensatoryCheck(psychotypeCode, scaledScores, answers, {
+      ignorePureGap: options?.force,
+    }),
   );
 }
 
@@ -224,7 +440,27 @@ export function isCompensatoryChecksEnabled(): boolean {
   return value === "true" || value === "1";
 }
 
-/** Provisional (plan §0 Q1): max of the type's scale pair; tie → first in pair. */
+/** V1.1 full model: weighted compensators vs aggravators (docx tables + block 4.2). */
+export function isFullCompensatoryMode(): boolean {
+  const value = process.env.TIOS_COMPENSATORY_FULL;
+  return value === "true" || value === "1";
+}
+
+/** Methodologist Q7: gap between 2nd and 3rd personal scales (absolute scores). */
+export function isPureProfileForCompensatory(scaledScores: ScaledScores): boolean {
+  const ranked = SCALE_KEYS.map((key) => ({
+    key,
+    score: scaledScores[key],
+  })).sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+
+  if (ranked.length < 3) {
+    return false;
+  }
+
+  return ranked[1].score - ranked[2].score >= COMPENSATORY_PURE_GAP_MIN;
+}
+
+/** Methodologist Q1: max within the type's scale pair; fixed tie-break per diad. */
 export function resolvePeakScale(
   psychotype: PurePsychotypeCode,
   scores: ScaledScores,
@@ -238,7 +474,7 @@ export function resolvePeakScale(
   if (secondScore > firstScore) {
     return second;
   }
-  return first;
+  return PEAK_TIE_BREAK[psychotype];
 }
 
 function countPassedClauses(
@@ -303,17 +539,33 @@ export function evaluateCompensatoryCheck(
   psychotypeCode: PsychotypeCode,
   scaledScores: ScaledScores,
   answers: readonly (number | null)[],
+  options?: { ignorePureGap?: boolean },
 ): CompensatoryCheckResult | null {
   if (!isPurePsychotypeCode(psychotypeCode)) {
     return null;
   }
 
+  if (!options?.ignorePureGap && !isPureProfileForCompensatory(scaledScores)) {
+    return null;
+  }
+
   const subfactor_scores = calculateSubfactorScores(answers);
   const profile = PROFILES[psychotypeCode];
-  const isResource = profile.evaluateResource(subfactor_scores);
+
+  let isResource: boolean;
+  let balance_index: number;
+
+  if (isFullCompensatoryMode()) {
+    const full = evaluateFullBalance(psychotypeCode, subfactor_scores, answers);
+    isResource = full.compWeight > full.aggWeight;
+    balance_index = full.balanceIndex;
+  } else {
+    isResource = profile.evaluateResource(subfactor_scores);
+    const passed = countPassedClauses(psychotypeCode, subfactor_scores);
+    balance_index = Math.round((passed / profile.clauseCount) * 100);
+  }
+
   const outcome: CompensatoryOutcome = isResource ? "resource" : "risk";
-  const passed = countPassedClauses(psychotypeCode, subfactor_scores);
-  const balance_index = Math.round((passed / profile.clauseCount) * 100);
 
   return {
     psychotype_code: psychotypeCode,

@@ -131,3 +131,56 @@ export function calculateSubfactorScores(
 export function isSubfactorModerate(score: number, min = SUBFACTOR_MODERATE_MIN): boolean {
   return score > min;
 }
+
+/** Block 4.2 (19, 24, 29): inverted → result = RIG pole, process = LAB pole (methodologist Q6). */
+const BLOCK42_QUESTIONS = [19, 24, 29] as const;
+
+export type Block42TripletScores = {
+  result: number;
+  process: number;
+};
+
+export function calculateBlock42TripletScores(
+  answers: readonly (number | null)[],
+): Block42TripletScores {
+  const normalized = normalizeAnswers(answers);
+  let result = 0;
+  let process = 0;
+  for (const questionId of BLOCK42_QUESTIONS) {
+    const val = normalized[questionId - 1];
+    if (val < 0) {
+      result += Math.abs(val);
+    } else if (val > 0) {
+      process += val;
+    }
+  }
+  return { result, process };
+}
+
+export function isBlock42ResultModerate(
+  answers: readonly (number | null)[],
+  min = SUBFACTOR_MODERATE_MIN,
+): boolean {
+  return calculateBlock42TripletScores(answers).result > min;
+}
+
+export function isBlock42ProcessModerate(
+  answers: readonly (number | null)[],
+  min = SUBFACTOR_MODERATE_MIN,
+): boolean {
+  return calculateBlock42TripletScores(answers).process > min;
+}
+
+/** TA 2.2 anxiety triplet (2, 7, 12). */
+export function scoreAnxietyTriplet(answers: readonly (number | null)[]): number {
+  const normalized = normalizeAnswers(answers);
+  return scoreTriplet(normalized, [2, 7, 12], "left");
+}
+
+/** Work 1.1 introversion triplet (16, 21, 26), right pole. */
+export function scoreIntroversionTriplet(
+  answers: readonly (number | null)[],
+): number {
+  const normalized = normalizeAnswers(answers);
+  return scoreTriplet(normalized, [16, 21, 26], "right");
+}

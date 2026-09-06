@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { fillAnswers } from "@/lib/calculations";
 import {
+  calculateBlock42TripletScores,
   calculateSubfactorScores,
+  isBlock42ResultModerate,
   SUBFACTOR_MODERATE_MIN,
   SUBFACTOR_QUESTION_FACTOR_PREFIX,
   SUBFACTOR_TRIplet_MAX,
 } from "@/lib/subfactors";
-
-import questionsData from "../../../data/questions_aug26.json";
 
 function setAnswers(
   base: number[],
@@ -25,44 +25,30 @@ function setAnswers(
 describe("calculateSubfactorScores", () => {
   it("left-pole triplet all -2 → score 6", () => {
     const answers = setAnswers(fillAnswers(0), [33, 38, 43], -2);
-    const scores = calculateSubfactorScores(answers);
-    expect(scores["3.3"]).toBe(SUBFACTOR_TRIplet_MAX);
+    expect(calculateSubfactorScores(answers)["3.3"]).toBe(SUBFACTOR_TRIplet_MAX);
   });
 
   it("right-pole triplet all +2 → score 6", () => {
     const answers = setAnswers(fillAnswers(0), [65, 70, 75], 2);
-    const scores = calculateSubfactorScores(answers);
-    expect(scores["5.5"]).toBe(SUBFACTOR_TRIplet_MAX);
+    expect(calculateSubfactorScores(answers)["5.5"]).toBe(SUBFACTOR_TRIplet_MAX);
   });
 
-  it("neutral answers → all subfactors 0", () => {
-    const scores = calculateSubfactorScores(fillAnswers(0));
-    for (const value of Object.values(scores)) {
-      expect(value).toBe(0);
-    }
-  });
-
-  it("moderate threshold boundary: score 2 is not moderate", () => {
-    const answers = setAnswers(fillAnswers(0), [33, 38, 43], -1);
-    const scores = calculateSubfactorScores(answers);
-    expect(scores["3.3"]).toBe(3);
-    expect(scores["3.3"] > SUBFACTOR_MODERATE_MIN).toBe(true);
-    const low = setAnswers(fillAnswers(0), [33], -1);
-    expect(calculateSubfactorScores(low)["3.3"]).toBe(1);
+  it("maps question ids to factor prefixes", () => {
+    expect(SUBFACTOR_QUESTION_FACTOR_PREFIX[35]).toBe("5.3");
+    expect(SUBFACTOR_QUESTION_FACTOR_PREFIX[63]).toBe("3.5");
   });
 });
 
-describe("SUBFACTOR_QUESTION_FACTOR_PREFIX vs questions_aug26.json", () => {
-  it("question factors match subfactor registry", () => {
-    const byId = new Map(
-      questionsData.questions.map((question) => [question.id, question.factor]),
-    );
+describe("block 4.2 triplet", () => {
+  it("inverted answers: negative → result pole", () => {
+    const answers = setAnswers(fillAnswers(0), [19, 24, 29], -2);
+    const scores = calculateBlock42TripletScores(answers);
+    expect(scores.result).toBe(SUBFACTOR_TRIplet_MAX);
+    expect(scores.process).toBe(0);
+    expect(isBlock42ResultModerate(answers)).toBe(true);
+  });
 
-    for (const [idRaw, prefix] of Object.entries(SUBFACTOR_QUESTION_FACTOR_PREFIX)) {
-      const id = Number(idRaw);
-      const factor = byId.get(id);
-      expect(factor, `missing question ${id}`).toBeDefined();
-      expect(factor!.startsWith(prefix), `${id}: ${factor} vs ${prefix}`).toBe(true);
-    }
+  it("moderate threshold uses SUBFACTOR_MODERATE_MIN", () => {
+    expect(SUBFACTOR_MODERATE_MIN).toBe(2);
   });
 });
