@@ -5,6 +5,8 @@ type ContactBody = {
   name?: string;
   contact?: string;
   message?: string;
+  company?: string;
+  elapsedMs?: number;
 };
 
 const NAME_MIN = 1;
@@ -13,6 +15,7 @@ const CONTACT_MIN = 1;
 const CONTACT_MAX = 200;
 const MESSAGE_MIN = 1;
 const MESSAGE_MAX = 4000;
+const MIN_FILL_MS = 3000;
 
 function formatContactMessage(name: string, contact: string, message: string): string {
   return [
@@ -35,6 +38,14 @@ export async function POST(request: Request) {
   const name = body.name?.trim() ?? "";
   const contact = body.contact?.trim() ?? "";
   const message = body.message?.trim() ?? "";
+
+  const filledHoneypot = (body.company?.trim() ?? "") !== "";
+  const tooFast = typeof body.elapsedMs === "number" && body.elapsedMs < MIN_FILL_MS;
+  if (filledHoneypot || tooFast) {
+    // Ответ как при успехе, чтобы бот не подбирал условия отсечки.
+    console.warn("contact spam blocked", { filledHoneypot, tooFast });
+    return json({ ok: true });
+  }
 
   if (name.length < NAME_MIN || name.length > NAME_MAX) {
     return error(`Имя: от ${NAME_MIN} до ${NAME_MAX} символов`, 400);
