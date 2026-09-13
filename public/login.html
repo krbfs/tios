@@ -72,16 +72,22 @@
 
     <script type="module">
       import { initSiteAnalytics } from "/js/analytics.js";
-      import { getAccessToken, loginUser, registerUser } from "/js/user-auth.js";
+      import {
+        loginUser,
+        registerUser,
+        validateUserSession,
+      } from "/js/user-auth.js";
 
       initSiteAnalytics();
 
       const params = new URLSearchParams(window.location.search);
       const next = params.get("next") || "/cabinet.html";
 
-      if (getAccessToken()) {
-        window.location.replace(next);
-      }
+      validateUserSession().then((isAuthenticated) => {
+        if (isAuthenticated) {
+          window.location.replace(next);
+        }
+      });
 
       const form = document.getElementById("login-form");
       const errorEl = document.getElementById("error");
@@ -107,6 +113,7 @@
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         errorEl.hidden = true;
+        submitBtn.disabled = true;
 
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
@@ -119,8 +126,11 @@
           }
           window.location.replace(next);
         } catch (error) {
-          errorEl.textContent = error.message;
+          errorEl.textContent =
+            error instanceof Error ? error.message : "Не удалось выполнить вход";
           errorEl.hidden = false;
+        } finally {
+          submitBtn.disabled = false;
         }
       });
     </script>

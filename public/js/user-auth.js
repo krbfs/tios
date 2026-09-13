@@ -22,11 +22,75 @@ export function getStoredUser() {
 export function saveUserSession(accessToken, user) {
   localStorage.setItem(TOKEN_KEY, accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  syncPublicHeaderLogin();
+  window.dispatchEvent(new Event("tc26-auth-change"));
 }
 
 export function clearUserSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  syncPublicHeaderLogin();
+  window.dispatchEvent(new Event("tc26-auth-change"));
+}
+
+export function getCabinetLinkLabel(user = getStoredUser()) {
+  return user?.email ? `Кабинет (${user.email})` : "Личный кабинет";
+}
+
+/** Update header login links on static HTML pages after auth state changes. */
+export function syncPublicHeaderLogin(root = document) {
+  const links = root.querySelectorAll(".site-header-login");
+  if (!links.length) {
+    return;
+  }
+
+  const token = getAccessToken();
+  const user = getStoredUser();
+  const returnTo = `${window.location.pathname}${window.location.search}`;
+
+  for (const link of links) {
+    if (token) {
+      link.href = "/cabinet.html";
+      link.textContent = getCabinetLinkLabel(user);
+      if (link.id === "cabinet-link") {
+        link.dataset.gaEvent = "cta_result_header_cabinet";
+      } else {
+        link.dataset.gaEvent = "cta_header_cabinet";
+      }
+      continue;
+    }
+
+    link.href = `/login.html?next=${encodeURIComponent(returnTo)}`;
+    link.textContent = "Войти";
+    if (link.id === "cabinet-link") {
+      link.dataset.gaEvent = "cta_result_header_login";
+    } else if (link.classList.contains("btn")) {
+      link.dataset.gaEvent = "cta_test_login_optional";
+    } else {
+      link.dataset.gaEvent = "cta_header_login";
+    }
+  }
+}
+
+/** Returns false and clears session when the stored token is rejected by the API. */
+export async function validateUserSession() {
+  const token = getAccessToken();
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const response = await fetch("/api/results/history", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 401) {
+      clearUserSession();
+      return false;
+    }
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export function buildResultUrl(encdata) {

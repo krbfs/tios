@@ -1,5 +1,7 @@
 /** Google Analytics 4 + Yandex.Metrika — init and event helpers. */
 
+import { syncPublicHeaderLogin } from "/js/user-auth.js";
+
 const DEFAULT_MEASUREMENT_ID = "G-TYYGE7DS6E";
 const DEFAULT_METRIKA_ID = "111930448";
 
@@ -149,6 +151,7 @@ export async function initSiteAnalytics() {
 
   bindGaClickTracking();
   initSiteHeader();
+  syncPublicHeaderLogin();
 }
 
 export function initSiteHeader() {
