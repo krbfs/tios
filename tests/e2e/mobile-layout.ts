@@ -8,9 +8,10 @@
  *   MOBILE_TEST_BASE=origin/main npm run test:mobile
  *   BASE_URL=https://… npm run test:mobile   # live prod/staging, no local build
  *   SKIP_BUILD=1 npm run test:mobile         # reuse existing .next build locally
+ *   E2E_DEV=1 npm run test:mobile            # next dev, no production build
  */
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess } from "node:child_process";
 import { chromium, type Browser, type Page } from "playwright";
 import { getDemoEncdata } from "../../src/lib/encdata";
 import {
@@ -18,6 +19,7 @@ import {
   formatChangedFiles,
   selectPageNames,
 } from "./mobile-layout-scope";
+import { startTestServer, stopTestServer } from "./start-test-server";
 
 const ROOT_URL = (process.env.BASE_URL ?? "http://127.0.0.1:3099").replace(/\/$/, "");
 const PORT = new URL(ROOT_URL).port || "3099";
@@ -187,57 +189,23 @@ async function isServerUp(url: string): Promise<boolean> {
   return false;
 }
 
-function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: process.cwd(),
-      env,
-      stdio: "inherit",
-    });
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
-      }
-    });
-  });
-}
-
 async function startServer(): Promise<ChildProcess> {
-  if (process.env.SKIP_BUILD !== "1") {
-    console.log("==> building Next.js for mobile layout tests");
-    await runCommand("npm", ["run", "build"], process.env);
-  }
-
-  console.log(`==> starting server on ${ROOT_URL}`);
-  const child = spawn("npm", ["run", "start"], {
-    cwd: process.cwd(),
-    env: { ...process.env, PORT, HOSTNAME: "127.0.0.1" },
-    stdio: "pipe",
+  const useDev =
+    process.env.E2E_DEV === "1" || process.env.E2E_MOBILE_DEV === "1";
+  console.log(
+    `==> starting ${useDev ? "dev" : "prod"} server on ${ROOT_URL}`,
+  );
+  return startTestServer({
+    port: PORT,
+    rootUrl: ROOT_URL,
+    useDev,
+    skipBuild: process.env.SKIP_BUILD === "1",
+    verbose: process.env.E2E_MOBILE_VERBOSE === "1",
   });
-
-  for (let attempt = 0; attempt < 90; attempt += 1) {
-    if (await isServerUp(ROOT_URL)) {
-      return child;
-    }
-    await sleep(1000);
-  }
-
-  child.kill();
-  throw new Error(`Server did not become ready at ${ROOT_URL}`);
 }
 
 async function stopServer(child: ChildProcess | null) {
-  if (!child || child.killed) {
-    return;
-  }
-  child.kill("SIGTERM");
-  await sleep(500);
-  if (!child.killed) {
-    child.kill("SIGKILL");
-  }
+  await stopTestServer(child);
 }
 
 async function assertNoHorizontalOverflow(page: Page) {

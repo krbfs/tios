@@ -16,7 +16,7 @@
  *   (min 120s) does not force a 2+ minute wait per scenario.
  */
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess } from "node:child_process";
 import { chromium, type Browser, type Page } from "playwright";
 
 import {
@@ -24,6 +24,7 @@ import {
   selectQuizFixtures,
   type QuizE2EFixture,
 } from "./e2e-quiz-fixtures";
+import { startTestServer, stopTestServer } from "./start-test-server";
 
 const ROOT_URL = (process.env.BASE_URL ?? "http://127.0.0.1:3101").replace(/\/$/, "");
 const PORT = new URL(ROOT_URL).port || "3101";
@@ -55,100 +56,23 @@ async function isServerUp(url: string): Promise<boolean> {
   return false;
 }
 
-function runCommand(command: string, args: string[], env: NodeJS.ProcessEnv) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: process.cwd(),
-      env,
-      stdio: "inherit",
-    });
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
-      }
-    });
-  });
-}
-
 async function startServer(): Promise<ChildProcess> {
-  const useDev = process.env.E2E_QUIZ_DEV === "1";
-
-  if (!useDev && process.env.SKIP_BUILD !== "1") {
-    console.log("==> building Next.js for e2e quiz tests");
-    await runCommand("npm", ["run", "build"], process.env);
-  }
-
-  const startArgs = useDev
-    ? ["run", "dev", "--", "-p", PORT, "-H", "127.0.0.1"]
-    : ["run", "start"];
-
+  const useDev =
+    process.env.E2E_DEV === "1" || process.env.E2E_QUIZ_DEV === "1";
   console.log(
     `==> starting ${useDev ? "dev" : "prod"} server on ${ROOT_URL}`,
   );
-  const child = spawn("npm", startArgs, {
-    cwd: process.cwd(),
-    env: { ...process.env, PORT, HOSTNAME: "127.0.0.1" },
-    stdio: "pipe",
-    detached: true,
+  return startTestServer({
+    port: PORT,
+    rootUrl: ROOT_URL,
+    useDev,
+    skipBuild: process.env.SKIP_BUILD === "1",
+    verbose: process.env.E2E_QUIZ_VERBOSE === "1",
   });
-
-  let stderr = "";
-  child.stderr?.on("data", (chunk: Buffer) => {
-    stderr += chunk.toString();
-  });
-  child.stdout?.on("data", (chunk: Buffer) => {
-    const text = chunk.toString();
-    if (process.env.E2E_QUIZ_VERBOSE === "1") {
-      process.stdout.write(text);
-    }
-  });
-
-  for (let attempt = 0; attempt < 90; attempt += 1) {
-    if (await isServerUp(ROOT_URL)) {
-      return child;
-    }
-    if (child.exitCode !== null) {
-      throw new Error(
-        `Server exited early (code ${child.exitCode}). stderr:\n${stderr.slice(-2000)}`,
-      );
-    }
-    await sleep(1000);
-  }
-
-  child.kill();
-  throw new Error(
-    `Server did not become ready at ${ROOT_URL}. stderr:\n${stderr.slice(-2000)}`,
-  );
 }
 
 async function stopServer(child: ChildProcess | null) {
-  if (!child || child.killed) {
-    return;
-  }
-  const pid = child.pid;
-  if (pid) {
-    try {
-      process.kill(-pid, "SIGTERM");
-    } catch {
-      child.kill("SIGTERM");
-    }
-  } else {
-    child.kill("SIGTERM");
-  }
-  await sleep(800);
-  if (pid) {
-    try {
-      process.kill(-pid, "SIGKILL");
-    } catch {
-      // already gone
-    }
-  }
-  if (!child.killed) {
-    child.kill("SIGKILL");
-  }
+  await stopTestServer(child);
 }
 
 async function padSubmitTimings(page: Page) {
