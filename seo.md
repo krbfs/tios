@@ -62,7 +62,8 @@
 - регистрация: **не обязательна**
 - старт теста: `/test` → `/test/take`
 - пример результата: `/results`
-- контакт: форма [/contact](/contact) (Telegram); резерв: support@tios-test.com
+- контакт: [/contact](/contact) («Контакты», форма → Telegram); резерв: support@tios-test.com
+- маршрутизация к Insighter: [/where-used](/where-used)
 - партнер: Insighter — https://insighter.by/
 
 ## Structured data (JSON-LD)

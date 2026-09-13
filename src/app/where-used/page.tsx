@@ -53,8 +53,8 @@ export default function WhereUsedPage() {
             <article id={block.id} className="scroll-mt-24">
               <h2 className="mb-4 text-xl font-bold md:text-2xl">{block.title}</h2>
               <div className="overflow-x-auto rounded-xl border border-solid border-border">
-                <table className="where-used-table w-full min-w-[320px] table-fixed border-collapse text-left text-sm md:text-base">
-                  <colgroup>
+                <table className="where-used-table w-full border-collapse text-left text-sm md:min-w-[320px] md:table-fixed md:text-base">
+                  <colgroup className="hidden md:table-column-group">
                     <col style={{ width: "62%" }} />
                     <col style={{ width: "38%" }} />
                   </colgroup>

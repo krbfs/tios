@@ -476,6 +476,55 @@ details > p {
   flex-shrink: 0;
 }
 
+/* /where-used — stacked rows on narrow screens */
+@media (max-width: 767px) {
+  .where-used-table thead {
+    display: none;
+  }
+
+  .where-used-table tbody tr {
+    display: block;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .where-used-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .where-used-table td {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+  }
+
+  .where-used-table td:first-child {
+    padding-bottom: 6px;
+  }
+
+  .where-used-table td:first-child::before {
+    content: "Если ищете";
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  .where-used-table td:last-child {
+    padding-top: 0;
+    padding-bottom: 14px;
+  }
+
+  .where-used-table td:last-child::before {
+    content: "Решение";
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+}
+
 .site-header-spacer {
   flex: 1;
 }
