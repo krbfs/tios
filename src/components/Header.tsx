@@ -38,7 +38,7 @@ const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/about", label: "О тесте", gaEvent: "cta_header_about" },
   { href: "/where-used", label: "Где используется", gaEvent: "cta_header_where_used" },
   { href: "/author", label: "Об авторе", gaEvent: "cta_header_author" },
-  { href: "/contact", label: "Свяжитесь с нами", gaEvent: "cta_header_contact" },
+  { href: "/contact", label: "Контакты", gaEvent: "cta_header_contact" },
 ];
 
 export function Header() {
@@ -92,7 +92,7 @@ export function Header() {
     <Link
       key={item.href}
       href={item.href}
-      className="text-[0.9375rem] font-normal text-foreground hover:text-primary"
+      className="shrink-0 whitespace-nowrap text-[0.875rem] font-normal text-foreground hover:text-primary lg:text-[0.9375rem]"
       data-ga-event={item.gaEvent}
       onClick={() => setOpen(false)}
     >
@@ -115,7 +115,7 @@ export function Header() {
         </Link>
 
         <nav
-          className="site-header-menu site-header-menu--desktop hidden items-center gap-x-5 md:ml-2 md:flex"
+          className="site-header-menu site-header-menu--desktop hidden min-w-0 flex-nowrap items-center gap-x-3 md:ml-2 md:flex lg:gap-x-4"
           aria-label="Основное меню"
         >
           {navLinks}

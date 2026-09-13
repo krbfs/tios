@@ -11,7 +11,7 @@ export default function ContactPage() {
       <section className="space-y-6 bg-white pb-12 pt-8 md:pb-16 md:pt-12">
         <div className="container-page mx-auto max-w-xl space-y-4">
           <RevealOnScroll>
-            <h1 className="text-3xl leading-tight md:text-4xl">Свяжитесь с нами</h1>
+            <h1 className="text-3xl leading-tight md:text-4xl">Контакты</h1>
           </RevealOnScroll>
 
           <RevealOnScroll delay={80}>
@@ -26,7 +26,7 @@ export default function ContactPage() {
         data={[
           buildBreadcrumbJsonLd([
             { name: "Главная", path: "/" },
-            { name: "Свяжитесь с нами", path: pages.contact.path },
+            { name: "Контакты", path: pages.contact.path },
           ]),
         ]}
       />

@@ -467,6 +467,15 @@ details > p {
 }
 
 /* Header burger — keep in sync with public/css/test.css */
+.site-header-menu--desktop {
+  flex-wrap: nowrap;
+}
+
+.site-header-menu--desktop a {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .site-header-spacer {
   flex: 1;
 }

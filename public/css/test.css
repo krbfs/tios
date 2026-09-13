@@ -80,6 +80,7 @@ body {
 
 .site-header-menu--desktop {
   display: none;
+  flex-wrap: nowrap;
 }
 
 .site-header-burger {
