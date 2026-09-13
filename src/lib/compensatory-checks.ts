@@ -406,8 +406,26 @@ export function toPublicCompensatoryCheck(
   if (!result) {
     return null;
   }
-  const { subfactor_scores: _scores, ...rest } = result;
-  return rest;
+  const {
+    psychotype_code,
+    outcome,
+    peak_scale,
+    balance_index,
+    adaptive_text,
+    risk_text,
+    active_text,
+    coaching_recommendations,
+  } = result;
+  return {
+    psychotype_code,
+    outcome,
+    peak_scale,
+    balance_index,
+    adaptive_text,
+    risk_text,
+    active_text,
+    coaching_recommendations,
+  };
 }
 
 export function buildCompensatoryCheck(
