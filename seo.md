@@ -39,6 +39,7 @@
 |---|---|
 | `/` | yes |
 | `/about` | yes |
+| `/where-used` | yes |
 | `/author` | yes |
 | `/contact` | yes |
 | `/test` | yes |

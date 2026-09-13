@@ -6,11 +6,37 @@ import { useEffect, useState } from "react";
 
 import { DEMO_RESULT_HREF } from "@/lib/demo-links";
 
+const TOKEN_KEY = "tc26_access_token";
+const USER_KEY = "tc26_user";
+
+type StoredUser = {
+  email?: string;
+};
+
+function readStoredUser(): StoredUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  if (!localStorage.getItem(TOKEN_KEY)) {
+    return null;
+  }
+  const raw = localStorage.getItem(USER_KEY);
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as StoredUser;
+  } catch {
+    return null;
+  }
+}
+
 /** Keep in sync with chrome/header-public.html */
 const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
   { href: "/test", label: "Пройти тест", gaEvent: "cta_header_start_test" },
   { href: DEMO_RESULT_HREF, label: "Пример результата", gaEvent: "cta_header_demo_result" },
   { href: "/about", label: "О тесте", gaEvent: "cta_header_about" },
+  { href: "/where-used", label: "Где используется", gaEvent: "cta_header_where_used" },
   { href: "/author", label: "Об авторе", gaEvent: "cta_header_author" },
   { href: "/contact", label: "Свяжитесь с нами", gaEvent: "cta_header_contact" },
 ];
@@ -18,12 +44,34 @@ const NAV_ITEMS: Array<{ href: string; label: string; gaEvent?: string }> = [
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const loginHref =
-    pathname === "/login" ? "/" : `/login?next=${encodeURIComponent(pathname)}`;
+  const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
+  const [returnTo, setReturnTo] = useState("/cabinet.html");
+
+  useEffect(() => {
+    const syncAuth = () => setStoredUser(readStoredUser());
+    syncAuth();
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("tc26-auth-change", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("tc26-auth-change", syncAuth);
+    };
+  }, []);
+
+  useEffect(() => {
+    setReturnTo(`${window.location.pathname}${window.location.search}`);
+  }, [pathname]);
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  const isLoggedIn = Boolean(storedUser);
+  const loginHref = `/login.html?next=${encodeURIComponent(returnTo)}`;
+  const cabinetHref = "/cabinet.html";
+  const cabinetLabel = storedUser?.email
+    ? `Кабинет (${storedUser.email})`
+    : "Личный кабинет";
 
   useEffect(() => {
     if (!open) {
@@ -75,13 +123,23 @@ export function Header() {
 
         <div className="site-header-spacer ml-auto md:ml-0 md:flex-1" />
 
-        <Link
-          href={loginHref}
-          className="btn btn-outline site-header-login site-header-login--desktop hidden md:inline-flex"
-          data-ga-event="cta_header_login"
-        >
-          Войти
-        </Link>
+        {isLoggedIn ? (
+          <Link
+            href={cabinetHref}
+            className="btn btn-outline site-header-login site-header-login--desktop hidden md:inline-flex"
+            data-ga-event="cta_header_cabinet"
+          >
+            {cabinetLabel}
+          </Link>
+        ) : (
+          <Link
+            href={loginHref}
+            className="btn btn-outline site-header-login site-header-login--desktop hidden md:inline-flex"
+            data-ga-event="cta_header_login"
+          >
+            Войти
+          </Link>
+        )}
 
         <button
           type="button"
@@ -108,14 +166,25 @@ export function Header() {
             aria-label="Основное меню"
           >
             {navLinks}
-            <Link
-              href={loginHref}
-              className="site-header-login text-[0.9375rem] font-normal text-foreground hover:text-primary"
-              data-ga-event="cta_header_login"
-              onClick={() => setOpen(false)}
-            >
-              Войти
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href={cabinetHref}
+                className="site-header-login text-[0.9375rem] font-normal text-foreground hover:text-primary"
+                data-ga-event="cta_header_cabinet"
+                onClick={() => setOpen(false)}
+              >
+                {cabinetLabel}
+              </Link>
+            ) : (
+              <Link
+                href={loginHref}
+                className="site-header-login text-[0.9375rem] font-normal text-foreground hover:text-primary"
+                data-ga-event="cta_header_login"
+                onClick={() => setOpen(false)}
+              >
+                Войти
+              </Link>
+            )}
           </nav>
         </div>
       </div>

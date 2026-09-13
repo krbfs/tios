@@ -23,6 +23,7 @@ const PAGE_META: Record<
 > = {
   "/": { changeFrequency: "weekly", priority: 1 },
   "/about": { changeFrequency: "monthly", priority: 0.85 },
+  "/where-used": { changeFrequency: "monthly", priority: 0.75 },
   "/author": { changeFrequency: "yearly", priority: 0.6 },
   "/contact": { changeFrequency: "yearly", priority: 0.5 },
   "/test": { changeFrequency: "weekly", priority: 0.9 },
