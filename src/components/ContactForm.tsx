@@ -128,13 +128,6 @@ export function ContactForm() {
         </p>
       ) : null}
 
-      <Link
-        href="/"
-        className="btn btn-outline contact-form-home"
-        data-ga-event="cta_contact_home"
-      >
-        На главную
-      </Link>
     </form>
   );
 }

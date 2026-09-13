@@ -466,6 +466,13 @@ details > p {
   }
 }
 
+/* Keep in sync with public/css/test.css */
+.page-home-cta {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px 32px;
+}
+
 /* Header burger — keep in sync with public/css/test.css */
 .site-header-menu--desktop {
   flex-wrap: nowrap;

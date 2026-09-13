@@ -33,6 +33,12 @@ body {
   width: 100%;
 }
 
+.page-home-cta {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px 32px;
+}
+
 .site-footer-copy {
   color: var(--footer-text);
   width: 100%;

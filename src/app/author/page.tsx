@@ -98,16 +98,6 @@ export default function AuthorPage() {
         </RevealOnScroll>
       </section>
 
-      <section className="container-page mx-auto max-w-4xl pb-16 md:pb-20">
-        <RevealOnScroll>
-          <p className="text-center">
-            <Link href="/" className="font-semibold text-link hover:underline">
-              На главную
-            </Link>
-          </p>
-        </RevealOnScroll>
-      </section>
-
       <JsonLd
         data={[
           buildBreadcrumbJsonLd([

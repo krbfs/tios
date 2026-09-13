@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { PageHomeCta } from "@/components/PageHomeCta";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
@@ -112,6 +113,7 @@ export default function RootLayout({
         <div className="app-shell">
           <Header />
           <main className="app-main">{children}</main>
+          <PageHomeCta />
           <Footer />
         </div>
       </body>
