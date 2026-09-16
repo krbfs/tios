@@ -17,13 +17,19 @@
 ## Быстрые команды
 
 ```bash
-npm test                    # все vitest (unit + security)
-npm run test:security       # только безопасность
-npm run test:unit           # математика, контент, прочие API
-npm run validate:seo-a2a    # llms.txt, ai.txt, seo.ts
+npm run test:ci             # короткий CI: vitest + SEO/catalog/demo (без браузера и локального сервера)
+npm run test:full           # test:ci + вопросники/контент-режимы + Playwright (e2e квиз + mobile)
+
+npm test                    # все vitest (unit + security) — входит в test:ci
+npm run test:security       # только безопасность (не полный CI)
+npm run test:unit           # unit без security (не полный CI)
+npm run test:validate:extended   # verify:questions + db:verify-content (часть test:full)
+npm run test:browser        # e2e-quiz + mobile на локальном dev (часть test:full)
+
+npm run validate:seo-a2a
 npm run content:validate-catalog
 npm run verify:demo
-npm run db:verify-content   # покрытие контента в БД (нужен DATABASE_URL)
+npm run db:verify-content   # JSON по умолчанию; --db нужен DATABASE_URL
 ```
 
 ## Деплой (`gcp:deploy`)

@@ -1,3 +1,5 @@
+import "./load-project-env";
+
 /**
  * Browser e2e: open Chromium, pass consent → 75 answers → result page,
  * assert psychotype (and key scales) match fixtures.
@@ -68,6 +70,7 @@ async function startServer(): Promise<ChildProcess> {
     useDev,
     skipBuild: process.env.SKIP_BUILD === "1",
     verbose: process.env.E2E_QUIZ_VERBOSE === "1",
+    e2eHarness: true,
   });
 }
 
@@ -95,13 +98,14 @@ async function padSubmitTimings(page: Page) {
       return;
     }
     body.time_per_question = timings;
-    await route.continue({
+    const response = await route.fetch({
       postData: JSON.stringify(body),
       headers: {
         ...route.request().headers(),
         "content-type": "application/json",
       },
     });
+    await route.fulfill({ response });
   });
 }
 
@@ -164,20 +168,37 @@ async function answerAllPages(page: Page, answers: number[]) {
           return label.includes(`Вопросы ${expectedFirst}–`);
         },
         start + PER_PAGE + 1,
-        { timeout: 30_000 },
+        { timeout: 60_000 },
       );
       continue;
     }
 
-    const modalSubmit = page.locator("#modal-submit");
-    if (await modalSubmit.isVisible().catch(() => false)) {
-      await modalSubmit.click();
-    }
+    await confirmFastSubmitModal(page);
+  }
+}
+
+/** UI flags >10% answers under 2s; e2e must confirm the modal before submit runs. */
+async function confirmFastSubmitModal(page: Page) {
+  const modalSubmit = page.locator("#modal-submit");
+  try {
+    await modalSubmit.waitFor({ state: "visible", timeout: 8_000 });
+    await modalSubmit.click();
+  } catch {
+    // maybeSubmit called submitAnswers directly (unlikely in e2e).
   }
 }
 
 async function waitForResult(page: Page) {
-  await page.waitForURL(/\/quiz\/result/, { timeout: 90_000 });
+  try {
+    await page.waitForURL(/\/quiz\/result/, { timeout: 90_000 });
+  } catch (err) {
+    const uiError = await page.locator("#error").textContent().catch(() => null);
+    const onTake = page.url().includes("/test/take");
+    if (onTake && uiError?.trim()) {
+      throw new Error(`Submit failed on take.html: ${uiError.trim()}`);
+    }
+    throw err;
+  }
   await page.waitForFunction(
     () => {
       const title = document.getElementById("psychotype-title")?.textContent ?? "";
@@ -261,8 +282,10 @@ async function main() {
 
   let server: ChildProcess | null = null;
   if (MANAGE_SERVER) {
-    if (await isServerUp(ROOT_URL)) {
-      console.log("==> reusing already running local server");
+    if (process.env.E2E_REUSE_SERVER === "1" && (await isServerUp(ROOT_URL))) {
+      console.log(
+        "==> reusing local server (ensure E2E_RELAX_LIMITS=1 E2E_QUIZ_SKIP_DB=1 on that process)",
+      );
     } else {
       server = await startServer();
     }

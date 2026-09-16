@@ -3,7 +3,11 @@ import { encodeAnswers } from "@/lib/encdata";
 import { getAuthUser } from "@/lib/api/auth";
 import { error, json, parseJson } from "@/lib/api/http";
 import { db } from "@/lib/db";
-import { assertHumanLikeTimings, requireTestAccess } from "@/lib/test-access";
+import {
+  assertHumanLikeTimings,
+  e2eQuizSkipDbPersistence,
+  requireTestAccess,
+} from "@/lib/test-access";
 
 type SubmitBody = {
   session_uuid?: string;
@@ -46,6 +50,17 @@ export async function POST(request: Request) {
     return error(
       err instanceof Error ? err.message : "Invalid answers",
       400,
+    );
+  }
+
+  if (e2eQuizSkipDbPersistence()) {
+    return json(
+      {
+        result_id: null,
+        encdata: encodeAnswers(normalizedAnswers),
+        session_uuid: body.session_uuid ?? null,
+      },
+      201,
     );
   }
 

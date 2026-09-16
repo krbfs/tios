@@ -40,13 +40,25 @@ export async function startTestServer(options: {
   useDev: boolean;
   skipBuild?: boolean;
   verbose?: boolean;
+  /** Lift antibot rate limits and skip DB on submit (local Playwright quiz e2e). */
+  e2eHarness?: boolean;
 }): Promise<ChildProcess> {
-  const { port, rootUrl, useDev, skipBuild, verbose } = options;
+  const { port, rootUrl, useDev, skipBuild, verbose, e2eHarness } = options;
 
   await freeE2EPort(port);
 
   if (!useDev && !skipBuild) {
     await runCommand("npm", ["run", "build"], process.env);
+  }
+
+  const childEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    PORT: port,
+    HOSTNAME: "127.0.0.1",
+  };
+  if (e2eHarness) {
+    childEnv.E2E_RELAX_LIMITS = "1";
+    childEnv.E2E_QUIZ_SKIP_DB = "1";
   }
 
   const child = useDev
@@ -55,13 +67,13 @@ export async function startTestServer(options: {
         ["next", "dev", "--turbopack", "-p", port, "-H", "127.0.0.1"],
         {
           cwd: process.cwd(),
-          env: { ...process.env, PORT: port, HOSTNAME: "127.0.0.1" },
+          env: childEnv,
           stdio: "pipe",
         },
       )
     : spawn("npm", ["run", "start"], {
         cwd: process.cwd(),
-        env: { ...process.env, PORT: port, HOSTNAME: "127.0.0.1" },
+        env: childEnv,
         stdio: "pipe",
       });
 

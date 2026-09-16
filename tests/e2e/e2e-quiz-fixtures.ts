@@ -1,7 +1,9 @@
 /**
  * Fixed answer vectors for browser e2e quiz runs.
- * Psychotype expectations are computed from `calculate_result` (MVP: TIOS_V1_PROFILES off).
+ * Expectations follow `calculate_result` with project env (.env.local).
  */
+
+import "./load-project-env";
 
 import {
   calculate_result,
@@ -10,6 +12,7 @@ import {
   type PsychotypeCode,
 } from "../../src/lib/calculations";
 import { getDemoAnswers } from "../../src/lib/encdata";
+import { primaryTypeLabel } from "../../src/lib/psychotypes";
 
 const BLOCK_EI = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71];
 const BLOCK_TA = [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57, 62, 67, 72];
@@ -147,12 +150,17 @@ export const QUIZ_E2E_FIXTURES: QuizE2EFixture[] = [
     "Прагматик",
     { rigidity: 30, aggression: 30 },
   ),
-  fixtureFromAnswers(
-    "mixed_zeros",
-    "Все ответы 0 → Смешанный тип (MVP)",
-    fillAnswers(0),
-    "Смешанный тип",
-  ),
+  (() => {
+    const answers = fillAnswers(0);
+    const computed = calculate_result(answers, fillTimings(5));
+    const label = primaryTypeLabel(computed.psychotype_code);
+    return fixtureFromAnswers(
+      "mixed_zeros",
+      `Все ответы 0 → ${label}`,
+      answers,
+      label,
+    );
+  })(),
   fixtureFromAnswers(
     "demo_influencer",
     "Демо-вектор ответов → Лидер мнений",

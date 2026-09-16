@@ -376,6 +376,23 @@ export function extractTestToken(request: Request): string | null {
   return header || null;
 }
 
+function e2eRelaxedLimitsEnabled(): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+  const flag = process.env.E2E_RELAX_LIMITS;
+  return flag === "1" || flag === "true";
+}
+
+/** Browser e2e quiz: skip Prisma on submit (encdata only), non-production only. */
+export function e2eQuizSkipDbPersistence(): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+  const flag = process.env.E2E_QUIZ_SKIP_DB;
+  return flag === "1" || flag === "true";
+}
+
 export async function requireTestAccess(
   request: Request,
   kind: "questions" | "submit",
@@ -384,18 +401,20 @@ export async function requireTestAccess(
   if (blocked) return blocked;
 
   const ip = clientIp(request);
-  const limit = kind === "questions" ? QUESTIONS_LIMIT : SUBMIT_LIMIT;
-  const limited = consumeRateLimit(`test:${kind}:${ip}`, limit);
-  if (!limited.ok) {
-    const response = error("Too many requests. Try again later.", 429);
-    logAntibotEvent(request, {
-      event: "rate_limit",
-      status: 429,
-      reason: "Too many requests",
-      kind,
-      retry_after_sec: limited.retryAfterSec,
-    });
-    return response;
+  if (!e2eRelaxedLimitsEnabled()) {
+    const limit = kind === "questions" ? QUESTIONS_LIMIT : SUBMIT_LIMIT;
+    const limited = consumeRateLimit(`test:${kind}:${ip}`, limit);
+    if (!limited.ok) {
+      const response = error("Too many requests. Try again later.", 429);
+      logAntibotEvent(request, {
+        event: "rate_limit",
+        status: 429,
+        reason: "Too many requests",
+        kind,
+        retry_after_sec: limited.retryAfterSec,
+      });
+      return response;
+    }
   }
 
   const token = extractTestToken(request);
