@@ -228,7 +228,9 @@
 
       function renderMeta(result) {
         const triad =
-          result.triad_variant === "left" || result.triad_variant === "right"
+          result.triad_variant === "left" ||
+          result.triad_variant === "right" ||
+          result.triad_variant === "detected"
             ? result.triad_variant
             : "—";
         const subS =
@@ -244,6 +246,10 @@
           <dt>Психотип</dt><dd>${formatPsychotypeSummary(result.psychotype_code)}</dd>
           ${empathSubtype ? `<dt>Подтип Эмпата</dt><dd>${empathSubtype}</dd>` : ""}
           <dt>triad_variant</dt><dd>${triad}</dd>
+          <dt>profile_complexity</dt><dd>${result.profile_complexity ?? "—"}</dd>
+          <dt>primary_type</dt><dd>${result.primary_type_code ?? result.primary_type ?? "—"}</dd>
+          <dt>secondary_type</dt><dd>${result.secondary_type_code ?? result.secondary_type ?? "—"}</dd>
+          <dt>cascade_level</dt><dd>${result.cascade_level_used ?? "—"}</dd>
           <dt>sub_index_s</dt><dd>${subS}</dd>
           <dt>sub_index_n</dt><dd>${subN}</dd>
           <dt>Режим</dt><dd>${modeLabel(result.mode)}</dd>

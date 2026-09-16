@@ -625,10 +625,44 @@
         return wrapper;
       }
 
-      function renderV1ProfileMeta() {
-        // Triad left/right label is admin-only; public users see triad via content blocks.
-        v1ProfileMeta.hidden = true;
-        v1ProfileMeta.textContent = "";
+      const PROFILE_COMPLEXITY_LABELS = {
+        triad: "Специальная триада",
+        dual: "Двойной профиль",
+        multidimensional: "Многомерный профиль",
+        modifier: "Доминанта с модификатором",
+        balanced: "Адаптивный профиль",
+      };
+
+      function renderV1ProfileMeta(result) {
+        const parts = [];
+        const complexity = result?.profile_complexity;
+        if (complexity && PROFILE_COMPLEXITY_LABELS[complexity]) {
+          parts.push(PROFILE_COMPLEXITY_LABELS[complexity]);
+        }
+        const primary =
+          result?.primary_type_code || result?.psychotype_code || null;
+        const secondary =
+          result?.secondary_type_code || result?.psychotype_secondary || null;
+        if (
+          secondary &&
+          (complexity === "dual" ||
+            complexity === "multidimensional" ||
+            complexity === "modifier")
+        ) {
+          parts.push(
+            `${formatPsychotypeTitle(primary)} + ${formatPsychotypeTitle(secondary)}`,
+          );
+        }
+        if (result?.triad_variant === "detected") {
+          parts.push("архетип триады");
+        }
+        if (!parts.length) {
+          v1ProfileMeta.hidden = true;
+          v1ProfileMeta.textContent = "";
+          return;
+        }
+        v1ProfileMeta.textContent = parts.join(" · ");
+        v1ProfileMeta.hidden = false;
       }
 
       function renderEmpathSubindices(result) {
