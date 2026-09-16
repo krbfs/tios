@@ -102,7 +102,7 @@ export function Header() {
 
   return (
     <header className={`site-header z-40 border-0 border-b border-solid border-border bg-white ${open ? "site-header--open" : ""}`}>
-      <div className="container-page flex min-h-16 items-center gap-4 py-2 md:py-0">
+      <div className="container-page flex min-h-16 items-center gap-4 py-2 lg:py-0">
         <Link href="/" className="inline-flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -115,18 +115,18 @@ export function Header() {
         </Link>
 
         <nav
-          className="site-header-menu site-header-menu--desktop hidden min-w-0 flex-nowrap items-center gap-x-3 md:ml-2 md:flex lg:gap-x-4"
+          className="site-header-menu site-header-menu--desktop hidden min-w-0 flex-nowrap items-center gap-x-3 lg:ml-2 lg:flex lg:gap-x-4"
           aria-label="Основное меню"
         >
           {navLinks}
         </nav>
 
-        <div className="site-header-spacer ml-auto md:ml-0 md:flex-1" />
+        <div className="site-header-spacer ml-auto lg:ml-0 lg:flex-1" />
 
         {isLoggedIn ? (
           <Link
             href={cabinetHref}
-            className="btn btn-outline site-header-login site-header-login--desktop hidden md:inline-flex"
+            className="btn btn-outline site-header-login site-header-login--desktop hidden lg:inline-flex"
             data-ga-event="cta_header_cabinet"
           >
             {cabinetLabel}
@@ -134,7 +134,7 @@ export function Header() {
         ) : (
           <Link
             href={loginHref}
-            className="btn btn-outline site-header-login site-header-login--desktop hidden md:inline-flex"
+            className="btn btn-outline site-header-login site-header-login--desktop hidden lg:inline-flex"
             data-ga-event="cta_header_login"
           >
             Войти
@@ -143,7 +143,7 @@ export function Header() {
 
         <button
           type="button"
-          className="site-header-burger md:hidden"
+          className="site-header-burger lg:hidden"
           aria-expanded={open}
           aria-controls="site-header-drawer"
           aria-label={open ? "Закрыть меню" : "Открыть меню"}
@@ -157,7 +157,7 @@ export function Header() {
 
       <div
         id="site-header-drawer"
-        className="site-header-drawer md:hidden"
+        className="site-header-drawer lg:hidden"
         hidden={!open}
       >
         <div className="container-page pb-4">

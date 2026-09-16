@@ -598,13 +598,13 @@ details > p {
   display: none !important;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .site-header-burger {
     display: inline-flex;
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .site-header .site-header-login--desktop {
     display: inline-flex !important;
   }

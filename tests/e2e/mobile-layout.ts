@@ -298,7 +298,7 @@ async function assertHeaderLayout(page: Page) {
   }
 
   const viewport = page.viewportSize();
-  const isMobile = viewport ? viewport.width < 768 : false;
+  const isMobile = viewport ? viewport.width < 1024 : false;
 
   if (isMobile) {
     const burger = page.locator("header .site-header-burger").first();

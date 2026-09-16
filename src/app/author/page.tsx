@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { authorInfo } from "@/lib/author";
