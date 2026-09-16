@@ -397,8 +397,19 @@ function applyLegacyDemoBlock4(answers: number[]): void {
   set([64, 69, 74], 1);
 }
 
+/** Expected V1 cascade fields for marketing demo (`TIOS_V1_PROFILES=true`). */
+export const DEMO_V1_PROFILE_EXPECTATION = {
+  psychotype_code: "influencer",
+  profile_complexity: "pure",
+  cascade_level_used: 1,
+  triad_variant: "right" as const,
+  triad_status: "stable" as const,
+  primary_type: "influencer",
+  secondary_type: null,
+} as const;
+
 /**
- * Demo profile for landing / «Пример результата» — Лидер мнений + триада right (V1).
+ * Demo profile for landing / «Пример результата» — Лидер мнений, pure + triad right (V1 cascade).
  * Personality scales fixed per DEMO_PERSONALITY_SCALES; block 4 unchanged vs legacy demo.
  */
 export function getDemoAnswers(): number[] {

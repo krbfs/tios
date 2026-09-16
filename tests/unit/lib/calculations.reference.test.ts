@@ -7,10 +7,16 @@ import { describe, expect, it } from "vitest";
 import {
   calculate_scaled_scores,
   calculate_systemic_scores,
+  classifyTriad,
   determine_psychotype,
+  SCALE_KEYS,
   type ScaleKey,
   type ScaledScores,
 } from "@/lib/calculations";
+import {
+  cascadeResultIsComplex,
+  resolveProfileCascade,
+} from "@/lib/profile-cascade";
 
 const PERSONALITY_MAP: Record<number, { left: ScaleKey; right: ScaleKey }> = {};
 const WORK_MAP: Record<
@@ -185,6 +191,48 @@ function randomAnswers(seed: number): number[] {
   });
 }
 
+function referenceV1Cascade(scores: ScaledScores) {
+  const ranked = SCALE_KEYS.map((key) => ({
+    key,
+    score: scores[key],
+  })).sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+
+  const top1 = ranked[0]?.key;
+  const top2 = ranked[1]?.key;
+  const top3 = ranked[2]?.key;
+  if (!top1 || !top2 || !top3) {
+    return null;
+  }
+
+  const triad_status = classifyTriad([top1, top2, top3], scores);
+  const cascade = resolveProfileCascade(ranked, scores, {
+    allowTriadVariant: true,
+    triadStatusImpossible: triad_status === "impossible",
+  });
+
+  if (cascadeResultIsComplex(cascade)) {
+    return {
+      psychotype_code: "complex",
+      profile_complexity: null,
+      cascade_level_used: null,
+      triad_variant: cascade.triad_variant,
+      primary_type: null,
+      secondary_type: null,
+      triad_status,
+    };
+  }
+
+  return {
+    psychotype_code: cascade.psychotype_code,
+    profile_complexity: cascade.profile_complexity,
+    cascade_level_used: cascade.cascade_level_used,
+    triad_variant: cascade.triad_variant,
+    primary_type: cascade.primary_type,
+    secondary_type: cascade.secondary_type,
+    triad_status,
+  };
+}
+
 describe("reference implementation vs calculations.ts", () => {
   it("matches personality scores on 2000 pseudo-random answer vectors", () => {
     for (let seed = 0; seed < 2000; seed += 1) {
@@ -215,13 +263,34 @@ describe("reference implementation vs calculations.ts", () => {
     }
   });
 
-  it("matches psychotype algorithm on 2000 pseudo-random personality profiles", () => {
+  it("matches MVP psychotype (TIOS_V1_PROFILES off) on 2000 random profiles", () => {
+    delete process.env.TIOS_V1_PROFILES;
     for (let seed = 0; seed < 2000; seed += 1) {
       const answers = randomAnswers(seed);
       const scores = calculate_scaled_scores(answers);
       expect(determine_psychotype(scores).psychotype_code).toBe(
         referencePsychotype(scores),
       );
+    }
+  });
+
+  it("matches V1 cascade fields on 2000 random profiles", () => {
+    process.env.TIOS_V1_PROFILES = "true";
+    for (let seed = 0; seed < 2000; seed += 1) {
+      const answers = randomAnswers(seed);
+      const scores = calculate_scaled_scores(answers);
+      const expected = referenceV1Cascade(scores);
+      const actual = determine_psychotype(scores);
+      if (!expected) {
+        continue;
+      }
+      expect(actual.psychotype_code).toBe(expected.psychotype_code);
+      expect(actual.profile_complexity).toBe(expected.profile_complexity);
+      expect(actual.cascade_level_used).toBe(expected.cascade_level_used);
+      expect(actual.triad_variant).toBe(expected.triad_variant);
+      expect(actual.primary_type).toBe(expected.primary_type);
+      expect(actual.secondary_type).toBe(expected.secondary_type);
+      expect(actual.triad_status).toBe(expected.triad_status);
     }
   });
 

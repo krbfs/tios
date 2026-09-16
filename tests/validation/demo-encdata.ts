@@ -3,7 +3,13 @@
  * Smoke-check demo encdata profile (landing / quiz/result link).
  * Usage: npm run verify:demo
  */
-import { computeFromEncdata, DEMO_THRESHOLD_WARNINGS, getDemoEncdata, getDemoResultHref } from "../../src/lib/encdata";
+import {
+  computeFromEncdata,
+  DEMO_THRESHOLD_WARNINGS,
+  DEMO_V1_PROFILE_EXPECTATION,
+  getDemoEncdata,
+  getDemoResultHref,
+} from "../../src/lib/encdata";
 import { DEMO_RESULT_HREF } from "../../src/lib/demo-links";
 
 const encdata = getDemoEncdata();
@@ -12,8 +18,31 @@ const result = computeFromEncdata(encdata);
 
 const checks: [string, boolean][] = [
   ["demo menu href in sync", DEMO_RESULT_HREF === getDemoResultHref()],
-  ["psychotype influencer", result.psychotype_code === "influencer"],
-  ["triad right (V1 demo)", result.triad_variant === "right"],
+  [
+    "psychotype influencer",
+    result.psychotype_code === DEMO_V1_PROFILE_EXPECTATION.psychotype_code,
+  ],
+  [
+    "V1 profile_complexity pure",
+    result.profile_complexity === DEMO_V1_PROFILE_EXPECTATION.profile_complexity,
+  ],
+  [
+    "V1 cascade level 1",
+    result.cascade_level_used === DEMO_V1_PROFILE_EXPECTATION.cascade_level_used,
+  ],
+  [
+    "V1 primary_type",
+    (result.primary_type ?? result.psychotype_code) ===
+      DEMO_V1_PROFILE_EXPECTATION.primary_type,
+  ],
+  [
+    "triad right (V1 demo)",
+    result.triad_variant === DEMO_V1_PROFILE_EXPECTATION.triad_variant,
+  ],
+  [
+    "triad stable",
+    result.triad_status === DEMO_V1_PROFILE_EXPECTATION.triad_status,
+  ],
   ["has scaled scores", Boolean(result.scaled_scores?.extraversion != null)],
   ["has systemic", Boolean(result.scaled_systemic?.LAB_work != null)],
   ["curated warnings", result.warnings?.length === DEMO_THRESHOLD_WARNINGS.length],
