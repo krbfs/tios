@@ -24,7 +24,8 @@ npm test                    # все vitest (unit + security) — входит �
 npm run test:security       # только безопасность (не полный CI)
 npm run test:unit           # unit без security (не полный CI)
 npm run test:validate:extended   # verify:questions + db:verify-content (часть test:full)
-npm run test:browser        # e2e-quiz + mobile на локальном dev (часть test:full)
+npm run test:browser        # все 10 e2e-квизов + mobile all pages (часть test:full)
+npm run test:e2e-quiz       # smoke: 4 сценария; полный каталог: test:e2e-quiz:all
 
 npm run validate:seo-a2a
 npm run content:validate-catalog
