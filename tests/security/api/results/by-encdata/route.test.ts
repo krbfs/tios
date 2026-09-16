@@ -88,6 +88,9 @@ describe("GET /api/results/by-encdata", () => {
     const payload = await readJson<{
       encdata: string;
       psychotype_code: string;
+      primary_type_code: string;
+      secondary_type_code: string | null;
+      profile_complexity: string | null;
       result_url: string;
       content_blocks: Array<{ block_key: string }>;
       admin_comment: null;
@@ -108,9 +111,11 @@ describe("GET /api/results/by-encdata", () => {
       {},
       null,
       null,
-      expect.objectContaining({
-        profileComplexity: expect.anything(),
-      }),
+      {
+        profileComplexity: payload.profile_complexity,
+        primaryTypeCode: payload.primary_type_code,
+        secondaryTypeCode: payload.secondary_type_code,
+      },
     );
   });
 
