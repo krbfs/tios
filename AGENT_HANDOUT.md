@@ -43,10 +43,12 @@
 3. **Вопросник и математика** (`source_current/Текст_опросника_и_математика_финал.docx` — окончательно)
 4. **Файлы контента** в `source_current/` — тексты режимов
 
+**Каскад v4.0 (реализовано в коде, сент. 2026):** пока источник правды для математики/контента триад — `source_sep_16th/` («ТОЧНЫЙ_ТЕКСТ…», «ОПИСАНИЯ_ТРИАД…»). После переноса в `source_current/` — как обычно по иерархии выше.
+
 **NAVIGATOR побеждает ТЗ.**  
 **При любом сомнении — спросить пользователя**, не выбирать формулу/текст самостоятельно.
 
-**Roadmap (NAVIGATOR 10.0):** MVP = 8 чистых типов. V1 = `triad_variant` + `complex` + суб-индексы Эмпата S/N + `insighter_you` (не 8 диад-кодов). V2 опц. = полные триады.
+**Roadmap:** MVP = 8 чистых типов без каскада (`mixed`). **V1 в проде** (`TIOS_V1_PROFILES=true`): 5-уровневый каскад (`profile-cascade.ts`), `triad_variant` = `left` | `right` | `detected`, поля `primary_type`, `secondary_type`, `profile_complexity`, `cascade_level_used`, `cluster_tendencies`; `complex` только если каскад не сработал (в ТЗ ожидание <3%); суб-индексы Эмпата S/N; `insighter_you`. Шестая спецтриада (Бендер) в docx расходится — в коде **5 триад**, без `individualist` EXT+SPO+AGG. V2 опц. = полные триады четырьмя тенденциями.
 
 Дополнительно в репозитории:
 
@@ -290,17 +292,23 @@ npm run chrome:assemble
 
 Зона напряжения: |Δ| > 10. Типология в `classifyCorrespondence()`.
 
-### 6.5 Психотип (NAVIGATOR §4.7 / ранее §4.6)
+### 6.5 Психотип — каскад v4.0 (`profile-cascade.ts`, sep_16)
 
-Круг: **AGG → SPO → EXT → LAB → ANX → SEN → INT → RIG**.
+Круг: **AGG → SPO → EXT → LAB → ANX → SEN → INT → RIG**. Сортировка 8 шкал по убыванию (0–30).
 
-1. Сортировка 8 тенденций по убыванию  
-2. top1 + top2 соседние → психотип пары  
-3. Иначе fallback (top1,top3) / (top2,top3) — max сумма среди соседних  
-4. Иначе в **MVP** — `mixed`; в **V1** — `psychotype_code = complex`  
+**Флаг `TIOS_V1_PROFILES`:** `false` — legacy: соседние top1+top2 → тип, иначе `mixed`, без каскада и без `triad_variant`. `true` (`.env.example`, прод) — каскад ниже; `psychotype_code` = `complex` только если все 5 уровней провалились.
 
-MVP: **без диад**; при `TIOS_V1_PROFILES` выкл. — без triad_variant, unresolved → `mixed`.  
-V1 (`TIOS_V1_PROFILES=true`, по умолчанию в `.env.example`): `triad_variant` left/right; `complex` вместо `mixed`; суб-индексы Эмпата S/N всегда в `calculate_result`.
+| Уровень | Условие (кратко) | Результат |
+|--------|-------------------|-----------|
+| 1 | top1+top2 соседние | `profile_complexity=pure`, тип пары; при сильной 3-й — `triad_variant` left/right (норм. 3-й ≥ 0.55) |
+| 2 | top-3 = одна из **5** утверждённых триад в коде | `profile_complexity=triad`, `triad_variant=detected`, контент `triad_*` (не left/right) |
+| 3 | ≥2 валидных диад в top-4 | `dual` или `multidimensional`, `primary_type` / `secondary_type` |
+| 4 | разрыв top1−top2 ≥ 4 | `modifier` |
+| 5 | размытый top-4 (правила в коде) | `balanced` |
+
+**Утверждённые триады в коде (уровень 2):** EXT+LAB+ANX → influencer; ANX+SEN+RIG → conservative; SEN+INT+AGG → empath; SPO+EXT+RIG → innovator; INT+RIG+SPO → analyst. (В docx ещё 6-я: RIG+AGG+SPO → pragmatist — **не в коде**, ждём решение.)
+
+**Пары → код** (как раньше):
 
 | code | Пара | RU |
 |------|------|-----|
@@ -312,6 +320,10 @@ V1 (`TIOS_V1_PROFILES=true`, по умолчанию в `.env.example`): `triad_
 | empath | SEN + INT | Эмпат |
 | analyst | INT + RIG | Аналитик |
 | pragmatist | RIG + AGG | Прагматик |
+
+**JSON / БД** (`calculate_result`, `test_results`): `primary_type`, `secondary_type`, `profile_complexity`, `cascade_level_used`, `cluster_tendencies` (массив ключей шкал), `triad_variant` (+ `detected`). **encdata** по-прежнему только 75 ответов; поля пересчитываются на сервере.
+
+**Контент V1 (leader_resource):** `detected` → блоки `triad_influencer_anx` … (не `description_main`); dual/multidimensional/modifier/balanced → базовые блоки `primary_type` + шаблоны `*_profile_message` (`psychotype_code='*'`); `complex` → плашка + универсальные техники. Логика: `cascade-content.ts`, `loadContentBlocks`.
 
 ### 6.6 avg_intensity
 
@@ -332,7 +344,7 @@ avg_intensity = sum(8 scales) / 8
 - противоречивые противоположные пары → непредсказуемое поведение
 - и др.
 
-**Демо encdata:** профиль «Лидер мнений» (`getDemoAnswers`) — warnings **вычисляются** через `buildThresholdWarnings()`, без переопределения.
+**Демо encdata:** профиль «Лидер мнений», pure + `triad_variant=right` (`DEMO_V1_PROFILE_EXPECTATION`, `getDemoAnswers`) — warnings через `buildThresholdWarnings()`; curated warnings только для демо-ссылки.
 
 ### 6.8 Валидация ответов
 
@@ -342,7 +354,7 @@ avg_intensity = sum(8 scales) / 8
 - `quickly_answers` — весь тест <60 сек
 - `too_many_fast_answers` — >10% ответов <2 сек
 - `incompletely_answered_block` — блок с ≥3 пропусками без сильных ответов
-- `irregular_psycho_type` — психотип `mixed` («нет описаний для такого сочетания»)
+- `irregular_psycho_type` — психотип `mixed` (legacy MVP); при V1 вместо `mixed` чаще каскад или `complex`
 - ~~`impossible_tendencies`~~ — **не применяется** при раздельном подсчёте NAVIGATOR v10 (EXT и INT независимы)
 
 ---
@@ -374,7 +386,7 @@ avg_intensity = sum(8 scales) / 8
 |--------|------------|
 | `User` | email, passwordHash, role (`user`/`admin`) |
 | `TestSession` | sessionUuid, userId?, started/completed |
-| `TestResult` | answers JSON, scores, psychotype, mode, admin fields |
+| `TestResult` | answers, scores, psychotype, cascade fields (`primary_type`, `secondary_type`, `profile_complexity`, `cascade_level_used`, `cluster_tendencies`), `triad_variant`, mode, admin |
 | `ContentBlock` | контент по psychotype + mode + block_key + version |
 | `Question` | 75 пар утверждений |
 | `PsychotypeDefinition` | справочник психотипов |
