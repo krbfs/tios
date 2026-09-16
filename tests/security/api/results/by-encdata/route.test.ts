@@ -108,6 +108,9 @@ describe("GET /api/results/by-encdata", () => {
       {},
       null,
       null,
+      expect.objectContaining({
+        profileComplexity: expect.anything(),
+      }),
     );
   });
 

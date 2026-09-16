@@ -21,6 +21,12 @@ import { db } from "@/lib/db";
 import { buildCompensatoryCheck } from "@/lib/compensatory-checks";
 import { encodeAnswers, buildResultUrl } from "@/lib/encdata";
 import { resolveContentModeForSession, MODE_LABELS, type ResultMode } from "@/lib/modes";
+import {
+  applyCascadeContentPresentationRules,
+  cascadeProfileMessageBlockKey,
+  resolveContentPsychotypeCode,
+  type CascadeContentContext,
+} from "@/lib/cascade-content";
 import { primaryTypeLabel } from "@/lib/psychotypes";
 
 export { ALLOWED_MODES, type ResultMode } from "@/lib/modes";
@@ -109,9 +115,12 @@ function mapContentBlockDto(
 
 export type LoadContentOptions = {
   includeHidden?: boolean;
-  /** When set to left/right, include matching triad blocks plus base (NULL). Otherwise only base. */
+  /** When set to left/right/detected, include matching triad blocks plus base (NULL). */
   triadVariant?: string | null;
   empathSubtypeBlockKey?: string | null;
+  profileComplexity?: string | null;
+  primaryTypeCode?: string | null;
+  secondaryTypeCode?: string | null;
 };
 
 function filterEmpathSubtypeBlocks<
@@ -141,7 +150,19 @@ export async function loadContentBlocks(
       ? options.triadVariant
       : null;
 
-  const where =
+  const cascadeContext: CascadeContentContext = {
+    triadVariant,
+    profileComplexity: options?.profileComplexity,
+    primaryTypeCode: options?.primaryTypeCode,
+    secondaryTypeCode: options?.secondaryTypeCode,
+  };
+
+  const contentPsychotypeCode = resolveContentPsychotypeCode(
+    psychotypeCode,
+    cascadeContext,
+  );
+
+  const baseWhere =
     psychotypeCode === "complex"
       ? {
           psychotypeCode,
@@ -150,7 +171,7 @@ export async function loadContentBlocks(
           blockKey: { in: [...COMPLEX_BLOCK_KEYS] },
         }
       : {
-          psychotypeCode,
+          psychotypeCode: contentPsychotypeCode,
           mode,
           isActive: true,
           OR: triadVariant
@@ -159,17 +180,40 @@ export async function loadContentBlocks(
         };
 
   const blocks = await db.contentBlock.findMany({
-    where,
+    where: baseWhere,
     orderBy: [{ sortOrder: "asc" }, { blockKey: "asc" }],
   });
 
+  const messageBlockKey = cascadeProfileMessageBlockKey(
+    options?.profileComplexity,
+  );
+  const wildcardBlocks =
+    psychotypeCode !== "complex" && messageBlockKey
+      ? await db.contentBlock.findMany({
+          where: {
+            psychotypeCode: "*",
+            mode,
+            isActive: true,
+            blockKey: messageBlockKey,
+            triadVariant: null,
+          },
+          orderBy: [{ sortOrder: "asc" }, { blockKey: "asc" }],
+        })
+      : [];
+
+  const empathForContent =
+    contentPsychotypeCode === "empath" ? options?.empathSubtypeBlockKey : null;
+
   const mapped = applyV1ContentDisplayRules(
     psychotypeCode,
-    filterEmpathSubtypeBlocks(
-      latestBlocksByKey(blocks).map((block) =>
-        mapContentBlockDto(block, visibilityOverrides),
+    applyCascadeContentPresentationRules(
+      filterEmpathSubtypeBlocks(
+        latestBlocksByKey([...blocks, ...wildcardBlocks]).map((block) =>
+          mapContentBlockDto(block, visibilityOverrides),
+        ),
+        empathForContent,
       ),
-      psychotypeCode === "empath" ? options?.empathSubtypeBlockKey : null,
+      cascadeContext,
     ),
   );
 
@@ -186,10 +230,15 @@ export async function loadVisibleContentBlocks(
   visibilityOverrides: Record<string, boolean>,
   triadVariant?: string | null,
   empathSubtypeBlockKey?: string | null,
+  cascade?: Omit<
+    LoadContentOptions,
+    "includeHidden" | "triadVariant" | "empathSubtypeBlockKey"
+  >,
 ): Promise<ContentBlockDto[]> {
   return loadContentBlocks(psychotypeCode, mode, visibilityOverrides, {
     triadVariant,
     empathSubtypeBlockKey,
+    ...cascade,
   });
 }
 
@@ -293,6 +342,11 @@ export async function serializeResult(
     visibilityOverrides,
     result.triadVariant,
     empathSubtypeBlockKey(empathSubtype),
+    {
+      profileComplexity: result.profileComplexity,
+      primaryTypeCode: result.primaryType ?? result.psychotypeCode,
+      secondaryTypeCode: result.secondaryType ?? result.psychotypeSecondary,
+    },
   );
 
   const encdata = getEncdataFromAnswers(result.answers);

@@ -35,6 +35,7 @@
     "db:import-questions": "tsx scripts/import_questions.ts",
     "db:import-content": "tsx scripts/import_content.ts",
     "db:import-v1-content": "tsx scripts/import_content.ts -- data/v1_leader_resource_blocks.json",
+    "db:import-v1-cascade-content": "tsx scripts/import_content.ts -- data/v1_cascade_profile_blocks.json",
     "db:import-insighter-you": "tsx scripts/import_insighter_you.ts",
     "db:import-insighter": "tsx scripts/import_insighter.ts",
     "db:import-stressless": "tsx scripts/import_stressless.ts",

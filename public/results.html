@@ -245,6 +245,12 @@
       const TRIAD_BLOCK_KEYS = new Set([
         "triad_addition_left",
         "triad_addition_right",
+        "triad_influencer_anx",
+        "triad_conservative_rig",
+        "triad_individualist_ext",
+        "triad_empath_agg",
+        "triad_innovator_rig",
+        "triad_analyst_spo",
       ]);
       const COMPLEX_BLOCK_KEY = "complex_profile_message";
       const KEY_FORMULA_BLOCK_KEY = "key_formula";
@@ -568,7 +574,8 @@
         } else if (
           TRIAD_BLOCK_KEYS.has(presentation.block_key) ||
           presentation.triad_variant === "left" ||
-          presentation.triad_variant === "right"
+          presentation.triad_variant === "right" ||
+          presentation.triad_variant === "detected"
         ) {
           wrapper.classList.add("content-block--triad");
           if (presentation.triad_variant) {
@@ -650,7 +657,8 @@
         const isTriad = (block) =>
           TRIAD_BLOCK_KEYS.has(block.block_key) ||
           block.triad_variant === "left" ||
-          block.triad_variant === "right";
+          block.triad_variant === "right" ||
+          block.triad_variant === "detected";
         const base = list.filter((block) => !isTriad(block));
         const triad = list.filter(isTriad);
         return [...base, ...triad];

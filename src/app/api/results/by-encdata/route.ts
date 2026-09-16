@@ -66,6 +66,12 @@ export async function GET(request: Request) {
       {},
       computed.triad_variant,
       empathSubtypeBlockKey(empathSubtype),
+      {
+        profileComplexity: computed.profile_complexity,
+        primaryTypeCode: computed.primary_type ?? computed.psychotype_code,
+        secondaryTypeCode:
+          computed.secondary_type ?? computed.psychotype_secondary,
+      },
     );
 
     return json({

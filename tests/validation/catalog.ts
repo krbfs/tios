@@ -56,6 +56,10 @@ function main() {
       "v1_leader_resource_blocks.json",
       loadCatalog("data/v1_leader_resource_blocks.json"),
     ],
+    [
+      "v1_cascade_profile_blocks.json",
+      loadCatalog("data/v1_cascade_profile_blocks.json"),
+    ],
   ] as const;
 
   const errors = catalogs.flatMap(([label, catalog]) =>
