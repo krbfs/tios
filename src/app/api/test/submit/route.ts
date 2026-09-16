@@ -86,6 +86,13 @@ export async function POST(request: Request) {
       scaledSystemic: computed.scaled_systemic,
       psychotypeCode: computed.psychotype_code,
       psychotypeSecondary: computed.psychotype_secondary,
+      primaryType: computed.primary_type,
+      secondaryType: computed.secondary_type,
+      profileComplexity: computed.profile_complexity,
+      cascadeLevelUsed: computed.cascade_level_used,
+      clusterTendencies: computed.cluster_tendencies?.length
+        ? computed.cluster_tendencies
+        : undefined,
       triadVariant: computed.triad_variant,
       subIndexS: computed.sub_index_s,
       subIndexN: computed.sub_index_n,

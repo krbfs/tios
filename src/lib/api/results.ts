@@ -135,7 +135,9 @@ export async function loadContentBlocks(
   options?: LoadContentOptions,
 ): Promise<ContentBlockDto[]> {
   const triadVariant =
-    options?.triadVariant === "left" || options?.triadVariant === "right"
+    options?.triadVariant === "left" ||
+    options?.triadVariant === "right" ||
+    options?.triadVariant === "detected"
       ? options.triadVariant
       : null;
 
@@ -352,6 +354,11 @@ export async function serializeResult(
     expression_level: expressionLevel,
     psychotype_code: result.psychotypeCode,
     psychotype_secondary: result.psychotypeSecondary,
+    primary_type_code: result.primaryType ?? result.psychotypeCode,
+    secondary_type_code: result.secondaryType ?? result.psychotypeSecondary,
+    profile_complexity: result.profileComplexity,
+    cascade_level_used: result.cascadeLevelUsed,
+    cluster_tendencies: result.clusterTendencies,
     triad_variant: result.triadVariant,
     triad_status: psychotypeFromScores.triad_status,
     sub_index_s: result.subIndexS,

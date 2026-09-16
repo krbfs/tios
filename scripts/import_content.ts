@@ -68,7 +68,7 @@ function loadBlocks(filePath: string): ImportBlock[] {
 }
 
 function normalizeTriadVariant(value: string | null | undefined): string | null {
-  if (value === "left" || value === "right") {
+  if (value === "left" || value === "right" || value === "detected") {
     return value;
   }
   return null;

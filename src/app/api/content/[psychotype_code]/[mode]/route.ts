@@ -7,7 +7,7 @@ type RouteContext = {
 };
 
 function parseTriadVariant(raw: string | null): string | null {
-  if (raw === "left" || raw === "right") {
+  if (raw === "left" || raw === "right" || raw === "detected") {
     return raw;
   }
   return null;
