@@ -4,6 +4,11 @@
  * Маппинг вопрос→шкала (BLOCK_*) сверен 26.08.2026 с ключами в source_current — без изменений vs MVP.
  */
 
+import {
+  cascadeResultIsComplex,
+  resolveProfileCascade,
+} from "@/lib/profile-cascade";
+
 export const SCALE_KEYS = [
   "extraversion",
   "introversion",
@@ -64,7 +69,15 @@ export type PsychotypeCode =
   /** V1: no adjacent pair in top-3 (NAVIGATOR 10.0). */
   | "complex";
 
-export type TriadVariant = "left" | "right";
+export type TriadVariant = "left" | "right" | "detected";
+
+export type ProfileComplexity =
+  | "pure"
+  | "triad"
+  | "dual"
+  | "multidimensional"
+  | "modifier"
+  | "balanced";
 
 export type TriadStatus = "stable" | "conflict" | "impossible" | "none";
 
@@ -82,6 +95,12 @@ export type PsychotypeResult = {
   /** QA-решения §4: normalized top-2 scores → recommendation depth; null at complex. */
   expression_level: ExpressionLevel | null;
   warnings: string[];
+  /** sep_16 cascade (V1): основной тип профиля. */
+  primary_type: PsychotypeCode | null;
+  secondary_type: PsychotypeCode | null;
+  profile_complexity: ProfileComplexity | null;
+  cascade_level_used: number | null;
+  cluster_tendencies: ScaleKey[];
 };
 
 /** Max raw score per tendency (NAVIGATOR / questionnaire). */
@@ -629,7 +648,7 @@ export function calculate_dominant_intensity(scaled_scores: ScaledScores): numbe
   );
 }
 
-function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
+export function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
   const indexA = TENDENCY_CIRCLE.indexOf(a);
   const indexB = TENDENCY_CIRCLE.indexOf(b);
   if (indexA < 0 || indexB < 0) {
@@ -639,7 +658,7 @@ function areScalesAdjacent(a: ScaleKey, b: ScaleKey): boolean {
   return diff === 1 || diff === TENDENCY_CIRCLE.length - 1;
 }
 
-function psychotypeForPair(a: ScaleKey, b: ScaleKey): PsychotypeCode | null {
+export function psychotypeForPair(a: ScaleKey, b: ScaleKey): PsychotypeCode | null {
   const match = ADJACENT_PSYCHOTYPES.find(
     (pair) =>
       (pair.a === a && pair.b === b) || (pair.a === b && pair.b === a),
@@ -868,6 +887,14 @@ function buildThresholdWarnings(
   return [...new Set(warnings)];
 }
 
+const EMPTY_CASCADE_FIELDS = {
+  primary_type: null,
+  secondary_type: null,
+  profile_complexity: null,
+  cascade_level_used: null,
+  cluster_tendencies: [] as ScaleKey[],
+};
+
 export function determine_psychotype(
   scaled_scores: ScaledScores,
   systemic?: Pick<SystemicScores, "tension_zone" | "correspondence_type">,
@@ -897,16 +924,48 @@ export function determine_psychotype(
           ? null
           : determine_expression_level(scaled_scores),
       warnings,
+      ...EMPTY_CASCADE_FIELDS,
     };
   }
 
   const triad_status = classifyTriad([top1, top2, top3], scaled_scores);
 
+  if (v1) {
+    const cascade = resolveProfileCascade(ranked, scaled_scores, {
+      allowTriadVariant: true,
+      triadStatusImpossible: triad_status === "impossible",
+    });
+    const psychotype_code = cascadeResultIsComplex(cascade)
+      ? COMPLEX_PSYCHOTYPE_LABEL
+      : cascade.psychotype_code;
+    const expression_level =
+      psychotype_code === COMPLEX_PSYCHOTYPE_LABEL
+        ? null
+        : determine_expression_level(scaled_scores);
+
+    return {
+      psychotype_code,
+      secondary: cascade.secondary,
+      is_dyad: false,
+      triad_variant: cascade.triad_variant,
+      triad_status,
+      avg_intensity,
+      expression_level,
+      warnings,
+      primary_type: cascadeResultIsComplex(cascade) ? null : cascade.primary_type,
+      secondary_type: cascadeResultIsComplex(cascade) ? null : cascade.secondary_type,
+      profile_complexity: cascadeResultIsComplex(cascade)
+        ? null
+        : cascade.profile_complexity,
+      cascade_level_used: cascadeResultIsComplex(cascade) ? null : cascade.cascade_level_used,
+      cluster_tendencies: cascade.cluster_tendencies,
+    };
+  }
+
   let psychotype_code: PsychotypeCode = unresolvedPsychotypeCode();
   let secondary: PsychotypeCode | null = null;
   let pair: [ScaleKey, ScaleKey] | null = null;
 
-  // QA-решения §1: базовый тип — только смежная top1+top2; иначе complex/mixed.
   if (areScalesAdjacent(top1, top2)) {
     const code = psychotypeForPair(top1, top2);
     if (code) {
@@ -919,23 +978,6 @@ export function determine_psychotype(
   }
 
   let triad_variant: TriadVariant | null = null;
-  if (
-    v1 &&
-    pair &&
-    psychotype_code !== MIXED_PSYCHOTYPE_LABEL &&
-    psychotype_code !== COMPLEX_PSYCHOTYPE_LABEL &&
-    triad_status !== "impossible"
-  ) {
-    const third = [top1, top2, top3].find(
-      (key) => key !== pair[0] && key !== pair[1],
-    );
-    if (
-      third &&
-      normalizeTendencyScore(scaled_scores[third]) >= TRIAD_THIRD_NORMALIZED_MIN
-    ) {
-      triad_variant = determine_triad_variant(pair[0], pair[1], third);
-    }
-  }
 
   const expression_level =
     psychotype_code === COMPLEX_PSYCHOTYPE_LABEL
@@ -951,6 +993,7 @@ export function determine_psychotype(
     avg_intensity,
     expression_level,
     warnings,
+    ...EMPTY_CASCADE_FIELDS,
   };
 }
 

@@ -298,7 +298,7 @@ describe("determine_psychotype", () => {
     expect(determine_psychotype(scores).psychotype_code).toBe("influencer");
   });
 
-  it("returns complex when top1+top2 are not adjacent (QA-решения §1)", () => {
+  it("V1 cascade level 3: non-adjacent top1+top2 → dual profile in top-4", () => {
     process.env.TIOS_V1_PROFILES = "true";
     const result = determine_psychotype({
       extraversion: 18,
@@ -310,9 +310,11 @@ describe("determine_psychotype", () => {
       lability: 20,
       rigidity: 0,
     });
-    // top1=SPO(30), top2=LAB(20) — not adjacent
-    expect(result.psychotype_code).toBe("complex");
-    expect(result.secondary).toBe("innovator");
+    // top1=SPO(30), top2=LAB(20) — not adjacent; SPO+EXT and LAB+EXT in top-4
+    expect(result.psychotype_code).toBe("innovator");
+    expect(result.profile_complexity).toBe("multidimensional");
+    expect(result.cascade_level_used).toBe(3);
+    expect(result.secondary).toBe("influencer");
     expect(result.triad_variant).toBeNull();
   });
 
@@ -592,21 +594,21 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
     expect(result.triad_variant).toBeNull();
   });
 
-  it("V1: unresolved → complex without secondary when no adjacent fallback", () => {
+  it("V1 cascade level 1: adjacent top1+top2 → pure profile", () => {
     process.env.TIOS_V1_PROFILES = "true";
     const result = determine_psychotype({
-      extraversion: 20,
-      introversion: 18,
-      anxiety: 16,
+      extraversion: 1,
+      introversion: 11,
+      anxiety: 1,
       aggression: 0,
-      sensitivity: 0,
+      sensitivity: 10,
       spontaneity: 0,
       lability: 0,
       rigidity: 0,
     });
-    // EXT+INT opposite; with ANX — no adjacent pair among top-3
-    expect(result.psychotype_code).toBe("complex");
-    expect(result.secondary).toBeNull();
+    expect(result.psychotype_code).toBe("empath");
+    expect(result.profile_complexity).toBe("pure");
+    expect(result.cascade_level_used).toBe(1);
     expect(result.triad_variant).toBeNull();
   });
 
@@ -630,10 +632,10 @@ describe("V1 profiles (TIOS_V1_PROFILES)", () => {
   it("V1: complex has null expression_level", () => {
     process.env.TIOS_V1_PROFILES = "true";
     const psychotype = determine_psychotype({
-      extraversion: 20,
-      introversion: 18,
-      anxiety: 16,
-      aggression: 0,
+      extraversion: 29,
+      introversion: 27,
+      anxiety: 28,
+      aggression: 30,
       sensitivity: 0,
       spontaneity: 0,
       lability: 0,
