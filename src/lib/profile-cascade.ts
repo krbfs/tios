@@ -1,6 +1,6 @@
 /**
  * Каскадное определение профиля (source_sep_16th, математика v4.0).
- * 5 утверждённых триад (без «Остап Бендер» / individualist_ext — TBD).
+ * 6 утверждённых спецтриад (source_sep_16th, Ответы на вопросы.docx).
  */
 
 import {
@@ -38,6 +38,7 @@ const APPROVED_SPECIAL_TRIADS: ReadonlyArray<{
 }> = [
   { keys: ["extraversion", "lability", "anxiety"], code: "influencer" },
   { keys: ["sensitivity", "introversion", "aggression"], code: "empath" },
+  { keys: ["aggression", "spontaneity", "extraversion"], code: "individualist" },
   { keys: ["spontaneity", "extraversion", "rigidity"], code: "innovator" },
   { keys: ["introversion", "rigidity", "spontaneity"], code: "analyst" },
   { keys: ["anxiety", "sensitivity", "rigidity"], code: "conservative" },

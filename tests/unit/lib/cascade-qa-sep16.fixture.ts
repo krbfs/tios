@@ -177,20 +177,22 @@ export const CASCADE_QA_SEP16_CASES: CascadeQaCase[] = [
   },
   {
     id: "qa-09",
-    title: "EXT(28), AGG(25), SPO(24), LAB(22) — многомерный",
+    title: "EXT(28), AGG(25), LAB(24), SPO(22) — многомерный",
     scores: scores({
       extraversion: 28,
       aggression: 25,
-      spontaneity: 24,
-      lability: 22,
+      lability: 24,
+      spontaneity: 22,
     }),
     expect: {
-      psychotype_code: "innovator",
+      psychotype_code: "influencer",
       profile_complexity: "multidimensional",
       triad_variant: null,
       cascade_level_used: 3,
-      secondary_type: "influencer",
+      secondary_type: "innovator",
     },
+    qa_doc_delta:
+      "В docx EXT+AGG+SPO→innovator; с 6-й триадой top-3 Бендер → вектор с LAB в top-3, primary influencer.",
   },
   {
     id: "qa-10",

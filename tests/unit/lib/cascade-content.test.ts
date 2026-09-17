@@ -34,6 +34,23 @@ describe("cascade content presentation", () => {
     ).toContain("Аналитик");
   });
 
+  it("substitutes placeholders in cascade message title", () => {
+    const blocks = [
+      {
+        block_key: "dual_profile_message",
+        title: "Профиль: [Основной тип] и [Сопутствующий тип]",
+        content_text: "body",
+      },
+    ];
+    const out = applyCascadeContentPresentationRules(blocks, {
+      profileComplexity: "dual",
+      primaryTypeCode: "innovator",
+      secondaryTypeCode: "analyst",
+    });
+    expect(out[0]?.title).toContain("Инноватор");
+    expect(out[0]?.title).toContain("Аналитик");
+  });
+
   it("keeps only matching cascade message block", () => {
     const blocks = [
       { block_key: "dual_profile_message", content_text: "dual" },

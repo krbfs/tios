@@ -964,20 +964,18 @@ export function determine_psychotype(
 
   let psychotype_code: PsychotypeCode = unresolvedPsychotypeCode();
   let secondary: PsychotypeCode | null = null;
-  let pair: [ScaleKey, ScaleKey] | null = null;
 
   if (areScalesAdjacent(top1, top2)) {
     const code = psychotypeForPair(top1, top2);
     if (code) {
       psychotype_code = code;
-      pair = [top1, top2];
     }
   } else {
     psychotype_code = unresolvedPsychotypeCode();
     secondary = computeSecondaryPsychotype(ranked);
   }
 
-  let triad_variant: TriadVariant | null = null;
+  const triad_variant: TriadVariant | null = null;
 
   const expression_level =
     psychotype_code === COMPLEX_PSYCHOTYPE_LABEL

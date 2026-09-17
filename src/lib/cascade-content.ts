@@ -106,12 +106,19 @@ export function applyCascadeContentPresentationRules<
     if (!CASCADE_PROFILE_MESSAGE_KEYS.has(block.block_key)) {
       return block;
     }
-    if (!block.content_text) {
-      return block;
+    const withTitle =
+      "title" in block && typeof block.title === "string"
+        ? {
+            ...block,
+            title: substituteCascadePlaceholders(block.title, context),
+          }
+        : block;
+    if (!withTitle.content_text) {
+      return withTitle;
     }
     return {
-      ...block,
-      content_text: substituteCascadePlaceholders(block.content_text, context),
+      ...withTitle,
+      content_text: substituteCascadePlaceholders(withTitle.content_text, context),
     };
   });
 }

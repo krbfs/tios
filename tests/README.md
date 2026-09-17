@@ -18,14 +18,18 @@
 
 ```bash
 npm run test:ci             # короткий CI: vitest + SEO/catalog/demo (без браузера и локального сервера)
-npm run test:full           # test:ci + вопросники/контент-режимы + Playwright (e2e квиз + mobile)
+npm run test:full           # test:ci + extended + обе Playwright-сюиты (см. ниже)
 
 npm test                    # все vitest (unit + security) — входит в test:ci
 npm run test:security       # только безопасность (не полный CI)
 npm run test:unit           # unit без security (не полный CI)
 npm run test:validate:extended   # verify:questions + db:verify-content (часть test:full)
-npm run test:browser        # все 10 e2e-квизов + mobile all pages (часть test:full)
-npm run test:e2e-quiz       # smoke: 4 сценария; полный каталог: test:e2e-quiz:all
+npm run test:suite:e2e-quiz # Playwright: все 10 проходов квиза (локальный dev)
+npm run test:suite:mobile   # Playwright: mobile layout (skip, если git diff без UI-страниц)
+npm run test:browser        # suite:e2e-quiz && suite:mobile
+npm run test:e2e-quiz       # smoke: 4 сценария без E2E_QUIZ_ALL
+npm run test:e2e-quiz:all   # то же, что suite:e2e-quiz, но без обязательного E2E_DEV
+npm run test:mobile:all     # все страницы × viewport (вне diff-skip)
 
 npm run validate:seo-a2a
 npm run content:validate-catalog

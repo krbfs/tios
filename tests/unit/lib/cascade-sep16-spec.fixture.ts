@@ -32,7 +32,7 @@ function scores(partial: Partial<ScaledScores>): ScaledScores {
   return { ...zeroScores(), ...partial };
 }
 
-/** Дополнение к QA docx: уровни 1–2 и все 5 спецтриад из ТОЧНЫЙ_ТЕКСТ (без 6-й Бендер). */
+/** Дополнение к QA docx: уровни 1–2 и все 6 спецтриад (Ответы на вопросы: AGG+SPO+EXT → individualist). */
 export const CASCADE_SEP16_SPEC_CASES: CascadeSpecCase[] = [
   {
     id: "spec-l1-pure-influencer",
@@ -57,6 +57,23 @@ export const CASCADE_SEP16_SPEC_CASES: CascadeSpecCase[] = [
       profile_complexity: "pure",
       triad_variant: "right",
       cascade_level_used: 1,
+    },
+  },
+  {
+    id: "spec-l2-detected-individualist-bender",
+    source: "ТОЧНЫЙ_ТЕКСТ",
+    title: "Спецтриада AGG+SPO+EXT → individualist (Остап Бендер)",
+    scores: scores({
+      extraversion: 22,
+      aggression: 20,
+      spontaneity: 18,
+      rigidity: 1,
+    }),
+    expect: {
+      psychotype_code: "individualist",
+      profile_complexity: "triad",
+      triad_variant: "detected",
+      cascade_level_used: 2,
     },
   },
   {
@@ -141,19 +158,19 @@ export const CASCADE_SEP16_SPEC_CASES: CascadeSpecCase[] = [
   {
     id: "spec-l3-multidimensional",
     source: "ТЕСТ_КЕЙСЫ",
-    title: "Уровень 3: ≥3 диад в top-4 (кейс 9)",
+    title: "Уровень 3: ≥3 диад в top-4 (кейс 9, без top-3 Бендер)",
     scores: scores({
       extraversion: 28,
       aggression: 25,
-      spontaneity: 24,
-      lability: 22,
+      lability: 24,
+      spontaneity: 22,
     }),
     expect: {
-      psychotype_code: "innovator",
+      psychotype_code: "influencer",
       profile_complexity: "multidimensional",
       triad_variant: null,
       cascade_level_used: 3,
-      secondary_type: "influencer",
+      secondary_type: "innovator",
     },
   },
   {

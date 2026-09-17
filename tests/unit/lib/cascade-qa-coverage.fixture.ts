@@ -72,7 +72,7 @@ function l2DetectedCase(
 
 /**
  * Доп. векторы к qa-01…14 (docx v1.0): явное покрытие 8 психотипов и триад
- * (L1 pure, L1 left/right, L2 detected — 5 спецтриад из ТОЧНЫЙ_ТЕКСТ, без Бендер).
+ * (L1 pure, L1 left/right, L2 detected — 6 спецтриад).
  */
 export const CASCADE_QA_COVERAGE_CASES: CascadeQaCase[] = [
   // —— L1 pure: по одной соседней диаде на тип (сырые баллы 0–30, как в QA docx) ——
@@ -232,6 +232,12 @@ export const CASCADE_QA_COVERAGE_CASES: CascadeQaCase[] = [
   ),
 
   // —— L2 detected: 5 утверждённых спецтриад (qa-02/08 уже покрывают influencer/empath) ——
+  l2DetectedCase(
+    "cov-l2-detected-individualist-bender",
+    "Спецтриада AGG+SPO+EXT → individualist (Остап Бендер)",
+    "individualist",
+    { extraversion: 22, aggression: 20, spontaneity: 18, rigidity: 1 },
+  ),
   l2DetectedCase(
     "cov-l2-detected-innovator",
     "Спецтриада SPO+EXT+RIG → innovator",

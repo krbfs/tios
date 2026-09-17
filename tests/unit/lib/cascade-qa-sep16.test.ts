@@ -29,6 +29,6 @@ function runCascadeQaCases(label: string, cases: CascadeQaCase[]) {
 
 runCascadeQaCases("cascade QA vectors (source_sep_16th ТЕСТ_КЕЙСЫ v1.0)", CASCADE_QA_SEP16_CASES);
 runCascadeQaCases(
-  "cascade QA coverage (8 типов + L1 left/right + 5 спецтриад)",
+  "cascade QA coverage (8 типов + L1 left/right + 6 спецтриад)",
   CASCADE_QA_COVERAGE_CASES,
 );
