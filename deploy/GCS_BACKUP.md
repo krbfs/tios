@@ -1,6 +1,6 @@
 # Pre-deploy GCS backup (tc_26)
 
-Before each `gcp:deploy`, a **gzip tar** of the deploy tree (`tc_26/`, same as Docker build context) is uploaded to GCS. Git remains the primary source of truth; this is an off-site **“as shipped”** snapshot.
+Before each `npm run gcp:deploy` / `deploy.py --deploy`, a **gzip tar** of **`git HEAD`** (`git archive`, prefix `tc_26/`) is uploaded to GCS. Git remains the primary source of truth; this is an off-site snapshot of committed deploy source (no `.env`, no `node_modules`).
 
 | Parameter | Value |
 |-----------|--------|

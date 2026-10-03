@@ -95,6 +95,24 @@ def build_tar_archive(source_dir: Path, dest_tar: Path) -> str:
     """Return top-level folder name inside the archive."""
     source_dir = source_dir.resolve()
     top = source_dir.name
+    try:
+        print(f"==> git archive HEAD → {dest_tar.name}", flush=True)
+        subprocess.run(
+            [
+                "git",
+                "archive",
+                "--format=tar.gz",
+                f"--prefix={top}/",
+                "-o",
+                str(dest_tar),
+                "HEAD",
+            ],
+            cwd=source_dir,
+            check=True,
+        )
+        return top
+    except (subprocess.CalledProcessError, OSError) as err:
+        print(f"==> git archive failed ({err}); falling back to filtered walk", flush=True)
     with tarfile.open(dest_tar, "w:gz") as tar:
         for path in sorted(source_dir.rglob("*")):
             if not path.is_file():
