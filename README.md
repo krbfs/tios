@@ -23,7 +23,7 @@ npm run dev
 
 ```bash
 python3 scripts/deploy.py --setup    # один раз
-python3 scripts/deploy.py --deploy
+python3 scripts/deploy.py --deploy   # перед Cloud Build — снимок в GCS (см. deploy/GCS_BACKUP.md)
 ```
 
 Или:

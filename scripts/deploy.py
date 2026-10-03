@@ -33,6 +33,8 @@ DEFAULTS = {
     "SERVICE": "tc26",
     "REPO": "tc26",
     "IMAGE": "tc26",
+    "BACKUP_GCS_BUCKET": "tios-test-backups",
+    "BACKUP_GCS_PREFIX": "site",
     "NEXT_PUBLIC_SITE_URL": "https://tios-test.com",
     "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-TYYGE7DS6E",
     "NEXT_PUBLIC_GA_ENABLED": "true",
@@ -410,12 +412,34 @@ def run_tests(cfg: dict[str, str]) -> None:
     print("==> all tests passed", flush=True)
 
 
-def deploy(cfg: dict[str, str]) -> None:
+def run_site_backup(cfg: dict[str, str]) -> None:
+    bucket = (cfg.get("BACKUP_GCS_BUCKET") or "tios-test-backups").strip()
+    prefix = (cfg.get("BACKUP_GCS_PREFIX") or "site").strip()
+    run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "backup_site_to_gcs.py"),
+            "--source",
+            str(ROOT),
+            "--bucket",
+            bucket,
+            "--project",
+            cfg["PROJECT_ID"],
+            "--prefix",
+            prefix,
+        ]
+    )
+
+
+def deploy(cfg: dict[str, str], *, skip_backup: bool = False) -> None:
     run_unit_tests()
 
     validate_runtime_env(cfg)
     ensure_gcloud_login()
     run(["gcloud", "config", "set", "project", cfg["PROJECT_ID"], "--quiet"])
+
+    if not skip_backup:
+        run_site_backup(cfg)
 
     tag = image_tag()
     canonical = site_url(cfg)
@@ -478,6 +502,11 @@ def main() -> int:
         action="store_true",
         help="Push DATABASE_URL/JWT from .env to Cloud Run (no rebuild)",
     )
+    parser.add_argument(
+        "--skip-backup",
+        action="store_true",
+        help="Skip pre-deploy GCS archive (see deploy/GCS_BACKUP.md)",
+    )
     args = parser.parse_args()
     if not args.setup and not args.deploy and not args.test and not args.sync_env:
         parser.error("укажи --setup, --deploy, --sync-env и/или --test")
@@ -490,7 +519,7 @@ def main() -> int:
     if args.sync_env:
         sync_env_only(cfg)
     if args.deploy:
-        deploy(cfg)
+        deploy(cfg, skip_backup=args.skip_backup)
     return 0
 
 
