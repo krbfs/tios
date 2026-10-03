@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Archive deploy source tree to GCS before Cloud Run publish.
 
-Off-site snapshot of the directory that goes into Docker build (tc_26 root),
-not a substitute for git. Secrets and .env are excluded from the tar.
+Full **local** snapshot of the deploy directory: tracked + untracked + gitignored
+(methodology folders, WIP), as on disk before deploy. Not a substitute for git.
+
+Never included: .env*, secrets/, credentials keys, node_modules, .next, .git.
 """
 
 from __future__ import annotations
@@ -16,12 +18,13 @@ import tarfile
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 DEFAULT_BUCKET = "tios-test-backups"
 DEFAULT_GCP_PROJECT = "tc-26-504910"
 DEFAULT_PREFIX = "site"
 
+# Heavy / redundant / unsafe — not «локальное, чего нет на GitHub».
 TAR_EXCLUDE_DIR_NAMES = frozenset(
     {
         ".git",
@@ -34,6 +37,7 @@ TAR_EXCLUDE_DIR_NAMES = frozenset(
         ".backup-clean-static",
         "secrets",
         ".vercel",
+        ".pytest_cache",
     }
 )
 
@@ -45,9 +49,10 @@ TAR_EXCLUDE_FILE_NAMES = frozenset(
     }
 )
 
+CREDENTIAL_FILE_SUFFIXES = (".pem", ".p12", ".key")
+
 
 def repo_root_from_source(source_dir: Path) -> Path:
-    """Git root for manifest (tc_26 is the deploy repo)."""
     return source_dir.resolve()
 
 
@@ -69,21 +74,30 @@ def git_manifest(repo_root: Path) -> dict[str, Any]:
     short = run_git("rev-parse", "--short", "HEAD")
     branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
     describe = run_git("describe", "--tags", "--always", "--dirty")
+    porcelain = run_git("status", "--porcelain")
     return {
         "commit": commit or None,
         "commit_short": short or None,
         "branch": branch or None,
         "describe": describe or None,
+        "dirty": bool(porcelain),
+        "status_porcelain_lines": len(porcelain.splitlines()) if porcelain else 0,
     }
 
 
 def should_exclude(rel: Path) -> bool:
+    """rel is path inside archive: tc_26/..."""
     name = rel.name
     if name in TAR_EXCLUDE_FILE_NAMES:
         return True
     if name.startswith(".env") and name != ".env.example":
         return True
-    if rel.suffix == ".pem":
+    if name.endswith(CREDENTIAL_FILE_SUFFIXES):
+        return True
+    lower = name.lower()
+    if "service-account" in lower and lower.endswith(".json"):
+        return True
+    if "credentials" in lower and lower.endswith(".json"):
         return True
     for part in rel.parts:
         if part in TAR_EXCLUDE_DIR_NAMES:
@@ -91,37 +105,41 @@ def should_exclude(rel: Path) -> bool:
     return False
 
 
-def build_tar_archive(source_dir: Path, dest_tar: Path) -> str:
-    """Return top-level folder name inside the archive."""
+def iter_backup_files(source_dir: Path, top: str) -> Iterator[tuple[Path, str]]:
+    """Yield (absolute_path, arcname) for files to store."""
+    source_dir = source_dir.resolve()
+    for dirpath, dirnames, filenames in os.walk(source_dir, topdown=True):
+        dirnames[:] = sorted(
+            d for d in dirnames if d not in TAR_EXCLUDE_DIR_NAMES and d != ".DS_Store"
+        )
+        for filename in filenames:
+            if filename == ".DS_Store":
+                continue
+            abs_path = Path(dirpath) / filename
+            try:
+                rel = abs_path.relative_to(source_dir)
+            except ValueError:
+                continue
+            arcname = str(Path(top) / rel)
+            if should_exclude(Path(arcname)):
+                continue
+            yield abs_path, arcname
+
+
+def build_tar_archive(source_dir: Path, dest_tar: Path) -> tuple[str, int]:
+    """Return (top-level folder name, file count)."""
     source_dir = source_dir.resolve()
     top = source_dir.name
-    try:
-        print(f"==> git archive HEAD → {dest_tar.name}", flush=True)
-        subprocess.run(
-            [
-                "git",
-                "archive",
-                "--format=tar.gz",
-                f"--prefix={top}/",
-                "-o",
-                str(dest_tar),
-                "HEAD",
-            ],
-            cwd=source_dir,
-            check=True,
-        )
-        return top
-    except (subprocess.CalledProcessError, OSError) as err:
-        print(f"==> git archive failed ({err}); falling back to filtered walk", flush=True)
+    count = 0
+    print(f"==> full worktree → {dest_tar.name} (incl. untracked / gitignored)", flush=True)
     with tarfile.open(dest_tar, "w:gz") as tar:
-        for path in sorted(source_dir.rglob("*")):
-            if not path.is_file():
-                continue
-            inner = Path(top) / path.relative_to(source_dir)
-            if should_exclude(inner):
-                continue
-            tar.add(path, arcname=str(inner))
-    return top
+        for abs_path, arcname in iter_backup_files(source_dir, top):
+            tar.add(abs_path, arcname=arcname)
+            count += 1
+            if count % 500 == 0:
+                print(f"    … {count} files", flush=True)
+    print(f"==> archived {count} files", flush=True)
+    return top, count
 
 
 def upload_site_archive(
@@ -145,12 +163,15 @@ def upload_site_archive(
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         tar_path = tmp_path / tar_name
-        top = build_tar_archive(source_dir, tar_path)
+        top, file_count = build_tar_archive(source_dir, tar_path)
         manifest = {
             "created_at_utc": stamp,
             "source_dir": str(source_dir),
             "archive_top_level": top,
             "tar_object": tar_name,
+            "backup_mode": "full_worktree",
+            "file_count": file_count,
+            "excludes": sorted(TAR_EXCLUDE_DIR_NAMES | TAR_EXCLUDE_FILE_NAMES),
             "git": git_info,
         }
         manifest_path = tmp_path / "manifest.json"

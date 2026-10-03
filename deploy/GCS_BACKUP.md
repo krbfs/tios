@@ -1,6 +1,8 @@
 # Pre-deploy GCS backup (tc_26)
 
-Before each `npm run gcp:deploy` / `deploy.py --deploy`, a **gzip tar** of **`git HEAD`** (`git archive`, prefix `tc_26/`) is uploaded to GCS. Git remains the primary source of truth; this is an off-site snapshot of committed deploy source (no `.env`, no `node_modules`).
+Before each `npm run gcp:deploy` / `deploy.py --deploy`, a **gzip tar** of the **full local `tc_26/` tree** is uploaded to GCS: tracked, untracked, and **gitignored** files (methodology folders, WIP) — everything on disk that matters for recovery, except secrets and heavy caches.
+
+GitHub is only the public slice; this archive is the **off-site full worktree** before deploy.
 
 | Parameter | Value |
 |-----------|--------|
@@ -16,7 +18,9 @@ gs://tios-test-backups/site/<YYYY-MM-DDTHHMMSSZ>-<git-short>/
   manifest.json
 ```
 
-**Excluded from tar:** `.git`, `node_modules`, `.next`, `secrets/`, `.env`, `.env.local`, `.runtime-env.yaml`, `*.pem`, and other paths in `scripts/backup_site_to_gcs.py`.
+**Included:** `source_sep_16th/`, `thrash/`, uncommitted edits, any local-only assets under `tc_26/`.
+
+**Never included:** `.git`, `node_modules`, `.next`, `secrets/`, `.env` (except `.env.example`), service-account JSON, `*.pem`, `.runtime-env.yaml` — see `scripts/backup_site_to_gcs.py`.
 
 ## Commands
 

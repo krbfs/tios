@@ -2,7 +2,7 @@
 """Deploy tc_26 to Google Cloud Run via Cloud Build.
 
 --deploy ALWAYS runs tests first (no skip). Deploy aborts if tests fail.
-Before Cloud Build: uploads git snapshot to gs://tios-test-backups/site/ (see deploy/GCS_BACKUP.md).
+Before Cloud Build: uploads full local worktree to gs://tios-test-backups/site/ (see deploy/GCS_BACKUP.md).
 Mobile layout tests hit the live Cloud Run URL (no local `next build`).
 
 Usage:

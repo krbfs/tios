@@ -30,6 +30,10 @@ class BackupGcsTests(unittest.TestCase):
         self.assertFalse(self.b.should_exclude(Path("tc_26/.env.example")))
         self.assertFalse(self.b.should_exclude(Path("tc_26/src/app/page.tsx")))
 
+    def test_includes_gitignored_methodology_paths(self):
+        self.assertFalse(self.b.should_exclude(Path("tc_26/source_sep_16th/foo.docx")))
+        self.assertFalse(self.b.should_exclude(Path("tc_26/thrash/draft.txt")))
+
 
 if __name__ == "__main__":
     unittest.main()
