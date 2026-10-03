@@ -23,16 +23,13 @@ class BackupGcsTests(unittest.TestCase):
     def setUpClass(cls):
         cls.b = _load()
 
-    def test_should_exclude_env_and_secrets(self):
-        self.assertTrue(self.b.should_exclude(Path("tc_26/.env")))
-        self.assertTrue(self.b.should_exclude(Path("tc_26/secrets/key.json")))
+    def test_only_node_modules_excluded(self):
         self.assertTrue(self.b.should_exclude(Path("tc_26/node_modules/foo")))
-        self.assertFalse(self.b.should_exclude(Path("tc_26/.env.example")))
-        self.assertFalse(self.b.should_exclude(Path("tc_26/src/app/page.tsx")))
-
-    def test_includes_gitignored_methodology_paths(self):
+        self.assertFalse(self.b.should_exclude(Path("tc_26/.env")))
+        self.assertFalse(self.b.should_exclude(Path("tc_26/secrets/key.json")))
+        self.assertFalse(self.b.should_exclude(Path("tc_26/.git/HEAD")))
         self.assertFalse(self.b.should_exclude(Path("tc_26/source_sep_16th/foo.docx")))
-        self.assertFalse(self.b.should_exclude(Path("tc_26/thrash/draft.txt")))
+        self.assertFalse(self.b.should_exclude(Path("tc_26/.next/BUILD_ID")))
 
 
 if __name__ == "__main__":

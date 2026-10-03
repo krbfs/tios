@@ -1,8 +1,8 @@
 # Pre-deploy GCS backup (tc_26)
 
-Before each `npm run gcp:deploy` / `deploy.py --deploy`, a **gzip tar** of the **full local `tc_26/` tree** is uploaded to GCS: tracked, untracked, and **gitignored** files (methodology folders, WIP) — everything on disk that matters for recovery, except secrets and heavy caches.
+Before each `npm run gcp:deploy` / `deploy.py --deploy`, a **gzip tar** of **almost the entire `tc_26/` directory on disk** is uploaded to the **private** bucket: `.env`, `secrets/`, `.git`, `.next`, methodology, uncommitted files — **everything except `node_modules/`** (restore with `npm ci`).
 
-GitHub is only the public slice; this archive is the **off-site full worktree** before deploy.
+**GitHub** (`krbfs/tios`): tracked files per `.gitignore` (no secrets in git — `.env` / `secrets/` stay ignored). **GCS**: full mirror including secrets — bucket must stay private.
 
 | Parameter | Value |
 |-----------|--------|
@@ -18,9 +18,7 @@ gs://tios-test-backups/site/<YYYY-MM-DDTHHMMSSZ>-<git-short>/
   manifest.json
 ```
 
-**Included:** `source_sep_16th/`, `thrash/`, uncommitted edits, any local-only assets under `tc_26/`.
-
-**Never included:** `.git`, `node_modules`, `.next`, `secrets/`, `.env` (except `.env.example`), service-account JSON, `*.pem`, `.runtime-env.yaml` — see `scripts/backup_site_to_gcs.py`.
+**Excluded from tar:** only `node_modules/` (see `scripts/backup_site_to_gcs.py`).
 
 ## Commands
 

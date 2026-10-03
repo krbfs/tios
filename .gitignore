@@ -42,11 +42,6 @@ yarn-error.log*
 .runtime-env.yaml
 /secrets/
 
-# methodology / scratch (parent repo only — never publish from tc_26)
-/source_current/
-/source_sep_16th/
-/thrash/
-
 # vercel
 .vercel
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Archive deploy source tree to GCS before Cloud Run publish.
 
-Full **local** snapshot of the deploy directory: tracked + untracked + gitignored
-(methodology folders, WIP), as on disk before deploy. Not a substitute for git.
+**Everything** under the source directory on disk: .env, secrets/, .git, gitignored
+methodology, uncommitted work — only ``node_modules`` is skipped (restore via ``npm ci``).
 
-Never included: .env*, secrets/, credentials keys, node_modules, .next, .git.
+GitHub uses .gitignore; this bucket is the full off-site mirror (private).
 """
 
 from __future__ import annotations
@@ -24,32 +24,8 @@ DEFAULT_BUCKET = "tios-test-backups"
 DEFAULT_GCP_PROJECT = "tc-26-504910"
 DEFAULT_PREFIX = "site"
 
-# Heavy / redundant / unsafe — not «локальное, чего нет на GitHub».
-TAR_EXCLUDE_DIR_NAMES = frozenset(
-    {
-        ".git",
-        "node_modules",
-        "__pycache__",
-        ".DS_Store",
-        ".next",
-        "out",
-        "coverage",
-        ".backup-clean-static",
-        "secrets",
-        ".vercel",
-        ".pytest_cache",
-    }
-)
-
-TAR_EXCLUDE_FILE_NAMES = frozenset(
-    {
-        ".env",
-        ".env.local",
-        ".runtime-env.yaml",
-    }
-)
-
-CREDENTIAL_FILE_SUFFIXES = (".pem", ".p12", ".key")
+# Sole exclusion: reproducible dependency tree (hundreds of MB).
+TAR_EXCLUDE_DIR_NAMES = frozenset({"node_modules"})
 
 
 def repo_root_from_source(source_dir: Path) -> Path:
@@ -87,18 +63,6 @@ def git_manifest(repo_root: Path) -> dict[str, Any]:
 
 def should_exclude(rel: Path) -> bool:
     """rel is path inside archive: tc_26/..."""
-    name = rel.name
-    if name in TAR_EXCLUDE_FILE_NAMES:
-        return True
-    if name.startswith(".env") and name != ".env.example":
-        return True
-    if name.endswith(CREDENTIAL_FILE_SUFFIXES):
-        return True
-    lower = name.lower()
-    if "service-account" in lower and lower.endswith(".json"):
-        return True
-    if "credentials" in lower and lower.endswith(".json"):
-        return True
     for part in rel.parts:
         if part in TAR_EXCLUDE_DIR_NAMES:
             return True
@@ -106,15 +70,10 @@ def should_exclude(rel: Path) -> bool:
 
 
 def iter_backup_files(source_dir: Path, top: str) -> Iterator[tuple[Path, str]]:
-    """Yield (absolute_path, arcname) for files to store."""
     source_dir = source_dir.resolve()
     for dirpath, dirnames, filenames in os.walk(source_dir, topdown=True):
-        dirnames[:] = sorted(
-            d for d in dirnames if d not in TAR_EXCLUDE_DIR_NAMES and d != ".DS_Store"
-        )
+        dirnames[:] = sorted(d for d in dirnames if d not in TAR_EXCLUDE_DIR_NAMES)
         for filename in filenames:
-            if filename == ".DS_Store":
-                continue
             abs_path = Path(dirpath) / filename
             try:
                 rel = abs_path.relative_to(source_dir)
@@ -127,11 +86,13 @@ def iter_backup_files(source_dir: Path, top: str) -> Iterator[tuple[Path, str]]:
 
 
 def build_tar_archive(source_dir: Path, dest_tar: Path) -> tuple[str, int]:
-    """Return (top-level folder name, file count)."""
     source_dir = source_dir.resolve()
     top = source_dir.name
     count = 0
-    print(f"==> full worktree → {dest_tar.name} (incl. untracked / gitignored)", flush=True)
+    print(
+        f"==> full disk snapshot → {dest_tar.name} (all except node_modules/)",
+        flush=True,
+    )
     with tarfile.open(dest_tar, "w:gz") as tar:
         for abs_path, arcname in iter_backup_files(source_dir, top):
             tar.add(abs_path, arcname=arcname)
@@ -169,9 +130,9 @@ def upload_site_archive(
             "source_dir": str(source_dir),
             "archive_top_level": top,
             "tar_object": tar_name,
-            "backup_mode": "full_worktree",
+            "backup_mode": "full_disk",
             "file_count": file_count,
-            "excludes": sorted(TAR_EXCLUDE_DIR_NAMES | TAR_EXCLUDE_FILE_NAMES),
+            "excludes": sorted(TAR_EXCLUDE_DIR_NAMES),
             "git": git_info,
         }
         manifest_path = tmp_path / "manifest.json"
